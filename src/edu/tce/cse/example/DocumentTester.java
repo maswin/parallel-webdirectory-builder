@@ -8,6 +8,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import edu.tce.cse.clustering.DocNode;
 import edu.tce.cse.clustering.Document;
 
 public class DocumentTester {
@@ -51,29 +52,27 @@ public class DocumentTester {
 	}
 	public static void main(String args[]) throws IOException{
 		List<Document> list=new ArrayList<Document>();
+		List<DocNode> nodeList=new ArrayList<DocNode>();
 		
 		sampleData sd = new sampleData();
 		list = sd.getSampleDoc();
+		nodeList = sd.getSampleDocNodes(list);
 		
 		Map<String, Double> termFreq = new HashMap<String, Double>();
 		Document primary = list.get(0);
-		System.out.println("Eucledian Distance Testing :");
-		System.out.println("Document for Testing : Music.txt");
+		DocNode primaryNode = nodeList.get(0);
+		System.out.println("Cosine Distance Testing :");
+		System.out.println("Document for Testing : "+primary.getFilePath());
 		/*for(Document doc : list){
 			System.out.println(findCosineSimilarity(primary.getTfIdfVector(),doc.getTfIdfVector()));
 		}*/
 		
-		double value1=0.0;
-		double value2=0.0;
-		for(int i=1;i<8;i++){
-			value1+=findEucledianSimilarity(primary.getTfIdfVector(),list.get(i).getTfIdfVector());
-			i++;
+		double tmp = 0.0;
+		double tmp1 = 0.0;
+		for(int i=1;i<list.size();i++){
+			tmp = findCosineSimilarity(primary.getTfIdfVector(),list.get(i).getTfIdfVector());
+			tmp1 = primaryNode.findCosSimilarity(nodeList.get(i));
+			System.out.println(list.get(i).getFilePath()+" "+tmp+" "+tmp1);
 		}
-		for(int i=8;i<15;i++){
-			value2+=findEucledianSimilarity(primary.getTfIdfVector(),list.get(i).getTfIdfVector());
-			i++;
-		}
-		System.out.println("Similarity With Music Related Documents: "+value1);
-		System.out.println("Similarity With War Related Documents: "+value2);
 	}
 }

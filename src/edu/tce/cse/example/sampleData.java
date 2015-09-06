@@ -65,4 +65,16 @@ public class sampleData {
 		}
 		return docNodes;
 	}
+	public List<DocNode> getSampleDocNodes(List<Document> inputDocuments) throws IOException{
+		List<DocNode> docNodes = new ArrayList<DocNode>();
+		
+		boolean[] signature;
+		DocNode node;
+		for(Document docs : inputDocuments){
+			signature = docs.getSignatureVector();
+			node = new DocNode(docs.getDocID(), signature);
+			docNodes.add(node);
+		}
+		return docNodes;
+	}
 }
