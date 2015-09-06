@@ -9,14 +9,14 @@ public class TryInitialClustering {
 		BufferedReader br=new BufferedReader(new InputStreamReader(System.in));
 		List<DocNode> list=new ArrayList<DocNode>();
 		//modify number of signature vectors here
-		for(int i=0; i<200; i++){
+		for(long i=0; i<200; i++){
 			String line=br.readLine();
 			int sig[]=new int[line.length()];
 			for(int j=0; j<sig.length; j++){
 				sig[j]=line.charAt(j)-'0';
 			}
-			DocNode d=new DocNode(i, sig);
-			list.add(d);
+			//DocNode d=new DocNode(i, sig);
+			//list.add(d);
 		}
 		
 		

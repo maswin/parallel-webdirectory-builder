@@ -4,7 +4,7 @@ import java.util.List;
 
 
 public class DocNode extends Node implements Comparable<DocNode>{
-	int signature[];
+	boolean signature[];
 	float centrality;
 	float sig;
 	float delta;
@@ -12,7 +12,7 @@ public class DocNode extends Node implements Comparable<DocNode>{
 	int level;
 	HashMap<Integer, List<Edge<DocNode>>> pred;
 	//public FibonacciHeap.Node<DocNode> node;
-	public DocNode(int id, int[] sig){
+	public DocNode(long id, boolean[] sig){
 		super(id);
 		signature = sig;
 		priority = Float.MAX_VALUE;
