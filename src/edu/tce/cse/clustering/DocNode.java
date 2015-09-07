@@ -1,10 +1,12 @@
 package edu.tce.cse.clustering;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class DocNode extends Node implements Comparable<DocNode>{
-	boolean signature[];
+	boolean[] signature;
+	double[] tfIdf;
 	float centrality;
 	float sig;
 	float delta;
@@ -24,6 +26,12 @@ public class DocNode extends Node implements Comparable<DocNode>{
 	}
 	public void setSignature(boolean[] signature) {
 		this.signature = signature;
+	}
+	public double[] getTfIdf() {
+		return tfIdf;
+	}
+	public void setTfIdf(double[] tfIdf) {
+		this.tfIdf = tfIdf;
 	}
 	public float findCosSimilarity(DocNode d){
 		double E = 0;

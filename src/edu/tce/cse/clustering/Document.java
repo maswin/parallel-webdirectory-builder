@@ -38,7 +38,8 @@ public class Document {
 
 	//Computed during Initialization
 	private Map<String, Double> tfIdfVector;
-	private boolean signatureVector[];
+	private double[] tfIdf;
+	private boolean[] signatureVector;
 
 	//Across all documents
 	static int totalDocuments = 0;
@@ -63,12 +64,10 @@ public class Document {
 
 		//Generate tfIdfVector - - To be done after initializing all Documents
 		tfIdfVector = null;
+		tfIdf = null;
 
 		//Generate Signature - To be done after initializing all Documents
 		signatureVector = null;
-
-
-
 	}
 
 	//Getters & Setters
@@ -109,7 +108,16 @@ public class Document {
 	public static Map<String, Integer> getDocumentFrequency() {
 		return documentFrequency;
 	}
+	public double[] getTfIdf() {
+		if(tfIdf == null){
+			generateTfIdf();
+		}
+		return tfIdf;
+	}
 
+	public void setTfIdf(double[] tfIdf) {
+		this.tfIdf = tfIdf;
+	}
 	static void initializeStopWordSet(){
 		/* Default Stop Word Set
 		 "a", "an", "and", "are", "as", "at", "be", "but", "by",
@@ -201,20 +209,24 @@ public class Document {
 	private void generateSignature(){
 		//Initialized only once
 		if(sb==null){
-			sb = new SuperBit(documentFrequency.size(),100,100);
+			sb = new SuperBit(documentFrequency.size(),30,30);
+			System.out.println("Hyper Plane Generated");
 		}
 
-		double[] vector = new double[documentFrequency.size()];
+		double[] vector = this.getTfIdf();
+		signatureVector = sb.signature(vector);
+	}
+	private void generateTfIdf(){		
+		tfIdf = new double[documentFrequency.size()];
 		int index = 0;
 		for(String term : documentFrequency.keySet()){
 			if(this.getTfIdfVector().containsKey(term)){
-				vector[index] = tfIdfVector.get(term);
+				tfIdf[index] = tfIdfVector.get(term);
 			}else{
-				vector[index] = 0.0;
+				tfIdf[index] = 0.0;
 			}
 			index++;
 		}
-		signatureVector = sb.signature(vector);
 	}
 
 

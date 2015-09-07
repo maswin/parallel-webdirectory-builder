@@ -3,9 +3,10 @@ package edu.tce.cse.util;
 import java.util.Random;
 
 public class LSH {
-	protected static final long LARGE_PRIME =  433494437;
     
-    protected int numOfBuckets = 10;
+	private static final int D = 20; //Range
+	private static final int modulo = 37; //Prime number within range (D,2D].
+    protected int numOfBuckets;
     protected int numOfFunctions;
     protected int dimensions;
     
@@ -31,9 +32,9 @@ public class LSH {
     	Random r = new Random();
     	for(int i=0;i<numOfFunctions;i++){
     		for(int j=0;j<dimensions;j++){
-    			A[i][j] = r.nextInt(50);
+    			A[i][j] = r.nextInt(D);
     		}
-    		B[i] = r.nextInt(50);
+    		B[i] = r.nextInt(D);
     	}
     }
     /**
@@ -57,7 +58,7 @@ public class LSH {
     		}
     	}
     	bucket += B[index];
-    	bucket = bucket%numOfBuckets;
+    	bucket = (bucket%modulo)%numOfBuckets;
     	return bucket;
     }
     

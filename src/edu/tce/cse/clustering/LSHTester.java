@@ -16,7 +16,7 @@ public class LSHTester {
 		sampleData sd = new sampleData();
 		nodeList = sd.getSampleDoc();
 		
-		LSH lsh = new LSH(4,10,nodeList.get(0).getSignatureVector().length);
+		LSH lsh = new LSH(6,10,nodeList.get(0).getSignatureVector().length);
 		
 		DisjointSet<Document> dSet = new DisjointSet<Document>();
 		int[][] hash = new int[nodeList.size()][];

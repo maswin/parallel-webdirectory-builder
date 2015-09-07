@@ -38,12 +38,19 @@ public class DocumentTester {
 		double E = 0.0;
 		double E1 = 0.0;
 		double E2 = 0.0;
-		for (String word : tfIdf1.keySet()) {
-			E1 += Math.pow(tfIdf1.get(word), 2);
+		Set<String> words = new HashSet<String>();
+		words.addAll(tfIdf1.keySet());
+		words.addAll(tfIdf2.keySet());
+		for (String word : words) {
+			if(tfIdf1.containsKey(word)){
+				E1 += Math.pow(tfIdf1.get(word), 2);
+			}
 			if(tfIdf2.containsKey(word)){
 				E2 += Math.pow(tfIdf2.get(word), 2);
-				E += tfIdf1.get(word)*tfIdf2.get(word);
 			}
+			if(tfIdf1.containsKey(word) && tfIdf2.containsKey(word)){
+				E += tfIdf1.get(word)*tfIdf2.get(word);
+			}			
 		}
 		E1 = Math.sqrt(E1);
 		E2 = Math.sqrt(E2);
