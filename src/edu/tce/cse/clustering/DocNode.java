@@ -1,10 +1,12 @@
 package edu.tce.cse.clustering;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 
 public class DocNode extends Node implements Comparable<DocNode>{
-	int signature[];
+	boolean[] signature;
+	double[] tfIdf;
 	float centrality;
 	float sig;
 	float delta;
@@ -12,11 +14,24 @@ public class DocNode extends Node implements Comparable<DocNode>{
 	int level;
 	HashMap<Integer, List<Edge<DocNode>>> pred;
 	//public FibonacciHeap.Node<DocNode> node;
-	public DocNode(int id, int[] sig){
+	public DocNode(long id, boolean[] sig){
 		super(id);
 		signature = sig;
 		priority = Float.MAX_VALUE;
 		pred = new HashMap<Integer, List<Edge<DocNode>>>();
+	}
+	//Getter & Setter
+	public boolean[] getSignature() {
+		return signature;
+	}
+	public void setSignature(boolean[] signature) {
+		this.signature = signature;
+	}
+	public double[] getTfIdf() {
+		return tfIdf;
+	}
+	public void setTfIdf(double[] tfIdf) {
+		this.tfIdf = tfIdf;
 	}
 	public float findCosSimilarity(DocNode d){
 		double E = 0;

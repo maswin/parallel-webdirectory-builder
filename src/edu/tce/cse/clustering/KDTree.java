@@ -31,7 +31,7 @@ public class KDTree {
 			currentNode = new KDNode(data);
 			return;
 		}else{
-			if(data.signature[currentDimension]){
+			if(data.tfIdf[currentDimension] < currentNode.data.tfIdf[currentDimension]){
 				currentDimension = (currentDimension+1)%dimensions;
 				insertUtil(data, currentNode.left, currentDimension);
 			}else{
@@ -46,11 +46,11 @@ public class KDTree {
 		KDNode lcs = this.root;
 		int currentDimension = 0;
 		while(lcs!=null){
-			if(node1.signature[currentDimension] 
-					&& node2.signature[currentDimension]){
+			if(node1.tfIdf[currentDimension] < lcs.data.tfIdf[currentDimension]
+					&& node2.tfIdf[currentDimension] < lcs.data.tfIdf[currentDimension]){
 				lcs = lcs.left;
-			}else if(!node1.signature[currentDimension] 
-					&& !node2.signature[currentDimension]){
+			}else if(node1.tfIdf[currentDimension] > lcs.data.tfIdf[currentDimension] 
+					&& node2.tfIdf[currentDimension] > lcs.data.tfIdf[currentDimension]){
 				lcs = lcs.right;
 			}else{
 				break;
@@ -74,7 +74,7 @@ public class KDTree {
 			if(subTreeRoot.data.equals(node)){
 				break;
 			}
-			if(node.signature[currentDimension]){
+			if(node.tfIdf[currentDimension] < subTreeRoot.data.tfIdf[currentDimension]){
 				subTreeRoot = subTreeRoot.left;
 			}else {
 				subTreeRoot = subTreeRoot.right;

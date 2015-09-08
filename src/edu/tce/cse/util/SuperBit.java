@@ -80,7 +80,7 @@ public class SuperBit implements Serializable {
         
         double[][] v = new double[K][d];
         Random rand = new Random();
-        
+
         for (int i = 0; i < K; i++) {
             double[] vector = new double[d];
             for (int j = 0; j < d; j++) {
@@ -135,7 +135,7 @@ public class SuperBit implements Serializable {
      * @param d 
      */
     public SuperBit(int d) {
-        this(d, d, 100/d);
+        this(d, d, 10000/d);
     }
     
     public SuperBit() {
