@@ -228,6 +228,19 @@ public class Document {
 			index++;
 		}
 	}
-
+	public float findCosSimilarity(Document d){
+		double E = 0.0;
+		double E1 = 0.0;
+		double E2 = 0.0;
+		for(int i=0;i<tfIdf.length;i++){
+			E1 += Math.pow(this.tfIdf[i],2);
+			E2 += Math.pow(d.tfIdf[i],2);
+			E += this.tfIdf[i]*d.tfIdf[i];
+		}
+		E1 = Math.sqrt(E1);
+		E2 = Math.sqrt(E2);
+		E = (E / (E1*E2));
+		return (float)(Math.abs(E));
+	}
 
 }

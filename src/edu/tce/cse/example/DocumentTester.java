@@ -34,7 +34,7 @@ public class DocumentTester {
 		
 		return (float)(Math.abs(Math.sqrt(E)));
 	}
-	public static double findCosineSimilarity(Map<String, Double> tfIdf1, Map<String, Double> tfIdf2){
+	public static float findCosineSimilarity(Map<String, Double> tfIdf1, Map<String, Double> tfIdf2){
 		double E = 0.0;
 		double E1 = 0.0;
 		double E2 = 0.0;
@@ -77,7 +77,8 @@ public class DocumentTester {
 		double tmp = 0.0;
 		double tmp1 = 0.0;
 		for(int i=1;i<list.size();i++){
-			tmp = findCosineSimilarity(primary.getTfIdfVector(),list.get(i).getTfIdfVector());
+			//tmp = findCosineSimilarity(primary.getTfIdfVector(),list.get(i).getTfIdfVector());
+			tmp = primary.findCosSimilarity(list.get(i));
 			tmp1 = primaryNode.findCosSimilarity(nodeList.get(i));
 			System.out.println(list.get(i).getFilePath()+" "+tmp+" "+tmp1);
 		}
