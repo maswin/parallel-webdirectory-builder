@@ -60,7 +60,7 @@ public class sampleData {
 		DocNode node;
 		for(Document docs : inputDocuments){
 			signature = docs.getSignatureVector();
-			node = new DocNode(docs.getDocID(), signature);
+			node = new DocNode(docs.getDocID(), signature, docs.getTfIdf());
 			docNodes.add(node);
 		}
 		return docNodes;
@@ -72,7 +72,7 @@ public class sampleData {
 		DocNode node;
 		for(Document docs : inputDocuments){
 			signature = docs.getSignatureVector();
-			node = new DocNode(docs.getDocID(), signature);
+			node = new DocNode(docs.getDocID(), signature, docs.getTfIdf());
 			docNodes.add(node);
 		}
 		return docNodes;

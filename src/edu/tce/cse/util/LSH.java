@@ -1,17 +1,17 @@
 package edu.tce.cse.util;
 
+import java.util.Arrays;
 import java.util.Random;
 
 public class LSH {
     
-	private static final int D = 20; //Range
-	private static final int modulo = 37; //Prime number within range (D,2D].
+	//private static final int D = 20; //Range
+	//private static final int modulo = 37; //Prime number within range (D,2D].
     protected int numOfBuckets;
     protected int numOfFunctions;
     protected int dimensions;
-    
+    protected int K; //Code Depth - Increasing K increases LSH Strictness (Max Size 32)
     private int A[][];
-    private int B[];
     /**
      * Instantiates a LSH instance with s stages (or bands) and b buckets (per 
      * stage), in a space with n dimensions.
@@ -19,23 +19,25 @@ public class LSH {
      * @param b buckets (per stage)
      * @param n dimensionality
      */
-    public LSH(int numOfBuckets, int numOfFunctions, int dimensions) {
+    public LSH(int numOfBuckets, int numOfFunctions, int dimensions, int K) {
         this.numOfBuckets = numOfBuckets; 
         this.numOfFunctions = numOfFunctions;
         this.dimensions = dimensions;
+        this.K = K;
         generateHashFunctions();
     }
     
     private void generateHashFunctions(){
-    	A = new int[numOfFunctions][dimensions];
-    	B = new int[numOfFunctions];
+    	A = new int[numOfFunctions][K];
     	Random r = new Random();
     	for(int i=0;i<numOfFunctions;i++){
-    		for(int j=0;j<dimensions;j++){
-    			A[i][j] = r.nextInt(D);
+    		for(int j=0;j<K;j++){
+    			A[i][j] = r.nextInt(dimensions);
     		}
-    		B[i] = r.nextInt(D);
     	}
+    	/*for(int i=0;i<numOfFunctions;i++){
+    		System.out.println(Arrays.toString(A[i]));
+    	}*/
     }
     /**
      * Hash a signature.
@@ -51,15 +53,18 @@ public class LSH {
          return hashSign;
     }
     public int hash(int index,boolean[] signature){
-    	int bucket = 0;
-    	for(int i=0;i<dimensions;i++){
-    		if(signature[i]){
-    			bucket += A[index][i];
+    	String bucket = "";
+    	int bucketValue = 0;
+    	for(int i=0;i<K;i++){
+    		if(signature[A[index][i]]){
+    			bucket += '1';
+    		}else{
+    			bucket += '0';
     		}
     	}
-    	bucket += B[index];
-    	bucket = (bucket%modulo)%numOfBuckets;
-    	return bucket;
+    	
+    	bucketValue = Integer.parseInt(bucket,2);
+    	return bucketValue;
     }
     
 }

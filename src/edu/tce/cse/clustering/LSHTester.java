@@ -16,7 +16,7 @@ public class LSHTester {
 		sampleData sd = new sampleData();
 		nodeList = sd.getSampleDoc();
 		
-		LSH lsh = new LSH(6,10,nodeList.get(0).getSignatureVector().length);
+		LSH lsh = new LSH(6,200,nodeList.get(0).getSignatureVector().length,15);
 		
 		DisjointSet<Document> dSet = new DisjointSet<Document>();
 		int[][] hash = new int[nodeList.size()][];
@@ -54,7 +54,8 @@ public class LSHTester {
 				count++;
 			}
 		}
-		if(count >= (hash1.length/2) ){
+		//if(count >= (hash1.length/3) ){
+		if(count >= 1 ){
 			result = true;
 		}
 		return result;
