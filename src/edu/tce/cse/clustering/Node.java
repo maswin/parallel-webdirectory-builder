@@ -5,5 +5,5 @@ public abstract class Node {
 	public Node(long id){
 		nodeID = id;
 	}
-	abstract public float findEdgeWEight(Node n);
+	abstract public float findDistance(Node n);
 }

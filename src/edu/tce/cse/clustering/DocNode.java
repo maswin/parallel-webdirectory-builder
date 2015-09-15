@@ -34,6 +34,9 @@ public class DocNode extends Node implements Comparable<DocNode>{
 	public void setTfIdf(double[] tfIdf) {
 		this.tfIdf = tfIdf;
 	}
+	public float getCentrality(){
+		return centrality;
+	}
 	public float findCosSimilarity(DocNode d){
 		/*double E = 0;
 		for (int i = 0; i < d.signature.length; i++) {
@@ -57,7 +60,7 @@ public class DocNode extends Node implements Comparable<DocNode>{
 		return (float)(Math.abs(E));
 	}
 	@Override
-	public float findEdgeWEight(Node n) {
+	public float findDistance(Node n) {
 		// TODO Auto-generated method stub
 		DocNode d = (DocNode)n;
 		return findCosSimilarity(d);
