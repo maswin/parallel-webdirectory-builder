@@ -1,4 +1,4 @@
-package edu.tce.cse.clustering;
+package edu.tce.cse.document;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -7,17 +7,19 @@ import java.util.Map;
 import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.DenseDoubleMatrix1D;
 import cern.colt.matrix.linalg.Algebra;
+import edu.tce.cse.clustering.Edge;
+import edu.tce.cse.clustering.Node;
 
 
 public class DocNode extends Node implements Comparable<DocNode>{
-	boolean[] signature;
-	double[] tfIdf;
-	float centrality;
-	float sig;
-	float delta;
+	public boolean[] signature;
+	public double[] tfIdf;
+	public float centrality;
+	public float sig;
+	public float delta;
 	public float priority;
-	int level;
-	HashMap<Integer, List<Edge<DocNode>>> pred;
+	public int level;
+	public HashMap<Integer, List<Edge<DocNode>>> pred;
 	//public FibonacciHeap.Node<DocNode> node;
 	public DocNode(long id, boolean[] sig, double[] tfIdf){
 		super(id);

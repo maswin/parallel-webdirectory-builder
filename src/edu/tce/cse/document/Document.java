@@ -1,4 +1,4 @@
-package edu.tce.cse.clustering;
+package edu.tce.cse.document;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -48,36 +48,37 @@ public class Document {
 	private Map<String, Double> tfIdfVector;
 	private double[] tfIdf;
 	private boolean[] signatureVector;
+	private SuperBit sb;
 
-	//Across all documents
-	static int totalDocuments = 0;
-	static Map<String, Integer> documentFrequency;
-	static SuperBit sb;
-	static List<String> stopWordSet = null;
-	public Document(String location) throws IOException{
-		//Initialize Stop Word Set
-		if(stopWordSet == null){
-			initializeStopWordSet();
-		}
+	/*
+	 * Call ParseDocument & generateTfIdfVector to complete Initialization
+	 * Send document frequency as parameter to both methods
+	 * ParseDocuments populate document frequency
+	 * After parsing all documents
+	 * generateTfIdfVector uses the populated document frequency
+	 * (Combine the documentfrequency from all processor before generating 
+	 *  tfIdfVector)
+	 */
+	public Document(int docId, String location) throws IOException{
 
-		//Set ID
-		this.docID = totalDocuments;
-		totalDocuments++;
+		//Set ID & Location
+		this.docID = docId;
 		filePath = location;
+		
 		//Initialize termfrequency
 		termFrequency = new HashMap<String, Integer>();
 		totalTokens = 0;
 		totalNumOfWords = 0;
-		parseDocument(location);
-
+		
+		//Generate Signature - - To be done after initializing all Documents
+		signatureVector = null;
+		
 		//Generate tfIdfVector - - To be done after initializing all Documents
 		tfIdfVector = null;
 		tfIdf = null;
-
-		//Generate Signature - To be done after initializing all Documents
-		signatureVector = null;
 	}
 
+	
 	//Getters & Setters
 	public long getDocID() {
 		return docID;
@@ -97,7 +98,8 @@ public class Document {
 
 	public Map<String, Double> getTfIdfVector() {
 		if(tfIdfVector == null){
-			calculateTfIdf();
+			System.out.println("Error : TfIdf Vector Not Generated");
+			throw new IllegalArgumentException();
 		}
 		return tfIdfVector;
 	}
@@ -109,16 +111,9 @@ public class Document {
 		return signatureVector;
 	}
 
-	public static int getTotalDocuments() {
-		return totalDocuments;
-	}
-
-	public static Map<String, Integer> getDocumentFrequency() {
-		return documentFrequency;
-	}
 	public double[] getTfIdf() {
 		if(tfIdf == null){
-			generateTfIdf();
+			System.out.println("Error : tfIdf Not Generated");
 		}
 		return tfIdf;
 	}
@@ -126,19 +121,9 @@ public class Document {
 	public void setTfIdf(double[] tfIdf) {
 		this.tfIdf = tfIdf;
 	}
-	static void initializeStopWordSet(){
-		/* Default Stop Word Set
-		 "a", "an", "and", "are", "as", "at", "be", "but", "by",
-		"for", "if", "in", "into", "is", "it",
-		"no", "not", "of", "on", "or", "such",
-		"that", "the", "their", "then", "there", "these",
-		"they", "this", "to", "was", "will", "with" 
-		 */
-		stopWordSet = new ArrayList<String>();
-		stopWordSet.add("from");
-	}
-	private void parseDocument(String location) throws IOException{
-		List<String> words = extractWords(location);
+	
+	public void parseDocument(Map<String, Integer> documentFrequency) throws IOException{
+		List<String> words = extractWords(this.filePath);
 		int count = 0;
 		for(String term : words){
 			if(termFrequency.containsKey(term)){
@@ -178,7 +163,6 @@ public class Document {
 		StandardFilter standardFilter = new StandardFilter(tokenizer);
 		
 		CharArraySet stopSet = CharArraySet.copy(StopAnalyzer.ENGLISH_STOP_WORDS_SET);
-		stopSet.addAll(stopWordSet);
 		StopFilter stopFilter = new StopFilter(standardFilter,
 				stopSet);
 
@@ -197,7 +181,7 @@ public class Document {
 		
 		return words;
 	}
-	private void calculateTfIdf(){		
+	public void calculateTfIdf(int totalDocuments, Map<String, Integer> documentFrequency){		
 		double tf;
 		int df;
 		double idf;
@@ -212,6 +196,7 @@ public class Document {
 			tfidf = tf*idf;
 			tfIdfVector.put(word, tfidf);
 		}
+		generateTfIdf(documentFrequency);
 	}
 
 	private void generateSignature(){
@@ -239,7 +224,7 @@ public class Document {
 				e.printStackTrace();
 			}
 		}else{
-			sb = new SuperBit(documentFrequency.size(),20,20);
+			sb = new SuperBit(tfIdf.length,20,20);
 			System.out.println("New Super Bit Generated");
 			FileOutputStream fout;
 			try {
@@ -254,7 +239,7 @@ public class Document {
 			}
 		}		
 	}
-	private void generateTfIdf(){		
+	private void generateTfIdf(Map<String, Integer> documentFrequency){		
 		tfIdf = new double[documentFrequency.size()];
 		int index = 0;
 		for(String term : documentFrequency.keySet()){
@@ -268,8 +253,8 @@ public class Document {
 	}
 	public float findCosSimilarity(Document d){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.tfIdf);
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.tfIdf);
+		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
+        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf());
 
         Algebra algebra = new Algebra();
         
