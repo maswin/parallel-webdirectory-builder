@@ -10,7 +10,7 @@ import edu.tce.cse.clustering.DocNode;
 import edu.tce.cse.clustering.Document;
 
 public class sampleData {
-	public static String inputFolder = "TestDocuments";
+	public static String inputFolder = "/home/mukuntha/Downloads/TestDocuments";
 	public List<Document> getSampleDoc() throws IOException{
 		File folder = new File(inputFolder);
 		File[] listOfFiles = folder.listFiles();
