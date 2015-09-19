@@ -68,19 +68,28 @@ public class DocumentTester {
 		Map<String, Double> termFreq = new HashMap<String, Double>();
 		Document primary = list.get(0);
 		DocNode primaryNode = nodeList.get(0);
+		System.out.println(" ");
+		System.out.println("Size "+Document.getDocumentFrequency().size());
+		int count = 0;
+		for(String s: Document.getDocumentFrequency().keySet()){
+			System.out.print(s+":"+Document.getDocumentFrequency().get(s)+" ");
+			if(count%10==0)
+				System.out.println(" ");
+			count++;
+		}
 		System.out.println("Cosine Distance Testing :");
 		System.out.println("Document for Testing : "+primary.getFilePath());
 		/*for(Document doc : list){
 			System.out.println(findCosineSimilarity(primary.getTfIdfVector(),doc.getTfIdfVector()));
 		}*/
 		
-		double tmp = 0.0;
+		/*double tmp = 0.0;
 		double tmp1 = 0.0;
 		for(int i=1;i<list.size();i++){
 			//tmp = findCosineSimilarity(primary.getTfIdfVector(),list.get(i).getTfIdfVector());
 			tmp = primary.findCosSimilarity(list.get(i));
 			tmp1 = primaryNode.findCosSimilarity(nodeList.get(i));
 			System.out.println(list.get(i).getFilePath()+" "+tmp+" "+tmp1);
-		}
+		}*/
 	}
 }
