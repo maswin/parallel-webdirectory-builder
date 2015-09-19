@@ -58,13 +58,14 @@ public class DocumentTester {
 		return (float)(Math.abs(E));
 	}
 	public static void main(String args[]) throws IOException{
+		
 		List<Document> list=new ArrayList<Document>();
 		List<DocNode> nodeList=new ArrayList<DocNode>();
 		
 		sampleData sd = new sampleData();
 		list = sd.getSampleDoc();
 		nodeList = sd.getSampleDocNodes(list);
-		
+		long startTime = System.nanoTime();
 		Map<String, Double> termFreq = new HashMap<String, Double>();
 		Document primary = list.get(0);
 		DocNode primaryNode = nodeList.get(0);
@@ -79,9 +80,12 @@ public class DocumentTester {
 		
 		for(int i=1;i<list.size();i++){
 			//tmp = findCosineSimilarity(primary.getTfIdfVector(),list.get(i).getTfIdfVector());
-			tmp = primary.findCosSimilarity(list.get(i));
+			//tmp = primary.findCosSimilarity(list.get(i));
 			tmp1 = primaryNode.findSignatureCosSimilarity(nodeList.get(i));
-			System.out.println(list.get(i).getFilePath()+" "+tmp+" "+tmp1);
+			//System.out.println(list.get(i).getFilePath()+" "+tmp+" "+tmp1);
+			System.out.println(list.get(i).getFilePath()+" "+tmp1);
 		}
+		long endTime = System.nanoTime();
+		System.out.println("Total Time "+(endTime-startTime));
 	}
 }
