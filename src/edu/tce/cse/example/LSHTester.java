@@ -7,7 +7,7 @@ import java.util.Arrays;
 import java.util.List;
 
 import edu.tce.cse.clustering.DisjointSet;
-import edu.tce.cse.clustering.Document;
+import edu.tce.cse.document.Document;
 import edu.tce.cse.util.LSH;
 
 public class LSHTester {

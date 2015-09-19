@@ -13,6 +13,8 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.BitSet;
 
+import edu.tce.cse.document.DocNode;
+
 
 
 public class Graph<E extends Node> {

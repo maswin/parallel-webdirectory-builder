@@ -8,7 +8,7 @@ import java.util.List;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
-import edu.tce.cse.clustering.Document;
+import edu.tce.cse.document.Document;
 
 public class SVDTester {
 	public static void main(String args[]) throws IOException{

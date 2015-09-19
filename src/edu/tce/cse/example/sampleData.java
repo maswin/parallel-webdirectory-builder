@@ -6,8 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import edu.tce.cse.clustering.DocNode;
-import edu.tce.cse.clustering.Document;
+import edu.tce.cse.document.DocNode;
+import edu.tce.cse.document.Document;
 
 public class sampleData {
 	public static String inputFolder = "TestDocuments";
@@ -17,11 +17,13 @@ public class sampleData {
 
 		List<Document> inputDocuments = new ArrayList<Document>();
 		Document doc;
+		int index = 0;
 		for (File file : listOfFiles) {
 		    if (file.isFile()) {
-		        doc = new Document(file.getAbsolutePath());
+		        doc = new Document(index, file.getAbsolutePath());
 		        inputDocuments.add(doc);
 		    }
+		    index++;
 		}
 		for(Document docs : inputDocuments){
 			docs.getSignatureVector();
