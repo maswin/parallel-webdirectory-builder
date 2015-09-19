@@ -76,10 +76,11 @@ public class DocumentTester {
 		
 		double tmp = 0.0;
 		double tmp1 = 0.0;
+		
 		for(int i=1;i<list.size();i++){
 			//tmp = findCosineSimilarity(primary.getTfIdfVector(),list.get(i).getTfIdfVector());
 			tmp = primary.findCosSimilarity(list.get(i));
-			tmp1 = primaryNode.findCosSimilarity(nodeList.get(i));
+			tmp1 = primaryNode.findSignatureCosSimilarity(nodeList.get(i));
 			System.out.println(list.get(i).getFilePath()+" "+tmp+" "+tmp1);
 		}
 	}

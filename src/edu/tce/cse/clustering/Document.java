@@ -1,9 +1,14 @@
 package edu.tce.cse.clustering;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -209,12 +214,42 @@ public class Document {
 	private void generateSignature(){
 		//Initialized only once
 		if(sb==null){
-			sb = new SuperBit(documentFrequency.size(),30,30);
-			System.out.println("Hyper Plane Generated");
+			initializeSuperBit();
 		}
 
 		double[] vector = this.getTfIdf();
 		signatureVector = sb.signature(vector);
+	}
+	private void initializeSuperBit(){
+		File f = new File("SuperBit/superbit.ser");
+		if(f.exists()){
+			FileInputStream fin;
+			try {
+				fin = new FileInputStream("SuperBit/superbit.ser");
+				ObjectInputStream ois = new ObjectInputStream(fin);
+				sb = (SuperBit) ois.readObject();
+				System.out.println("Read existing Super Bit");
+				ois.close();
+				fin.close();
+			} catch (IOException | ClassNotFoundException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}else{
+			sb = new SuperBit(documentFrequency.size(),20,20);
+			System.out.println("New Super Bit Generated");
+			FileOutputStream fout;
+			try {
+				fout = new FileOutputStream("SuperBit/superbit.ser");
+				ObjectOutputStream oos = new ObjectOutputStream(fout);   
+				oos.writeObject(sb);
+				oos.close();
+				fout.close();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		}		
 	}
 	private void generateTfIdf(){		
 		tfIdf = new double[documentFrequency.size()];
