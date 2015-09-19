@@ -2,6 +2,7 @@ package edu.tce.cse.example;
 
 import java.util.ArrayList;
 import java.util.List;
+import mpi.*;
 
 import edu.tce.cse.clustering.Cluster;
 import edu.tce.cse.clustering.DocNode;
@@ -24,20 +25,20 @@ public class InitialClusteringTester {
 		graph.findCentrality();
 		
 		float[] values = new float[graph.V.size()];
-		System.out.println("");
-		System.out.println("Betweenness Centrality values:");
+		//System.out.println("");
+		//System.out.println("Betweenness Centrality values:");
 		for(int i=0; i<graph.V.size(); i++){
-			System.out.println(graph.V.get(i).nodeID+": "+graph.V.get(i).getCentrality());
+			//System.out.println(graph.V.get(i).nodeID+": "+graph.V.get(i).getCentrality());
 			values[i] = graph.V.get(i).getCentrality();
 		}
 		Statistics stats = new Statistics(values);
 		float mean = stats.getMean();
 		float stdDev= stats.getStdDev();
-		System.out.println("Vertices having centrality scores greater than or equal to mean: ");
+		/*System.out.println("Vertices having centrality scores greater than or equal to mean: ");
 		for(int i=0; i<graph.V.size(); i++){
 			if(graph.V.get(i).getCentrality()>=mean)
 				System.out.print(i+" ");
-		}
+		}*/
 		graph.removeInterClusterEdges(mean+(1f*stdDev), false);
 		int count = 1;
 		List<List<DocNode>> components = graph.findConnectedComponents();
