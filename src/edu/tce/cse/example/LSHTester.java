@@ -1,4 +1,4 @@
-package edu.tce.cse.clustering;
+package edu.tce.cse.example;
 
 
 import java.io.IOException;
@@ -6,7 +6,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import edu.tce.cse.example.sampleData;
+import edu.tce.cse.clustering.DisjointSet;
+import edu.tce.cse.clustering.Document;
 import edu.tce.cse.util.LSH;
 
 public class LSHTester {
@@ -19,6 +20,7 @@ public class LSHTester {
 		LSH lsh = new LSH(nodeList.get(0).getSignatureVector().length,150,10);
 		lsh.setNumOfBuckets(6);
 		DisjointSet<Document> dSet = new DisjointSet<Document>();
+		
 		int[][] hash = new int[nodeList.size()][];
 		int[] hashBucket = new int[nodeList.size()];
 		int index = 0;
@@ -26,8 +28,7 @@ public class LSHTester {
 			dSet.makeSet(node);
 			hash[index] = lsh.hashSignature(node.getSignatureVector());
 			hashBucket[index] = lsh.hash(node.getSignatureVector());
-			System.out.println(node.getFilePath()+"\t"+hashBucket[index]+"\t"+Arrays.toString(hash[index]));
-			
+			System.out.println(node.getFilePath()+"\t"+hashBucket[index]+"\t"+Arrays.toString(hash[index]));		
 			index++;
 		}
 		List<List<Document>> sets;
