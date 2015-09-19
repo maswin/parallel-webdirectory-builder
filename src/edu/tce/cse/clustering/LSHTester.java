@@ -16,16 +16,17 @@ public class LSHTester {
 		sampleData sd = new sampleData();
 		nodeList = sd.getSampleDoc();
 		
-		LSH lsh = new LSH(6,200,nodeList.get(0).getSignatureVector().length,15);
-		
+		LSH lsh = new LSH(nodeList.get(0).getSignatureVector().length,150,10);
+		lsh.setNumOfBuckets(6);
 		DisjointSet<Document> dSet = new DisjointSet<Document>();
 		int[][] hash = new int[nodeList.size()][];
+		int[] hashBucket = new int[nodeList.size()];
 		int index = 0;
 		for(Document node : nodeList){
 			dSet.makeSet(node);
 			hash[index] = lsh.hashSignature(node.getSignatureVector());
-			
-			System.out.println(node.getFilePath()+" "+Arrays.toString(hash[index]));
+			hashBucket[index] = lsh.hash(node.getSignatureVector());
+			System.out.println(node.getFilePath()+"\t"+hashBucket[index]+"\t"+Arrays.toString(hash[index]));
 			
 			index++;
 		}
@@ -55,7 +56,7 @@ public class LSHTester {
 			}
 		}
 		//if(count >= (hash1.length/3) ){
-		if(count >= 1 ){
+		if(count >= 2 ){
 			result = true;
 		}
 		return result;
