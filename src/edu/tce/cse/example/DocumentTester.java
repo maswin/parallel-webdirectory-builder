@@ -8,8 +8,10 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-import edu.tce.cse.clustering.DocNode;
-import edu.tce.cse.clustering.Document;
+import mpi.MPI;
+import edu.tce.cse.document.DocNode;
+import edu.tce.cse.document.Document;
+import edu.tce.cse.document.DocumentInitializer;
 
 public class DocumentTester {
 	public static double findEucledianSimilarity(Map<String, Double> tfIdf1, Map<String, Double> tfIdf2){
@@ -57,39 +59,36 @@ public class DocumentTester {
 		E = (E / (E1*E2));
 		return (float)(Math.abs(E));
 	}
-	public static void main(String args[]) throws IOException{
-		List<Document> list=new ArrayList<Document>();
-		List<DocNode> nodeList=new ArrayList<DocNode>();
+	public static void main(String args[]) throws IOException{ 
 		
-		sampleData sd = new sampleData();
-		list = sd.getSampleDoc();
-		nodeList = sd.getSampleDocNodes(list);
+		MPI.Init(args);
+		int id = MPI.COMM_WORLD.Rank();
+		int size = MPI.COMM_WORLD.Size();
+		System.out.println("Started Id : "+id+"/"+size);
 		
-		Map<String, Double> termFreq = new HashMap<String, Double>();
-		Document primary = list.get(0);
-		DocNode primaryNode = nodeList.get(0);
-		System.out.println(" ");
-		System.out.println("Size "+Document.getDocumentFrequency().size());
-		int count = 0;
-		for(String s: Document.getDocumentFrequency().keySet()){
-			System.out.print(s+":"+Document.getDocumentFrequency().get(s)+" ");
-			if(count%10==0)
-				System.out.println(" ");
-			count++;
+		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
+		List<Document> docList=new ArrayList<Document>();
+		
+		docList = DI.getDocumentList();
+		
+		//Testing
+		Document primary = docList.get(0);
+		double sim = 0.0;
+		MPI.COMM_WORLD.Barrier();
+		
+		for(int i=0;i<size;i++){
+			MPI.COMM_WORLD.Barrier();
+			if(id==i){
+				System.out.println("Primary Node : "+primary.getFilePath());
+				for(int index = 1;index<docList.size();index++){
+					sim = primary.findCosSimilarity(docList.get(index));
+					System.out.println(docList.get(index).getFilePath()+" "+sim);
+				}
+				System.out.println();
+			}
 		}
-		System.out.println("Cosine Distance Testing :");
-		System.out.println("Document for Testing : "+primary.getFilePath());
-		/*for(Document doc : list){
-			System.out.println(findCosineSimilarity(primary.getTfIdfVector(),doc.getTfIdfVector()));
-		}*/
 		
-		/*double tmp = 0.0;
-		double tmp1 = 0.0;
-		for(int i=1;i<list.size();i++){
-			//tmp = findCosineSimilarity(primary.getTfIdfVector(),list.get(i).getTfIdfVector());
-			tmp = primary.findCosSimilarity(list.get(i));
-			tmp1 = primaryNode.findCosSimilarity(nodeList.get(i));
-			System.out.println(list.get(i).getFilePath()+" "+tmp+" "+tmp1);
-		}*/
+		MPI.Finalize();
+		
 	}
 }

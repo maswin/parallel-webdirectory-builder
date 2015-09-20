@@ -5,9 +5,9 @@ import java.util.List;
 import mpi.*;
 
 import edu.tce.cse.clustering.Cluster;
-import edu.tce.cse.clustering.DocNode;
-import edu.tce.cse.clustering.Document;
 import edu.tce.cse.clustering.Graph;
+import edu.tce.cse.document.DocNode;
+import edu.tce.cse.document.Document;
 import edu.tce.cse.util.Statistics;
 
 public class InitialClusteringTester {

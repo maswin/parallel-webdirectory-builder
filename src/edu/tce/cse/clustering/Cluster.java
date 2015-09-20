@@ -5,6 +5,8 @@ import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 
+import edu.tce.cse.document.DocNode;
+
 public class Cluster extends Node{
 	List<Node> nodes;
 	List<DocNode> repPoints;

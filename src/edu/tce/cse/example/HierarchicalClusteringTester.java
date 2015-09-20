@@ -8,14 +8,14 @@ import java.util.Set;
 
 import mpi.*;
 import edu.tce.cse.clustering.Cluster;
-import edu.tce.cse.clustering.DocNode;
 import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Graph;
 import edu.tce.cse.clustering.KDTree;
+import edu.tce.cse.document.DocNode;
 import edu.tce.cse.util.Statistics;
 
 public class HierarchicalClusteringTester {
-	
+
 	public List<Cluster> mergeClusters(List<Cluster> clusters, List<KDTree> trees, HashMap<DocNode, Integer> nodeToTreeMap, int maxTreeHeight){
 		Graph graph = new Graph(clusters);
 		graph.addEdges(trees, nodeToTreeMap, maxTreeHeight);
@@ -85,7 +85,7 @@ public class HierarchicalClusteringTester {
 		while(true){
 			//gather disjoint sets
 			//form KD trees + nodeToTree map + get max tree height?
-			List<Cluster> nextLevelClusters = mergeClusters(clustersAtThisLevel, trees, nodeToTreeMap, maxTreeHeight);
+			//List<Cluster> nextLevelClusters = mergeClusters(clustersAtThisLevel, trees, nodeToTreeMap, maxTreeHeight);
 			
 		}
 	}

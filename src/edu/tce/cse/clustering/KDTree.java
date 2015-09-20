@@ -1,5 +1,7 @@
 package edu.tce.cse.clustering;
 
+import edu.tce.cse.document.DocNode;
+
 public class KDTree {
 	
 	private class KDNode{
