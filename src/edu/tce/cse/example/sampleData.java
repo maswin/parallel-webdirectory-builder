@@ -4,31 +4,47 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.List;
+import java.util.Map;
 
+import mpi.MPI;
+import mpi.Op;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 
 public class sampleData {
-	public static String inputFolder = "TestDocuments";
+	public static String documentDirectory = "TestDocuments";
+	private List<Document> documentList;
+	public sampleData(){
+		documentList = new ArrayList<Document>();
+		try {
+			InitializeDocuments();
+		} catch (IOException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
+	private void InitializeDocuments() throws IOException{
+		File inputDirectory = new File(documentDirectory);
+        File[] files = inputDirectory.listFiles();
+        
+        Map<String, Integer> documentFrequency = new LinkedHashMap<String, Integer>();
+        
+        for (int i = 0; i < files.length; i++) {
+            Document document = new Document(i, files[i].getAbsolutePath());
+            document.parseDocument(documentFrequency);
+            documentList.add(document);
+        }
+        
+        for(Document doc : documentList){
+        	doc.calculateTfIdf(files.length, documentFrequency);
+        }
+        
+	}
 	public List<Document> getSampleDoc() throws IOException{
-		File folder = new File(inputFolder);
-		File[] listOfFiles = folder.listFiles();
-
-		List<Document> inputDocuments = new ArrayList<Document>();
-		Document doc;
-		int index = 0;
-		for (File file : listOfFiles) {
-		    if (file.isFile()) {
-		        doc = new Document(index, file.getAbsolutePath());
-		        inputDocuments.add(doc);
-		    }
-		    index++;
-		}
-		for(Document docs : inputDocuments){
-			docs.getSignatureVector();
-		}
-		return inputDocuments;
+		return documentList;
 	}
 	public int[][] getSampleDocSignature() throws IOException{
 	
