@@ -216,7 +216,6 @@ public class Document {
 				fin = new FileInputStream("SuperBit/superbit.ser");
 				ObjectInputStream ois = new ObjectInputStream(fin);
 				sb = (SuperBit) ois.readObject();
-				System.out.println("Read existing Super Bit");
 				ois.close();
 				fin.close();
 			} catch (IOException | ClassNotFoundException e) {
