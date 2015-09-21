@@ -43,7 +43,7 @@ public class HierarchicalClusteringTester {
 		clusters= graph.formClusters(components, startingClusterID);
 		return clusters;
 	}
-	public void distributeRepPoints(DocNode[] repPoints){
+	public void distributeRepPoints(Object[] repPoints){
 		//int totalRepPoints = 0;
 		//DocNode[] repPoints = new DocNode[totalRepPoints];
 		//int index = 0;
@@ -65,12 +65,12 @@ public class HierarchicalClusteringTester {
 		MPI.COMM_WORLD.Scatterv(repPoints, 0, sendcount, displs, MPI.OBJECT, localRepPoints, 0, localRepPoints.length, MPI.OBJECT, 0);
 	}
 	
-	public DocNode[] getRepPoints(List<Cluster> clusters){
+	public Object[] getRepPoints(List<Cluster> clusters){
 		List<DocNode> repPoints = new ArrayList<DocNode>();
 		for(Cluster c: clusters){
 			repPoints.addAll(c.getRepPoints());
 		}
-		DocNode[] store = (DocNode[])repPoints.toArray();
+		Object[] store = repPoints.toArray();
 		return store;
 	}
 	

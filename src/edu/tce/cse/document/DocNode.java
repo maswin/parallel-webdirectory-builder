@@ -1,4 +1,5 @@
 package edu.tce.cse.document;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +12,9 @@ import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Node;
 
 
-public class DocNode extends Node implements Comparable<DocNode>{
+public class DocNode extends Node implements Comparable<DocNode>, Serializable{
+	
+	public String fileName;
 	public boolean[] signature;
 	public double[] tfIdf;
 	public float centrality;
@@ -43,6 +46,9 @@ public class DocNode extends Node implements Comparable<DocNode>{
 	}
 	public float getCentrality(){
 		return centrality;
+	}
+	public void setFileName(String name){
+		this.fileName = name; 
 	}
 	public float findCosSimilarity(DocNode d){
 		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.tfIdf);

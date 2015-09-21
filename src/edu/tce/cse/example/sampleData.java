@@ -75,6 +75,7 @@ public class sampleData {
 		for(Document docs : inputDocuments){
 			signature = docs.getSignatureVector();
 			node = new DocNode(docs.getDocID(), signature, docs.getTfIdf());
+			node.setFileName(docs.getFilePath());
 			docNodes.add(node);
 		}
 		return docNodes;

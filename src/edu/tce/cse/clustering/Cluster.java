@@ -1,5 +1,6 @@
 package edu.tce.cse.clustering;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -7,16 +8,18 @@ import java.util.List;
 
 import edu.tce.cse.document.DocNode;
 
-public class Cluster extends Node{
+public class Cluster extends Node implements Serializable{
 	List<Node> nodes;
 	List<DocNode> repPoints;
 	int degreeInMST;
-	public Cluster(int id){
+	public Cluster(long id){
 		super(id);
 		nodes = new ArrayList<Node>();
 		repPoints = new ArrayList<DocNode>();
 	}
-
+	public void setNodeID(long id){
+		nodeID = id;
+	}
 	public List<DocNode> getRepPoints() {
 		return repPoints;
 	}
