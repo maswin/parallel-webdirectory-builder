@@ -48,27 +48,16 @@ public class DocumentInitializer {
             document.parseDocument(localDocumentFrequency[0]);
             documentList.add(document);
         }
-        
-        //MPI.COMM_WORLD.Barrier();
-        /*
-         * Collect Document Frequency from all Processors
-         * Need not wait - Only when all processors approach 
-         * reduce, reduce operation will take place.
-         * Reduced Result will stay in Processor 0
-         */
-        
+       
+        //Collect Document Frequency from all Processors
         Map<String, Integer>[] globalDocumentFrequency = new HashMap[1];
-        MPI.COMM_WORLD.Reduce(localDocumentFrequency, 0,
-                globalDocumentFrequency, 0, 1, MPI.OBJECT, new Op(new DocumentFrequencyReducer(), true), 0);
-        
-        //Broadcast the documentFrequency to other processor
-        MPI.COMM_WORLD.Bcast(globalDocumentFrequency, 0, 1, MPI.OBJECT, 0);
+        MPI.COMM_WORLD.Allreduce(localDocumentFrequency, 0,
+                globalDocumentFrequency, 0, 1, MPI.OBJECT, new Op(new DocumentFrequencyReducer(), true));
         
         //System.out.println(this.processorID+" "+globalDocumentFrequency[0].keySet().size());
         
-        for(Document doc : documentList){
-        	doc.calculateTfIdf(N, globalDocumentFrequency[0]);
-        }
+        documentList.parallelStream().forEach(doc -> 
+        	doc.calculateTfIdf(N, globalDocumentFrequency[0]));
         
 	}
 
@@ -76,5 +65,14 @@ public class DocumentInitializer {
 		return documentList;
 	}
 
+	public List<DocNode> getDocNodeList(){
+		List<DocNode> docNodeList = new ArrayList<DocNode>();
+		DocNode node;
+		for(Document document : documentList){
+			node = new DocNode(document.getDocID(),document.getSignatureVector(), document.getTfIdf());
+			docNodeList.add(node);
+		}
+		return docNodeList;
+	}
 	
 }

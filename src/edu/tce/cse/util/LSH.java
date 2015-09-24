@@ -96,7 +96,7 @@ public class LSH {
 		bucketValue = Integer.parseInt(bucket,2);
 		return bucketValue;
 	}
-	public int hash(boolean[] signature) {
+	/*public int hash(boolean[] signature) {
 		int hashSign = 0;       
 		for(int i=0;i<signature.length;i++){
 			if(signature[i]){
@@ -105,7 +105,7 @@ public class LSH {
 		}
 		hashSign = hashSign%modulo;
 		return hashSign%numOfBuckets;
-	}
+	}*/
 
 
 }
