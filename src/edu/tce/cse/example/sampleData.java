@@ -15,7 +15,7 @@ import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 
 public class sampleData {
-	public static String documentDirectory = "/home/mukuntha/Downloads/TestDocuments";
+	public static String documentDirectory = "TestDocuments";
 	private List<Document> documentList;
 	public sampleData(){
 		documentList = new ArrayList<Document>();
