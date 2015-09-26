@@ -11,7 +11,7 @@ import edu.tce.cse.document.DocNode;
 public class Cluster extends Node implements Serializable{
 	List<Node> nodes;
 	List<DocNode> repPoints;
-	int degreeInMST;
+	float weightedDegreeInMST;
 	public Cluster(long id){
 		super(id);
 		nodes = new ArrayList<Node>();
@@ -34,12 +34,12 @@ public class Cluster extends Node implements Serializable{
 	public void setNodes(List<Node> nodes) {
 		this.nodes = nodes;
 	}
-	public int getDegreeInMST() {
-		return degreeInMST;
+	public float getDegreeInMST() {
+		return weightedDegreeInMST;
 	}
 
-	public void setDegreeInMST(int degreeInMST) {
-		this.degreeInMST = degreeInMST;
+	public void setDegreeInMST(float degreeInMST) {
+		this.weightedDegreeInMST = degreeInMST;
 	}
 	
 	//to find representative points when documents are grouped to form initial cluster
@@ -58,31 +58,63 @@ public class Cluster extends Node implements Serializable{
 	}
 	
 	//to find representative points when clusters are grouped to form next level cluster
-	//if 4 clusters are merged: x, 2x, 3x, 4x representative points are picked from the 4 clusters
-	// 							sorted in ascending order of their degree in MST
 	void findRepPointsBasedOnMSTDegree(){
+		//fix max ration of rep points to be picked
+		float maxRatioOfRepPoints = 0.5f;
 		nodes.sort(new DegreeComparator());
-		float sum = (nodes.size()*(nodes.size()+1))/2;
-		int totalRepPoints = 0;
+		Cluster c = ((Cluster)(nodes.get(nodes.size()-1)));
+		//for node with maximum weighted degree, ratio of rep points picked = maxRatioOfRepPoints
+		int numOfRepPoints = c.repPoints.size();
+		//for node with maximum weighted degree, num of rep points picked = max
+		int max = (int) Math.abs(Math.ceil(maxRatioOfRepPoints*numOfRepPoints));
+		
+		float proportion = max/c.weightedDegreeInMST;
 		for(int i=0; i<nodes.size(); i++){
-			totalRepPoints+=((Cluster)nodes.get(i)).repPoints.size();
-		}
-		//fix number of rep points to be picked
-		int numOfRepPoints = (int)Math.ceil(totalRepPoints/2.0);
-		int x = (int) Math.abs(numOfRepPoints/sum);
-		for(int i=0; i<nodes.size(); i++){
-			for(int j=0; j<(i+1)*x; j++){
-				repPoints.add(((Cluster)nodes.get(i)).repPoints.get(j));
+			c = ((Cluster)(nodes.get(i)));
+			numOfRepPoints = (int) Math.abs(Math.ceil(proportion*c.weightedDegreeInMST));
+			numOfRepPoints = Math.min(numOfRepPoints, c.repPoints.size());
+			for(int j=0; j< numOfRepPoints; j++){
+				repPoints.add(c.repPoints.get(j));
 			}
 		}
 	}
 
+	void checkCentralityHeuristic(List<DocNode> nodes){
+		if(nodes.size()==1)
+			return ;
+		float max = Float.MIN_VALUE;
+		float minCentrality = Float.MAX_VALUE; float maxCentrality = Float.MIN_VALUE;
+		int minNode = -1; int maxNode = -1;
+		int actual1 = -1; int actual2 = -1;
+		for(int i=0; i<nodes.size(); i++){
+			if(nodes.get(i).centrality<minCentrality){
+				minCentrality = nodes.get(i).centrality;
+				minNode = i;
+			}
+			if(nodes.get(i).centrality>maxCentrality){
+				maxCentrality = nodes.get(i).centrality;
+				maxNode = i;
+			}
+			for(int j= i+1; j<nodes.size(); j++){
+				float dist = nodes.get(i).findEuclideanSimilarity(nodes.get(j));
+				if(dist>max){
+					max = dist;
+					actual1 = i; 
+					actual2 = j;
+				}	
+			}
+		}
+		float heuristicMax = nodes.get(minNode).findEuclideanSimilarity(nodes.get(maxNode));
+		System.out.println(heuristicMax+", actual = "+max);
+	}
+	
 	//to add the DocNode objects to a list and call findRepPoints()
 	void formCluster(List<? extends Node> nodes){
 		try{
 			//merging DocNode objects to form an initial cluster
 			if(nodes.get(0) instanceof DocNode){
 				List<DocNode> list = (List<DocNode>)nodes;
+				checkCentralityHeuristic(list);
 				findRepPointsBasedOnCentrality(list);
 				this.nodes.addAll(nodes);
 			}
@@ -110,26 +142,6 @@ public class Cluster extends Node implements Serializable{
 		avgDistance/=(repPoints.size()*c.getRepPoints().size());
 		return avgDistance;
 	}
-
-	//to find distance using KDTree LCA measure
-	public float findDistanceUsingKDTreeMeasure(Cluster c, List<KDTree> trees, HashMap<DocNode, Integer> nodeToTreeMap, int maxTreeHeight){
-		float avgDistance = 0.0f;
-		for(int i=0; i<repPoints.size(); i++){
-			for(int j=0; j<c.getRepPoints().size(); j++){
-				DocNode node1 = repPoints.get(i);
-				DocNode node2 = c.getRepPoints().get(j);
-				if(nodeToTreeMap.get(node1)==nodeToTreeMap.get(node2)){
-					avgDistance+=(trees.get(nodeToTreeMap.get(node1)).findDistance(node1, node2));
-				}
-				else{
-					//fix penalty weight when rep points don't fall under same KD tree
-					avgDistance+=(4*maxTreeHeight);
-				}
-			}
-		}
-		avgDistance/=(repPoints.size()*c.getRepPoints().size());
-		return avgDistance;
-	}
 }
 
 //to sort based on ascending order of centrality
@@ -145,9 +157,9 @@ class CentralityComparator implements Comparator{
 //to sort based on ascending order of degree in MST
 class DegreeComparator implements Comparator{
 	public int compare(Object i, Object j){
-		if(((Cluster)i).degreeInMST<((Cluster)j).degreeInMST)
+		if(((Cluster)i).weightedDegreeInMST<((Cluster)j).weightedDegreeInMST)
 			return -1;
-		else if(((Cluster)i).degreeInMST==((Cluster)j).degreeInMST)
+		else if(((Cluster)i).weightedDegreeInMST==((Cluster)j).weightedDegreeInMST)
 			return 0;
 		return 1;
 	}

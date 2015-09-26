@@ -67,6 +67,13 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 		E = E / signature.length;
 		return (float)(Math.abs(E));
 	}
+	public float findEuclideanSimilarity(DocNode d){
+		float E = 0.0f;
+		for(int i=0; i<tfIdf.length; i++){
+			E += Math.pow((tfIdf[i]-d.tfIdf[i]), 2);
+		}
+		return (float)(Math.abs(Math.sqrt(E)));
+	}
 	@Override
 	public float findDistance(Node n) {
 		// TODO Auto-generated method stub
