@@ -27,8 +27,8 @@ public class LSHTester {
 		for(Document node : nodeList){
 			dSet.makeSet(node);
 			hash[index] = lsh.hashSignature(node.getSignatureVector());
-			hashBucket[index] = lsh.hash(node.getSignatureVector());
-			System.out.println(node.getFilePath()+"\t"+hashBucket[index]+"\t"+Arrays.toString(hash[index]));		
+			//hashBucket[index] = lsh.hash(node.getSignatureVector());
+			System.out.println(node.getFilePath()+"\t"+Arrays.toString(hash[index]));		
 			index++;
 		}
 		List<List<Document>> sets;

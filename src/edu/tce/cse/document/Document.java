@@ -29,9 +29,9 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.tartarus.snowball.ext.PorterStemmer;
 
-import cern.colt.matrix.DoubleMatrix1D;
-import cern.colt.matrix.impl.DenseDoubleMatrix1D;
-import cern.colt.matrix.linalg.Algebra;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
+import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
 import edu.tce.cse.util.SuperBit;
 
 
@@ -45,7 +45,6 @@ public class Document {
 
 
 	//Computed during Initialization
-	private Map<String, Double> tfIdfVector;
 	private double[] tfIdf;
 	private boolean[] signatureVector;
 	private SuperBit sb;
@@ -57,7 +56,7 @@ public class Document {
 	 * After parsing all documents
 	 * generateTfIdfVector uses the populated document frequency
 	 * (Combine the documentfrequency from all processor before generating 
-	 *  tfIdfVector)
+	 *  tfIdf vector)
 	 */
 	public Document(int docId, String location) throws IOException{
 
@@ -74,7 +73,6 @@ public class Document {
 		signatureVector = null;
 		
 		//Generate tfIdfVector - - To be done after initializing all Documents
-		tfIdfVector = null;
 		tfIdf = null;
 	}
 
@@ -94,14 +92,6 @@ public class Document {
 
 	public int getTotalTokens() {
 		return totalTokens;
-	}
-
-	public Map<String, Double> getTfIdfVector() {
-		if(tfIdfVector == null){
-			System.out.println("Error : TfIdf Vector Not Generated");
-			throw new IllegalArgumentException();
-		}
-		return tfIdfVector;
 	}
 
 	public boolean[] getSignatureVector() {
@@ -182,23 +172,27 @@ public class Document {
 		return words;
 	}
 	public void calculateTfIdf(int totalDocuments, Map<String, Integer> documentFrequency){		
-		double tf;
+		int tf;
 		int df;
 		double idf;
 		double tfidf;
-		tfIdfVector = new HashMap<String, Double>();
-		for(String word : termFrequency.keySet()){
-			tf = (termFrequency.get(word)/(totalNumOfWords*1.0));
+		int index = 0;
+		
+		this.tfIdf = new double[documentFrequency.size()];
+		for(String word : documentFrequency.keySet()){
+			tf = 0;
+			if(termFrequency.containsKey(word)){
+				tf = termFrequency.get(word);
+			}
+			
 			df = documentFrequency.get(word);
-
-			idf = 1 + Math.log(totalDocuments/(df*1.0));
+			idf = Math.log10((double)totalDocuments/(1.0 * df));
 
 			tfidf = tf*idf;
-			tfIdfVector.put(word, tfidf);
+			tfIdf[index++] = tfidf;
 		}
-		generateTfIdf(documentFrequency);
-	}
 
+	}
 	private void generateSignature(){
 		//Initialized only once
 		if(sb==null){
@@ -238,27 +232,18 @@ public class Document {
 			}
 		}		
 	}
-	private void generateTfIdf(Map<String, Integer> documentFrequency){		
-		tfIdf = new double[documentFrequency.size()];
-		int index = 0;
-		for(String term : documentFrequency.keySet()){
-			if(this.getTfIdfVector().containsKey(term)){
-				tfIdf[index] = tfIdfVector.get(term);
-			}else{
-				tfIdf[index] = 0.0;
-			}
-			index++;
-		}
-	}
+	
 	public float findCosSimilarity(Document d){
-
 		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
         DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf());
 
-        Algebra algebra = new Algebra();
+        DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
         
         return (float) (vector1.zDotProduct(vector2) / 
                 (algebra.norm2(vector1)*algebra.norm2(vector2)));
+	}
+	public float findCosDistance(Document d){
+		return (1-findCosSimilarity(d));
 	}
 
 }

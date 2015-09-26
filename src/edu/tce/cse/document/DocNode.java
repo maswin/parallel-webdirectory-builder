@@ -5,9 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import cern.colt.matrix.DoubleMatrix1D;
-import cern.colt.matrix.impl.DenseDoubleMatrix1D;
-import cern.colt.matrix.linalg.Algebra;
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
+import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
 import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Node;
 
@@ -26,7 +26,7 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	//public FibonacciHeap.Node<DocNode> node;
 	public DocNode(long id, boolean[] sig, double[] tfIdf){
 		super(id);
-		signature = sig;
+		this.signature = sig;
 		this.tfIdf = tfIdf;
 		priority = Float.MAX_VALUE;
 		pred = new HashMap<Integer, List<Edge<DocNode>>>();
@@ -51,13 +51,17 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 		this.fileName = name; 
 	}
 	public float findCosSimilarity(DocNode d){
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.tfIdf);
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.tfIdf);
 
-        Algebra algebra = new Algebra();
+		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
+        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf());
+
+        DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
         
         return (float) (vector1.zDotProduct(vector2) / 
                 (algebra.norm2(vector1)*algebra.norm2(vector2)));
+	}
+	public float findCosDistance(DocNode d){
+		return (1-findCosSimilarity(d));
 	}
 	public float findSignatureCosSimilarity(DocNode d){
 		double E = 0;
