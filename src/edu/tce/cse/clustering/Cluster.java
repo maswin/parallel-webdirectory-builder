@@ -4,19 +4,22 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
 import edu.tce.cse.document.DocNode;
-import edu.tce.cse.util.KDTree;
 
 public class Cluster extends Node implements Serializable{
 	List<Node> nodes;
 	List<DocNode> repPoints;
+	Set<Cluster> children;
 	float weightedDegreeInMST;
 	public Cluster(long id){
 		super(id);
 		nodes = new ArrayList<Node>();
 		repPoints = new ArrayList<DocNode>();
+		children = new HashSet<Cluster>();
 	}
 	public void setNodeID(long id){
 		nodeID = id;

@@ -15,7 +15,6 @@ import java.util.BitSet;
 
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.util.DisjointSet;
-import edu.tce.cse.util.KDTree;
 
 
 

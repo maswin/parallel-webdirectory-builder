@@ -1,4 +1,4 @@
-package edt.tce.cse.webdirectorybuilder;
+package edu.tce.cse.webdirectorybuilder;
 
 import java.util.ArrayList;
 import java.util.List;
