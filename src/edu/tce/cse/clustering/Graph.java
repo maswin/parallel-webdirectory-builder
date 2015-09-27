@@ -67,33 +67,6 @@ public class Graph<E extends Node> {
 		return node1.findDistance(node2);
 	}
 	
-	//to form a complete graph by calculating edge weight using KD tree LCA distance measure
-	public void addEdges(List<KDTree> trees, HashMap<DocNode, Integer> nodeToTreeMap, int maxTreeHeight){
-		adjList.put(V.get(0), new ArrayList<Edge>());
-		Cluster c1 = (Cluster)V.get(0);
-		Cluster c2;
-		for(int j=1; j<V.size(); j++){
-			c2 = (Cluster)V.get(j);
-			adjList.put(V.get(j), new ArrayList<Edge>());
-			float weight = c1.findDistanceUsingKDTreeMeasure(c2, trees, nodeToTreeMap, maxTreeHeight);
-			Edge e = new Edge(V.get(0), V.get(j), weight);
-			adjList.get(V.get(0)).add(e);
-			e = new Edge(V.get(j), V.get(0), weight);
-			adjList.get(V.get(j)).add(e);
-		}
-		for(int i=1; i<V.size(); i++){
-			c1 = (Cluster)V.get(i);
-			for(int j=i+1; j<V.size(); j++){
-				c2 = (Cluster)V.get(j);
-				float weight = c1.findDistanceUsingKDTreeMeasure(c2, trees, nodeToTreeMap, maxTreeHeight);
-				Edge e = new Edge(V.get(i), V.get(j), weight);
-				adjList.get(V.get(i)).add(e);
-				e = new Edge(V.get(j), V.get(i), weight);
-				adjList.get(V.get(j)).add(e);
-			}
-		}
-	}
-
 	//to sparsify the graph by retaining d^e edges (based on weight) for each node (d=degree of node) 
 	public void sparsify(float e){
 		Thread[] threads = new Thread[NTHREAD];

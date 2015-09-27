@@ -1,6 +1,8 @@
 package edu.tce.cse.clustering;
 
-public abstract class Node {
+import java.io.Serializable;
+
+public abstract class Node implements Serializable{
 	public long nodeID;
 	public Node(long id){
 		nodeID = id;

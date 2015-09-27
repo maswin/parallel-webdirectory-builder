@@ -1,4 +1,5 @@
 package edu.tce.cse.document;
+import java.io.Serializable;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -11,7 +12,9 @@ import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Node;
 
 
-public class DocNode extends Node implements Comparable<DocNode>{
+public class DocNode extends Node implements Comparable<DocNode>, Serializable{
+	
+	public String fileName;
 	public boolean[] signature;
 	public double[] tfIdf;
 	public float centrality;
@@ -19,8 +22,7 @@ public class DocNode extends Node implements Comparable<DocNode>{
 	public float delta;
 	public float priority;
 	public int level;
-	public HashMap<Integer, List<Edge<DocNode>>> pred;
-	public String fileName;
+	public HashMap<Integer, List<Edge<DocNode>>> pred;;
 	//public FibonacciHeap.Node<DocNode> node;
 	public DocNode(long id, String fileName, boolean[] sig, double[] tfIdf){
 		super(id);
@@ -46,6 +48,9 @@ public class DocNode extends Node implements Comparable<DocNode>{
 	public float getCentrality(){
 		return centrality;
 	}
+	public void setFileName(String name){
+		this.fileName = name; 
+	}
 	public float findCosSimilarity(DocNode d){
 
 		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
@@ -66,6 +71,13 @@ public class DocNode extends Node implements Comparable<DocNode>{
 		}
 		E = E / signature.length;
 		return (float)(Math.abs(E));
+	}
+	public float findEuclideanSimilarity(DocNode d){
+		float E = 0.0f;
+		for(int i=0; i<tfIdf.length; i++){
+			E += Math.pow((tfIdf[i]-d.tfIdf[i]), 2);
+		}
+		return (float)(Math.abs(Math.sqrt(E)));
 	}
 	@Override
 	public float findDistance(Node n) {
