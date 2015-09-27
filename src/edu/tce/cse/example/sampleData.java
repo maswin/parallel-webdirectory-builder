@@ -33,7 +33,7 @@ public class sampleData {
         Map<String, Integer> documentFrequency = new LinkedHashMap<String, Integer>();
         
         for (int i = 0; i < files.length; i++) {
-            Document document = new Document(i, files[i].getAbsolutePath());
+            Document document = new Document(i, files[i].getAbsolutePath(), files[i].getName());
             document.parseDocument(documentFrequency);
             documentList.add(document);
         }
@@ -78,7 +78,7 @@ public class sampleData {
 		DocNode node;
 		for(Document docs : inputDocuments){
 			signature = docs.getSignatureVector();
-			node = new DocNode(docs.getDocID(), signature, docs.getTfIdf());
+			node = new DocNode(docs.getDocID(), docs.getFileName(),signature, docs.getTfIdf());
 			docNodes.add(node);
 		}
 		return docNodes;
@@ -90,7 +90,7 @@ public class sampleData {
 		DocNode node;
 		for(Document docs : inputDocuments){
 			signature = docs.getSignatureVector();
-			node = new DocNode(docs.getDocID(), signature, docs.getTfIdf());
+			node = new DocNode(docs.getDocID(), docs.getFileName(), signature, docs.getTfIdf());
 			docNodes.add(node);
 		}
 		return docNodes;

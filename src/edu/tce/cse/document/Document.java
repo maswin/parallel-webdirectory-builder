@@ -38,6 +38,7 @@ import edu.tce.cse.util.SuperBit;
 public class Document {
 	private long docID;
 	private String filePath;
+	private String fileName;
 
 	private Map<String, Integer> termFrequency;
 	private int totalTokens; 
@@ -58,11 +59,12 @@ public class Document {
 	 * (Combine the documentfrequency from all processor before generating 
 	 *  tfIdf vector)
 	 */
-	public Document(int docId, String location) throws IOException{
+	public Document(int docId, String location, String fileName) throws IOException{
 
 		//Set ID & Location
 		this.docID = docId;
-		filePath = location;
+		this.filePath = location;
+		this.fileName = fileName;
 		
 		//Initialize termfrequency
 		termFrequency = new HashMap<String, Integer>();
@@ -84,6 +86,10 @@ public class Document {
 
 	public String getFilePath() {
 		return filePath;
+	}
+	
+	public String getFileName() {
+		return fileName;
 	}
 
 	public Map<String, Integer> getTermFrequency() {

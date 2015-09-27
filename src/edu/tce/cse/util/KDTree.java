@@ -1,4 +1,4 @@
-package edu.tce.cse.clustering;
+package edu.tce.cse.util;
 
 import edu.tce.cse.document.DocNode;
 

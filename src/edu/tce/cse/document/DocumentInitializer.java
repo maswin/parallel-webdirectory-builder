@@ -44,7 +44,7 @@ public class DocumentInitializer {
         localDocumentFrequency[0] = new LinkedHashMap();
         
         for (int i = startIndex; i <= endIndex; i++) {
-            Document document = new Document(i, files[i].getAbsolutePath());
+            Document document = new Document(i, files[i].getAbsolutePath(), files[i].getName());
             document.parseDocument(localDocumentFrequency[0]);
             documentList.add(document);
         }
@@ -69,7 +69,7 @@ public class DocumentInitializer {
 		List<DocNode> docNodeList = new ArrayList<DocNode>();
 		DocNode node;
 		for(Document document : documentList){
-			node = new DocNode(document.getDocID(),document.getSignatureVector(), document.getTfIdf());
+			node = new DocNode(document.getDocID(),document.getFileName(),document.getSignatureVector(), document.getTfIdf());
 			docNodeList.add(node);
 		}
 		return docNodeList;

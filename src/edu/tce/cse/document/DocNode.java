@@ -20,11 +20,13 @@ public class DocNode extends Node implements Comparable<DocNode>{
 	public float priority;
 	public int level;
 	public HashMap<Integer, List<Edge<DocNode>>> pred;
+	public String fileName;
 	//public FibonacciHeap.Node<DocNode> node;
-	public DocNode(long id, boolean[] sig, double[] tfIdf){
+	public DocNode(long id, String fileName, boolean[] sig, double[] tfIdf){
 		super(id);
 		this.signature = sig;
 		this.tfIdf = tfIdf;
+		this.fileName = fileName;
 		priority = Float.MAX_VALUE;
 		pred = new HashMap<Integer, List<Edge<DocNode>>>();
 	}

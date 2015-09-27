@@ -8,8 +8,8 @@ import java.util.Set;
 import edu.tce.cse.clustering.Cluster;
 import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Graph;
-import edu.tce.cse.clustering.KDTree;
 import edu.tce.cse.document.DocNode;
+import edu.tce.cse.util.KDTree;
 import edu.tce.cse.util.Statistics;
 
 public class HierarchicalClusteringTester {

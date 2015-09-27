@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.List;
 
 import edu.tce.cse.document.DocNode;
+import edu.tce.cse.util.KDTree;
 
 public class Cluster extends Node{
 	List<Node> nodes;
