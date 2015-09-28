@@ -106,16 +106,16 @@ public class Graph<E extends Node> {
 	}
 
 	//to perform depth first search and find connected components of the graph
-	public List<List<DocNode>> findConnectedComponents(){
+	public List<List<Node>> findConnectedComponents(){
 		BitSet bs = new BitSet(V.size());
 		int count = 1;
-		List<List<DocNode>> clusters=new ArrayList<List<DocNode>>();
-		List<DocNode> cluster;
+		List<List<Node>> clusters=new ArrayList<List<Node>>();
+		List<Node> cluster;
 		for(int i=0; i<V.size(); i++){
 			if(!bs.get(i)){
 				//System.out.println("Component "+count+":");
-				cluster=new ArrayList<DocNode>();
-				findComponent(bs, (DocNode)V.get(i), cluster);
+				cluster=new ArrayList<Node>();
+				findComponent(bs, V.get(i), cluster);
 				clusters.add(cluster);
 				count++;
 
@@ -123,14 +123,16 @@ public class Graph<E extends Node> {
 		}
 		return clusters;
 	}
-	public void findComponent(BitSet bs, DocNode v, List<DocNode> cluster){
-		bs.set((int)v.nodeID);
+	public void findComponent(BitSet bs, Node v, List<Node> cluster){
+		bs.set(V.indexOf(v));
 		cluster.add(v);
+		if(adjList.containsKey(v)){
 		for(int j=0; j<adjList.get(v).size(); j++){
-			DocNode neighbour = (DocNode)adjList.get(v).get(j).getDst();
-			if(!bs.get((int)neighbour.nodeID)){
+			Node neighbour = adjList.get(v).get(j).getDst();
+			if(!bs.get(V.indexOf(neighbour))){
 				findComponent(bs, neighbour, cluster);
 			}
+		}
 		}
 	}
 	
@@ -142,7 +144,7 @@ public class Graph<E extends Node> {
 		for(E node: V){
 			dSet.makeSet(node);
 		}
-		List<Edge> edges = getEdgesIfCompleteGraph();
+		List<Edge> edges = getEdges();
 		edges.sort(new WeightComparator());
 		int numEdges=0;
 		for (Edge edge: edges) {
@@ -162,12 +164,16 @@ public class Graph<E extends Node> {
 		return mst;
 	}
 	
-	public List<Edge> getEdgesIfCompleteGraph(){
+	public List<Edge> getEdges(){
 		List<Edge> edges = new ArrayList();
 		for(int i=0; i<V.size(); i++){
-			for(int j=i+1; j<V.size(); j++){
-				edges.add(adjList.get(V.get(i)).get(j-1));
+			if(adjList.containsKey(V.get(i))){
+			for(int j=0; j<adjList.get(V.get(i)).size(); j++){
+				Edge e = adjList.get(V.get(i)).get(j);
+				if(e.getSrc().nodeID<e.getDst().nodeID)
+				edges.add(e);
 			}
+		 }
 		}
 		return edges;
 	}
@@ -312,15 +318,15 @@ public class Graph<E extends Node> {
 	//to remove inter-cluster edges based on 'threshold' value
 	public void removeInterClusterEdges(float threshold, boolean removeLessThanThreshold){
 		Thread[] threads = new Thread[NTHREAD];
-		List<DocNode> myList;
+		List<Node> myList;
 		int share = (int)Math.ceil(V.size()/NTHREAD);
 		Object lock=new Object();
 		for (int i = 0; i < NTHREAD; i++) {
 			if(i!=NTHREAD-1)
-				myList = (List<DocNode>)V.subList(i*share, (i+1)*share);
+				myList = (List<Node>)V.subList(i*share, (i+1)*share);
 			else
-				myList = (List<DocNode>)V.subList(i*share, V.size());
-			threads[i] = new Thread(new EdgeRemoverRunnable(i, (Map<DocNode, List<Edge>>)adjList, myList, threshold, removeLessThanThreshold, lock));
+				myList = (List<Node>)V.subList(i*share, V.size());
+			threads[i] = new Thread(new EdgeRemoverRunnable(i, (Map<Node, List<Edge>>)adjList, myList, threshold, removeLessThanThreshold, lock));
 			threads[i].start();
 		}
 		for (Thread thread : threads) {
@@ -344,12 +350,12 @@ public class Graph<E extends Node> {
 	}
 	
 	//process each connected component to create Cluster objects
-	public List<Cluster> formClusters(List<List<DocNode>> list, int startingClusterID){
+	public Map<Long,Cluster> formClusters(List<List<DocNode>> list, int startingClusterID){
 		Thread[] threads = new Thread[NTHREAD];
 		List<List<DocNode>> myList;
 		int share = (int)Math.ceil(list.size()/NTHREAD);
 		Object lock=new Object();
-		List<Cluster> clusters = new ArrayList<Cluster>();
+		Map<Long,Cluster> clusters = new HashMap();
 		for (int i = 0; i < NTHREAD; i++) {
 			if(i!=NTHREAD-1)
 				myList = list.subList(i*share, (i+1)*share);
@@ -371,9 +377,9 @@ public class Graph<E extends Node> {
 	}
 	
 	//process each connected component to create LeafCluster objects
-	public List<Cluster> formLeafClusters(List<List<DocNode>> list, int startingClusterID, Directory directory){
+	public List<Cluster> formLeafClusters(List<List<Node>> list, int startingClusterID, Directory directory){
 		Thread[] threads = new Thread[NTHREAD];
-		List<List<DocNode>> myList;
+		List<List<Node>> myList;
 		int share = (int)Math.ceil(list.size()/NTHREAD);
 		Object lock=new Object();
 		List<Cluster> clusters = new ArrayList<Cluster>();
@@ -534,12 +540,12 @@ class BackwardPhaseRunnable implements Runnable{
 //to remove inter-cluster edges: decide if min or max of centrality values of an edge's nodes >= or < threshold
 class EdgeRemoverRunnable implements Runnable{
 	int id;
-	Map<DocNode, List<Edge>> adjList;
-	List<DocNode> myNodes;
+	Map<Node, List<Edge>> adjList;
+	List<Node> myNodes;
 	float threshold;
 	Object lock;
 	boolean removeLessThanThreshold;
-	public EdgeRemoverRunnable(int id, Map<DocNode, List<Edge>> adjList, List<DocNode> myList, float threshold, boolean removeLessThanThreshold, Object lock){
+	public EdgeRemoverRunnable(int id, Map<Node, List<Edge>> adjList, List<Node> myList, float threshold, boolean removeLessThanThreshold, Object lock){
 		this.id=id;
 		this.adjList=adjList;
 		this.myNodes=myList;
@@ -549,15 +555,29 @@ class EdgeRemoverRunnable implements Runnable{
 	}
 	public void run(){
 		List<Edge> toRemove=new LinkedList<Edge>();
+		boolean isDocNode = myNodes.get(0) instanceof DocNode;
 		for(int i=0; i<myNodes.size(); i++){
 			List<Edge> list=adjList.get(myNodes.get(i));
+			if(list==null)
+				continue;
+			if(isDocNode){
 			for(Edge e: list){
 				DocNode neighbour = (DocNode)(e.getDst());
-				float min=(float)Math.min(neighbour.centrality, myNodes.get(i).centrality);
+				float min=(float)Math.min(neighbour.centrality, ((DocNode)myNodes.get(i)).centrality);
 				if(!removeLessThanThreshold&&min>=threshold)	
 					toRemove.add(e);
 				else if(removeLessThanThreshold&&min<threshold)	
 					toRemove.add(e);
+			}
+			}
+			else{
+				for(Edge e: list){
+					Cluster neighbour = (Cluster)e.getDst();
+					if(!removeLessThanThreshold&&e.getWeight()>=threshold)	
+						toRemove.add(e);
+					else if(removeLessThanThreshold&&e.getWeight()<threshold)	
+						toRemove.add(e);
+				}
 			}
 		}
 		synchronized(lock){
@@ -574,22 +594,27 @@ class FormingClustersRunnable<E extends Node> implements Runnable{
 	int id;
 	List<List<E>> components;
 	Object lock;
-	List<Cluster> clusters;
-	public FormingClustersRunnable(int id, List<List<E>> list, Object lock, List<Cluster> clusters){
+	Map<Long, Cluster> clusters;
+	public FormingClustersRunnable(int id, List<List<E>> list, Object lock, Map<Long, Cluster> clusters){
 		this.id = id;
 		components = list;
 		this.lock = lock;
 		this.clusters = clusters;
 	}
 	public void run(){
-		List<Cluster> list = new ArrayList<Cluster>();
+		Map<Long, Cluster> list = new HashMap();
 		for(int i=0; i<components.size(); i++){
+			if(components.get(i).size()>1){
 			Cluster c = new Cluster(id+i);
 			c.formCluster(components.get(i));
-			list.add(c);
+			list.put(c.nodeID, c);
+			}
+			else{
+				list.put(components.get(i).get(0).nodeID, (Cluster)components.get(i).get(0));
+			}
 		}
 		synchronized(lock){
-			clusters.addAll(list);
+			clusters.putAll(list);
 		}
 	}
 }

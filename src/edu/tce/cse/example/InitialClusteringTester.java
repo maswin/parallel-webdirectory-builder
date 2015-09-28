@@ -5,6 +5,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mpi.*;
 import edu.tce.cse.clustering.Cluster;
@@ -44,7 +45,7 @@ public class InitialClusteringTester {
 		}
 		return nodeList;
 	}
-	public List<Cluster> performInitialClustering(List<DocNode> docs, Directory directory){
+	public Map<Long, Cluster> performInitialClustering(List<DocNode> docs, Directory directory){
 		Graph<DocNode> graph = new Graph(docs);
 		graph.addEdges();
 		//modify sparsification exponent here
@@ -69,7 +70,7 @@ public class InitialClusteringTester {
 		}*/
 		graph.removeInterClusterEdges(mean+(1f*stdDev), false);
 		int count = 1;
-		List<List<DocNode>> components = graph.findConnectedComponents();
+		List<List<Node>> components = graph.findConnectedComponents();
 		/*for(List<DocNode> x: components){
 			System.out.println("Cluster "+count);
 			for(DocNode d: x){
@@ -84,7 +85,7 @@ public class InitialClusteringTester {
 		return distributeInitialClusters(clusters.toArray());
 	}
 
-    public List<Cluster> distributeInitialClusters(Object[] localClusters){
+    public Map<Long, Cluster> distributeInitialClusters(Object[] localClusters){
 		int numOfClusters[]=new int[MPI.COMM_WORLD.Size()];
 		int displs[]=new int[MPI.COMM_WORLD.Size()];
 		int numOfLocalClusters[]=new int[1];
@@ -98,11 +99,13 @@ public class InitialClusteringTester {
 		Cluster[] clusters = new Cluster[totalNumOfClusters];
 		
 		MPI.COMM_WORLD.Gatherv(localClusters, 0, localClusters.length, MPI.OBJECT, clusters, 0, numOfClusters, displs, MPI.OBJECT, 0);
+		HashMap<Long, Cluster> clusterMap = new HashMap();
 		if(MPI.COMM_WORLD.Rank()==0){
 			//assign starting cluster id to index!!!
-			long index = 42;	
+			long index = 0;	
 			for(Cluster c: clusters){
 				c.setNodeID(index);
+				clusterMap.put(c.nodeID, c);
 				index++;
 				System.out.println("\n Node(cluster) "+c.nodeID+" - representative points:");
 				for(DocNode d: c.getRepPoints()){
@@ -115,7 +118,7 @@ public class InitialClusteringTester {
 		MPI.COMM_WORLD.Barrier();
 		System.out.println("Done!");
 		
-		return Arrays.asList(clusters);
+		return clusterMap;
 	}
 }
 //combo 1: 0.3f-sparsification Math.min mean+stdDev
