@@ -16,10 +16,6 @@ public class LSH {
 
 	private double Pmiss = 0.5;
 
-	public LSH(int dimensions){
-		this.dimensions = dimensions;
-		generateHashFunctions();
-	}
 	public int getNumOfFunctions() {
 		return numOfFunctions;
 	}
@@ -33,6 +29,16 @@ public class LSH {
 		this.dimensions = dimensions;
 	}
 
+	public void increamentK(){
+		
+	}
+	public void increamentNumOfHashFunctions(){
+		
+	}
+	public LSH(int dimensions){
+		this.dimensions = dimensions;
+		generateHashFunctions();
+	}
 	public LSH(int dimensions, int C, double r){
 		this.dimensions = dimensions;
 		this.C = C;
@@ -69,13 +75,8 @@ public class LSH {
 					A[i][j] = r.nextInt(dimensions);
 				}
 			}
-		}
-		
+		}		
 		MPI.COMM_WORLD.Bcast(A, 0, numOfFunctions, MPI.OBJECT, 0);
-		MPI.COMM_WORLD.Barrier();
-		/*for(int i=0;i<numOfFunctions;i++){
-    		System.out.println(Arrays.toString(A[i]));
-    	}*/
 	}
 	public String[] hashSignature(boolean[] signature) {
 		String[] hashSign = new String[numOfFunctions];       

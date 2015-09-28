@@ -48,7 +48,7 @@ public class Document {
 	//Computed during Initialization
 	private double[] tfIdf;
 	private boolean[] signatureVector;
-	private SuperBit sb;
+	private static SuperBit sb;
 
 	/*
 	 * Call ParseDocument & generateTfIdfVector to complete Initialization
