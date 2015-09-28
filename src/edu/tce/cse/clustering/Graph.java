@@ -13,7 +13,9 @@ import java.util.PriorityQueue;
 import java.util.Set;
 import java.util.BitSet;
 
+import mpi.MPI;
 import edu.tce.cse.document.DocNode;
+import edu.tce.cse.model.Directory;
 import edu.tce.cse.util.DisjointSet;
 
 
@@ -183,9 +185,9 @@ public class Graph<E extends Node> {
 		//fix each vertex in graph as source vertex
 		for(int source = 0; source<V.size(); source++){
 			DocNode src = (DocNode)(V.get(source));
-			src.level=0;
-			src.priority=0;
-			src.sig=1;
+			src.container.level=0;
+			src.container.priority=0;
+			src.container.sig=1;
 			HashMap<Integer, List<Edge<DocNode>>> edgesMap = new HashMap<Integer, List<Edge<DocNode>>>();	
 			
 			//perform one iteration of Dijkstra's algo 
@@ -216,7 +218,7 @@ public class Graph<E extends Node> {
 					if(queues2[i]==null||queues2[i].size()==0)
 						count++;
 					else{
-						if(next==-1||queues2[i].peek().priority<queues2[next].peek().priority)
+						if(next==-1||queues2[i].peek().container.priority<queues2[next].peek().container.priority)
 						{next=i; 
 						}
 					}
@@ -251,13 +253,13 @@ public class Graph<E extends Node> {
 			//queues of all threads are empty now
 			//combine pred of all nodes to form edgesMap (key = level, value = edges explored at that level)
 			for(int i=0; i<V.size(); i++){
-				Set<Integer> iterator = ((DocNode)V.get(i)).pred.keySet();
+				Set<Integer> iterator = ((DocNode)V.get(i)).container.pred.keySet();
 				for(int j: iterator){
 					if(!edgesMap.containsKey(j)){
-						edgesMap.put(j, ((DocNode)V.get(i)).pred.get(j));
+						edgesMap.put(j, ((DocNode)V.get(i)).container.pred.get(j));
 					}
 					else
-						edgesMap.get(j).addAll(((DocNode)V.get(i)).pred.get(j));
+						edgesMap.get(j).addAll(((DocNode)V.get(i)).container.pred.get(j));
 				}
 			}
 			Set<Integer> keyset = edgesMap.keySet();
@@ -291,12 +293,12 @@ public class Graph<E extends Node> {
 			//update centrality score for all vertices
 			for(int v=0; v<V.size(); v++){
 				DocNode d = (DocNode)V.get(v);
-				d.centrality+=(d.delta);
-				d.level=-1;
-				d.delta=0;
-				d.sig=0;
-				d.priority=Float.MAX_VALUE;
-				d.pred.clear();
+				d.centrality+=(d.container.delta);
+				d.container.level=-1;
+				d.container.delta=0;
+				d.container.sig=0;
+				d.container.priority=Float.MAX_VALUE;
+				d.container.pred.clear();
 			}
 			/*System.out.println("Centrality values: Using "+source+" as source vertex in this iteration -");
 			for(int i=0; i<graph.V.size(); i++){
@@ -367,6 +369,33 @@ public class Graph<E extends Node> {
 		}
 		return clusters;
 	}
+	
+	//process each connected component to create LeafCluster objects
+	public List<Cluster> formLeafClusters(List<List<DocNode>> list, int startingClusterID, Directory directory){
+		Thread[] threads = new Thread[NTHREAD];
+		List<List<DocNode>> myList;
+		int share = (int)Math.ceil(list.size()/NTHREAD);
+		Object lock=new Object();
+		List<Cluster> clusters = new ArrayList<Cluster>();
+		for (int i = 0; i < NTHREAD; i++) {
+			if(i!=NTHREAD-1)
+				myList = list.subList(i*share, (i+1)*share);
+			else
+				myList = list.subList(i*share, list.size());
+			threads[i] = new Thread(new FormingLeafClustersRunnable(startingClusterID+(i*share), myList, lock, clusters, directory));
+			threads[i].start();
+		}
+		for (Thread thread : threads) {
+			try {
+				//A Wait for Joining all threads merging in a single Iteration
+				thread.join();
+
+			} catch (InterruptedException ee) {
+				ee.printStackTrace();
+			}
+		}
+		return clusters;
+	}
 
 }
 
@@ -420,7 +449,7 @@ class LevelComparator implements Comparator{
 //to sort DocNode objects in ascending order of 'priority'
 class PriorityComparator implements Comparator{
 	public int compare(Object i, Object j){
-		if(((DocNode)i).priority<((DocNode)j).priority)
+		if(((DocNode)i).container.priority<((DocNode)j).container.priority)
 			return -1;
 		return 1;
 	}
@@ -451,27 +480,27 @@ class ForwardPhaseRunnable implements Runnable{
 				/*if(id==3)
 					System.out.print("--"+v.nodeID+"--");*/
 				if(V.contains(v)){
-					float alt = graph.adjList.get(source).get(i).getWeight() + source.priority;
-					if(v.priority==Float.MAX_VALUE){
+					float alt = graph.adjList.get(source).get(i).getWeight() + source.container.priority;
+					if(v.container.priority==Float.MAX_VALUE){
 						queue.add(v);
 					}
-					if(alt < v.priority){
+					if(alt < v.container.priority){
 						//queue.decreasePriority(v, alt);
 						queue.remove(v);
-						v.priority=alt;
+						v.container.priority=alt;
 						queue.add(v);
-						v.pred.clear();
-						v.sig = 0;
+						v.container.pred.clear();
+						v.container.sig = 0;
 					}
-					if(v.priority == alt){
-						v.sig += source.sig;
-						if(v.level<source.level+1){
-							v.level = source.level+1;
+					if(v.container.priority == alt){
+						v.container.sig += source.container.sig;
+						if(v.container.level<source.container.level+1){
+							v.container.level = source.container.level+1;
 						}
-						if(!v.pred.containsKey(v.level)){
-							v.pred.put(v.level, new ArrayList<Edge<DocNode>>());
+						if(!v.container.pred.containsKey(v.container.level)){
+							v.container.pred.put(v.container.level, new ArrayList<Edge<DocNode>>());
 						}
-						v.pred.get(v.level).add((Edge<DocNode>)(graph.adjList.get(source).get(i)));
+						v.container.pred.get(v.container.level).add((Edge<DocNode>)(graph.adjList.get(source).get(i)));
 					}
 				}
 			}
@@ -495,7 +524,7 @@ class BackwardPhaseRunnable implements Runnable{
 			if(V.contains(edges.get(i).getSrc())){
 				DocNode src = edges.get(i).getSrc();
 				DocNode dst = edges.get(i).getDst();
-				src.delta+=((src.sig/dst.sig)*(1+dst.delta));
+				src.container.delta+=((src.container.sig/dst.container.sig)*(1+dst.container.delta));
 				//System.out.println("For edge to "+dst.nodeID+" Updating delta of "+src.nodeID+" to "+src.delta);
 			}
 		}
@@ -556,6 +585,34 @@ class FormingClustersRunnable<E extends Node> implements Runnable{
 		List<Cluster> list = new ArrayList<Cluster>();
 		for(int i=0; i<components.size(); i++){
 			Cluster c = new Cluster(id+i);
+			c.formCluster(components.get(i));
+			list.add(c);
+		}
+		synchronized(lock){
+			clusters.addAll(list);
+		}
+	}
+}
+
+class FormingLeafClustersRunnable<E extends Node> implements Runnable{
+	int id;
+	List<List<E>> components;
+	Object lock;
+	List<Cluster> clusters;
+	Directory directory;
+	public FormingLeafClustersRunnable(int id, List<List<E>> list, Object lock, List<Cluster> clusters, Directory directory){
+		this.id = id;
+		components = list;
+		this.lock = lock;
+		this.clusters = clusters;
+		this.directory = directory;
+	}
+	public void run(){
+		List<Cluster> list = new ArrayList<Cluster>();
+		for(int i=0; i<components.size(); i++){
+			List<DocNode> temp = (List<DocNode>)components.get(i);
+			directory.directoryMap.put(id+i, temp);
+			LeafCluster c = new LeafCluster(id+i, MPI.COMM_WORLD.Rank(), id+i);
 			c.formCluster(components.get(i));
 			list.add(c);
 		}
