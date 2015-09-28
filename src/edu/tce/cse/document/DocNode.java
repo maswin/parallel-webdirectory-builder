@@ -10,6 +10,7 @@ import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
 import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Node;
+import edu.tce.cse.model.PartialBetweenness;
 
 
 public class DocNode extends Node implements Comparable<DocNode>, Serializable{
@@ -18,20 +19,17 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	public boolean[] signature;
 	public double[] tfIdf;
 	public float centrality;
-	public float sig;
-	public float delta;
-	public float priority;
-	public int level;
-	public HashMap<Integer, List<Edge<DocNode>>> pred;;
-	//public FibonacciHeap.Node<DocNode> node;
+	public PartialBetweenness container;
+	public long clusterID;
+	
 	public DocNode(long id, String fileName, boolean[] sig, double[] tfIdf){
 		super(id);
 		this.signature = sig;
 		this.tfIdf = tfIdf;
 		this.fileName = fileName;
-		priority = Float.MAX_VALUE;
-		pred = new HashMap<Integer, List<Edge<DocNode>>>();
+		this.container = new PartialBetweenness();
 	}
+	
 	//Getter & Setter
 	public boolean[] getSignature() {
 		return signature;
@@ -39,6 +37,13 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	public void setSignature(boolean[] signature) {
 		this.signature = signature;
 	}
+	public long getClusterID() {
+		return clusterID;
+	}
+	public void setClusterID(long clusterID) {
+		this.clusterID = clusterID;
+	}
+	
 	public double[] getTfIdf() {
 		return tfIdf;
 	}
@@ -87,7 +92,7 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	}
 	@Override
 	public int compareTo(DocNode o) {
-		if (priority > o.priority) {
+		if (container.priority > o.container.priority) {
 			return +1;
 		} else {
 			return -1;

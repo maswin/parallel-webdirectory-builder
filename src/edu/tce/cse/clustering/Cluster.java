@@ -11,15 +11,14 @@ import java.util.Set;
 import edu.tce.cse.document.DocNode;
 
 public class Cluster extends Node implements Serializable{
-	List<Node> nodes;
+	
+    List<Node> children;
 	List<DocNode> repPoints;
-	Set<Cluster> children;
 	float weightedDegreeInMST;
 	public Cluster(long id){
 		super(id);
-		nodes = new ArrayList<Node>();
+		children = new ArrayList<Node>();
 		repPoints = new ArrayList<DocNode>();
-		children = new HashSet<Cluster>();
 	}
 	public void setNodeID(long id){
 		nodeID = id;
@@ -31,12 +30,12 @@ public class Cluster extends Node implements Serializable{
 		this.repPoints = repPoints;
 	}
 
-	public List<Node> getNodes() {
-		return nodes;
+	public List<Node> getChildren() {
+		return children;
 	}
 
-	public void setNodes(List<Node> nodes) {
-		this.nodes = nodes;
+	public void setChildren(List<Node> nodes) {
+		this.children = nodes;
 	}
 	public float getDegreeInMST() {
 		return weightedDegreeInMST;
@@ -65,19 +64,20 @@ public class Cluster extends Node implements Serializable{
 	void findRepPointsBasedOnMSTDegree(){
 		//fix max ration of rep points to be picked
 		float maxRatioOfRepPoints = 0.5f;
-		nodes.sort(new DegreeComparator());
-		Cluster c = ((Cluster)(nodes.get(nodes.size()-1)));
+		children.sort(new DegreeComparator());
+		Cluster c = ((Cluster)(children.get(children.size()-1)));
 		//for node with maximum weighted degree, ratio of rep points picked = maxRatioOfRepPoints
 		int numOfRepPoints = c.repPoints.size();
 		//for node with maximum weighted degree, num of rep points picked = max
 		int max = (int) Math.abs(Math.ceil(maxRatioOfRepPoints*numOfRepPoints));
 		
 		float proportion = max/c.weightedDegreeInMST;
-		for(int i=0; i<nodes.size(); i++){
-			c = ((Cluster)(nodes.get(i)));
+		for(int i=0; i<children.size(); i++){
+			c = ((Cluster)(children.get(i)));
 			numOfRepPoints = (int) Math.abs(Math.ceil(proportion*c.weightedDegreeInMST));
 			numOfRepPoints = Math.min(numOfRepPoints, c.repPoints.size());
 			for(int j=0; j< numOfRepPoints; j++){
+				c.repPoints.get(j).setClusterID(nodeID);
 				repPoints.add(c.repPoints.get(j));
 			}
 		}
@@ -118,13 +118,12 @@ public class Cluster extends Node implements Serializable{
 			//merging DocNode objects to form an initial cluster
 			if(nodes.get(0) instanceof DocNode){
 				List<DocNode> list = (List<DocNode>)nodes;
-				checkCentralityHeuristic(list);
+				//checkCentralityHeuristic(list);
 				findRepPointsBasedOnCentrality(list);
-				this.nodes.addAll(nodes);
 			}
 			//merging clusters to form a merged cluster
 			else if(nodes.get(0) instanceof Cluster){
-				this.nodes.addAll(nodes);
+				this.children.addAll(nodes);
 				//find rep points for cluster
 				findRepPointsBasedOnMSTDegree();
 			}

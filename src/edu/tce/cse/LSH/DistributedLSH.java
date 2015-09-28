@@ -22,12 +22,12 @@ public class DistributedLSH {
 		pairPoints = new ArrayList<Data>();
 		flag = new HashSet<String>();
 	}
-	public void hash(List<DocNode> nodeList){
-		if(nodeList.size()<=0){
+	public void hash(DocNode[] nodeList){
+		if(nodeList.length<=0){
 			System.out.println("List is Empty");
 			return;
 		}
-		LSH lsh = new LSH(nodeList.get(0).getSignature().length);
+		LSH lsh = new LSH(nodeList[0].getSignature().length);
 		
 		Map<String, Set<DocNode>> localBuckets[] = new HashMap[1];
 		Map<String, Set<DocNode>> globalBuckets[] = new HashMap[1];// = new HashMap<String, Set<DocNode>>();
