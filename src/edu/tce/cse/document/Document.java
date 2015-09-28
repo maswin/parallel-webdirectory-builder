@@ -199,7 +199,7 @@ public class Document {
 		}
 
 	}
-	private void generateSignature(){
+	public void generateSignature(){
 		//Initialized only once
 		if(sb==null){
 			initializeSuperBit();
@@ -223,7 +223,7 @@ public class Document {
 				e.printStackTrace();
 			}
 		}else{
-			sb = new SuperBit(tfIdf.length,20,20);
+			sb = new SuperBit(tfIdf.length,30,30);
 			System.out.println("New Super Bit Generated");
 			FileOutputStream fout;
 			try {

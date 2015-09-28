@@ -8,6 +8,7 @@ import mpi.MPI;
 public class LSH {
 
 	protected int numOfFunctions = 10;
+	protected int signatureLength;
 	protected int dimensions;
 	protected int K = 5; //Code Depth - Increasing K increases LSH Strictness (Max Size 32)
 	protected int C;
@@ -22,11 +23,11 @@ public class LSH {
 	public void setNumOfFunctions(int numOfFunctions) {
 		this.numOfFunctions = numOfFunctions;
 	}
-	public int getDimensions() {
-		return dimensions;
+	public int getsignatureLength() {
+		return signatureLength;
 	}
-	public void setDimensions(int dimensions) {
-		this.dimensions = dimensions;
+	public void setsignatureLength(int signatureLength) {
+		this.signatureLength = signatureLength;
 	}
 
 	public void increamentK(){
@@ -35,11 +36,12 @@ public class LSH {
 	public void increamentNumOfHashFunctions(){
 		
 	}
-	public LSH(int dimensions){
-		this.dimensions = dimensions;
+	public LSH(int signatureLength){
+		this.signatureLength = signatureLength;
 		generateHashFunctions();
 	}
-	public LSH(int dimensions, int C, double r){
+	public LSH(int signatureLength, int dimensions, int C, double r){
+		this.signatureLength = signatureLength;
 		this.dimensions = dimensions;
 		this.C = C;
 		this.r = r;
@@ -72,7 +74,7 @@ public class LSH {
 			Random r = new Random();
 			for(int i=0;i<numOfFunctions;i++){
 				for(int j=0;j<K;j++){
-					A[i][j] = r.nextInt(dimensions);
+					A[i][j] = r.nextInt(signatureLength);
 				}
 			}
 		}		
