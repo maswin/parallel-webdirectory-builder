@@ -8,6 +8,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import edu.tce.cse.util.SVDReducer;
 import mpi.MPI;
 import mpi.Op;
 
@@ -59,8 +60,49 @@ public class DocumentInitializer {
         documentList.parallelStream().forEach(doc -> 
         	doc.calculateTfIdf(N, globalDocumentFrequency[0]));
         
+        reduceTfIDF();
+        
 	}
 
+	private void reduceTfIDF(){
+		List<double[]>[] localTfIdf = new ArrayList[1];
+		localTfIdf[0] = new ArrayList<double[]>();
+		
+		List<double[]>[] globalTfIdf = new ArrayList[1];
+		globalTfIdf[0] = new ArrayList<double[]>();
+		
+		for( Document doc : documentList){
+			localTfIdf[0].add(doc.getTfIdf());
+		}
+		
+		MPI.COMM_WORLD.Reduce(localTfIdf, 0, 
+				globalTfIdf, 0, 1, MPI.OBJECT, new Op(new TfIdfReducer(),true), 0);
+		int size[] = new int[1];
+		size[0] = 0;
+		if(MPI.COMM_WORLD.Rank()==0){
+			size[0] = globalTfIdf[0].size();
+		}
+		MPI.COMM_WORLD.Bcast(size, 0, 1, MPI.INT, 0);
+		
+		double[][] tfIdfMatrix = new double[size[0]][];
+		
+		if(MPI.COMM_WORLD.Rank() == 0){
+			int index = 0;
+			for(double[] tfIdf : globalTfIdf[0]){
+				tfIdfMatrix[index] = tfIdf;
+				index++;
+			}
+			SVDReducer svd = new SVDReducer();
+			tfIdfMatrix = svd.reduceTfIdf(tfIdfMatrix);
+		}
+		
+		MPI.COMM_WORLD.Bcast(tfIdfMatrix, 0, size[0], MPI.OBJECT, 0);
+		int index = this.startIndex;
+		for(Document doc : documentList){
+			doc.setTfIdf(tfIdfMatrix[index]);
+			index++;
+		}
+	}
 	public List<Document> getDocumentList() {
 		return documentList;
 	}

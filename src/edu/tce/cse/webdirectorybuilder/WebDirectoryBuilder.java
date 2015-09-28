@@ -5,6 +5,7 @@ import java.util.List;
 
 import edu.tce.cse.clustering.Cluster;
 import edu.tce.cse.clustering.Graph;
+import edu.tce.cse.clustering.Node;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.document.DocumentInitializer;
@@ -44,7 +45,7 @@ public class WebDirectoryBuilder {
 		
 		graph.removeInterClusterEdges(mean+(1f*stdDev), false);
 		
-		List<List<DocNode>> components = graph.findConnectedComponents();
+		List<List<Node>> components = graph.findConnectedComponents();
 		printComponent(components);
 		
 		List<Cluster> clusters = graph.formClusters(components, graph.V.size());

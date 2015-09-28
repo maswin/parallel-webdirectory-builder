@@ -13,8 +13,14 @@ import edu.tce.cse.example.sampleData;
 
 public class SVDReducer {
 
-	public int k = 30;
+	public int k = 25;
 
+	public SVDReducer(){
+		
+	}
+	public SVDReducer(int k){
+		this.k = k;
+	}
 	public double[][] reduceTfIdf(double[][] tfIdf){
 		DoubleMatrix2D tfIdfMatrix = new DenseDoubleMatrix2D(tfIdf);
 		tfIdfMatrix = tfIdfMatrix.viewDice();
