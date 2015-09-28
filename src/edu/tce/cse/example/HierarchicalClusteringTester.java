@@ -12,23 +12,31 @@ import edu.tce.cse.LSH.DistributedLSH;
 import edu.tce.cse.clustering.Cluster;
 import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Graph;
+import edu.tce.cse.clustering.Node;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.model.Data;
 import edu.tce.cse.model.Directory;
 import edu.tce.cse.util.Statistics;
 
 public class HierarchicalClusteringTester {
-	List<Cluster> clustersAtThisLevel;
+	Map<Long, Cluster> clustersAtThisLevel;
 	DocNode[] localRepPoints;
 	boolean[] flag = new boolean[1];
 	int share[]=new int[2];
-	public List<Cluster> mergeClusters(List<Cluster> clusters, List<Data> list, long startID){
-		Graph graph = new Graph(clusters);
+	public void mergeClusters(List<Data> list, int startID){
+		List<Cluster> temp = new ArrayList<Cluster>();
+		temp.addAll(clustersAtThisLevel.values());
+		Graph graph = new Graph(temp);
 		HashMap<Cluster, HashMap<Cluster, Float>> adjList=new HashMap(); 
+		System.out.println("Clusters at this level:");
+		clustersAtThisLevel.keySet().forEach(a -> System.out.print(a+" "));
+		System.out.println(" ");
 		//use addEdge() to add each edge between cluster nodes. Update edge weight accordingly
 		for(Data data: list){
-			Cluster a = clusters.get((int)(data.a.clusterID-startID));
-			Cluster b = clusters.get((int)(data.b.clusterID-startID));
+			System.out.println(data.a.clusterID+" "+data.b.clusterID);
+			Cluster a = clustersAtThisLevel.get(data.a.clusterID);
+			Cluster b = clustersAtThisLevel.get(data.b.clusterID);
+
 			if(a.nodeID<b.nodeID){
 				if(!adjList.containsKey(a))
 					adjList.put(a, new HashMap());
@@ -37,7 +45,7 @@ public class HierarchicalClusteringTester {
 					val = adjList.get(a).get(b);
 				adjList.get(a).put(b, val+a.findDistance(b));
 			}
-			else{
+			else if(a.nodeID>b.nodeID){
 				if(!adjList.containsKey(b))
 					adjList.put(b, new HashMap());
 				float val = 0f;
@@ -52,7 +60,7 @@ public class HierarchicalClusteringTester {
 			}
 		}
 		adjList.clear();
-		
+
 		Graph mst = graph.findMST();
 		float[] values = new float[mst.V.size()-1]; int count = 0;
 		Set<Cluster> used = new HashSet();
@@ -60,11 +68,13 @@ public class HierarchicalClusteringTester {
 			Cluster c = (Cluster) mst.V.get(i);
 			List<Edge> edges = (List<Edge>) mst.adjList.get(c);
 			float sum = 0f;
-			for(Edge e: edges){
-				if(!used.contains(e.getDst())){
-					values[count++] = e.getWeight();
+			if(edges!=null){
+				for(Edge e: edges){
+					if(!used.contains(e.getDst())){
+						values[count++] = e.getWeight();
+					}
+					sum+=e.getWeight();
 				}
-				sum+=e.getWeight();
 			}
 			c.setDegreeInMST(sum);
 			used.add(c);
@@ -73,30 +83,27 @@ public class HierarchicalClusteringTester {
 		float mean = stats.getMean();
 		float stdDev = stats.getStdDev();
 		//change threshold value here
-		graph.removeInterClusterEdges(mean+(1f*stdDev), true);
+		graph.removeInterClusterEdges(mean, true);
 		count = 1;
 		List<List<DocNode>> components = graph.findConnectedComponents();
-		
-		int startingClusterID = (int) (startID + clusters.size()); //keep track of last node ID that has been assigned 
-		clusters= graph.formClusters(components, startingClusterID);
-		return clusters;
+
+		int startingClusterID = (int) (startID); //keep track of last node ID that has been assigned 
+		clustersAtThisLevel = graph.formClusters(components, startingClusterID);
 	}
 	public void distributeRepPoints(List<Cluster> clusters){
 		//int totalRepPoints = 0;
 		//DocNode[] repPoints = new DocNode[totalRepPoints];
 		//int index = 0;
-		
+
 		Object[] repPoints = new Object[1];
-		if(MPI.COMM_WORLD.Rank()==0)
-			{
-				repPoints = getRepPoints(clusters);
-				System.out.println(repPoints.length);
-			}
+		repPoints = getRepPoints(clusters);
+		//System.out.println(repPoints.length);
+		MPI.COMM_WORLD.Bcast(share, 1, 1, MPI.INT, 0);
 		MPI.COMM_WORLD.Barrier();
 		int numOfThreads = MPI.COMM_WORLD.Size();
 		MPI.COMM_WORLD.Bcast(share, 0, 1, MPI.INT, 0);
 		MPI.COMM_WORLD.Barrier();
-		System.out.println(share[0]+" "+share[1]);
+		//System.out.println(share[0]+" "+share[1]);
 		localRepPoints = new DocNode[share[0]];
 		int displs[] = new int[numOfThreads];
 		int sendcount[] = new int[numOfThreads];
@@ -107,30 +114,33 @@ public class HierarchicalClusteringTester {
 			}
 			else{
 				sendcount[i]=(share[1]-(i*share[0]));
-				localRepPoints = new DocNode[sendcount[i]];
+				if(MPI.COMM_WORLD.Rank()==i)
+					localRepPoints = new DocNode[sendcount[i]];
 			}
 		}
 		MPI.COMM_WORLD.Scatterv(repPoints, 0, sendcount, displs, MPI.OBJECT, localRepPoints, 0, localRepPoints.length, MPI.OBJECT, 0);
 		MPI.COMM_WORLD.Barrier();
-		
-		
+
+
 	}
-	
+
 	public Object[] getRepPoints(List<Cluster> clusters){
 		List<DocNode> repPoints = new ArrayList<DocNode>();
 		for(Cluster c: clusters){
+			if(c==null)
+				break;
 			repPoints.addAll(c.getRepPoints());
 		}
 		share[1] = repPoints.size();
-		MPI.COMM_WORLD.Bcast(share, 1, 1, MPI.INT, 0);
+
 		Object[] store = repPoints.toArray();
 		int numOfThreads = MPI.COMM_WORLD.Size();
 		share[0] = (int)Math.ceil(store.length/numOfThreads);
 		return store;
 	}
-	
+
 	public static void main(String args[]){
-		
+
 		//fix threshold for number of clusters
 		int k = 5; 
 		//gather Clusters (initial) from all processors
@@ -142,29 +152,50 @@ public class HierarchicalClusteringTester {
 		InitialClusteringTester obj = new InitialClusteringTester();
 		HierarchicalClusteringTester hc = new HierarchicalClusteringTester();
 		DistributedLSH dLSH = new DistributedLSH();
-		
+
 		List<DocNode> nodeList = obj.preprocess();
 		hc.clustersAtThisLevel = obj.performInitialClustering(nodeList, directory);
-		
+		for(int i=0; i<MPI.COMM_WORLD.Size(); i++){
+			MPI.COMM_WORLD.Barrier();
+			if(i==MPI.COMM_WORLD.Rank()){
+				System.out.println("Process "+i+":");
+				for(List<DocNode> l: directory.directoryMap.values()){
+					for(DocNode d: l){
+						System.out.print(d.fileName+" ");
+					}
+					System.out.println(" ");
+				}
+			}
+		}
+		int startID = hc.clustersAtThisLevel.size();
 		while(true){
 			MPI.COMM_WORLD.Barrier();
-			hc.distributeRepPoints(hc.clustersAtThisLevel);
+			List<Cluster> temp = new ArrayList<Cluster>();
+			temp.addAll(hc.clustersAtThisLevel.values());
+			hc.distributeRepPoints(temp);
+			temp.clear();
 			MPI.COMM_WORLD.Barrier();
 			if(MPI.COMM_WORLD.Rank()==0)
 				System.out.println("Distributed");
 			dLSH.hash(hc.localRepPoints);
 			if(MPI.COMM_WORLD.Rank()==0)
 				System.out.println("Hashed");
-			
+
 			if(MPI.COMM_WORLD.Rank()==0){
 				List<Data> data = dLSH.getPairPoints();
-				hc.clustersAtThisLevel = hc.mergeClusters(hc.clustersAtThisLevel, data, hc.clustersAtThisLevel.get(0).nodeID);
+				hc.mergeClusters(data, startID);
+				startID+=hc.clustersAtThisLevel.size();
 				System.out.println("Merged");
-				for(Cluster c: hc.clustersAtThisLevel){
+				for(Cluster c: hc.clustersAtThisLevel.values()){
 					System.out.println("\n Node(cluster) "+c.nodeID+" - representative points:");
 					for(DocNode d: c.getRepPoints()){
-						System.out.print(((DocNode)d).fileName+" ");
 						d.setClusterID(c.nodeID);
+						System.out.print(((DocNode)d).fileName+"("+d.clusterID+") ");
+
+					}
+					System.out.println("\n Children:");
+					for(Node n: c.getChildren()){
+						System.out.print(n.nodeID+" ");
 					}
 				}
 				if(hc.clustersAtThisLevel.size()<=k){
@@ -172,10 +203,11 @@ public class HierarchicalClusteringTester {
 				}
 			}
 			MPI.COMM_WORLD.Bcast(hc.flag, 0, 1, MPI.BOOLEAN, 0);
-			
+
 			MPI.COMM_WORLD.Barrier();
 			if(hc.flag[0])
 				break;
+
 		}
 		MPI.Finalize();
 	}

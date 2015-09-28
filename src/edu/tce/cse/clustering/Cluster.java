@@ -122,7 +122,7 @@ public class Cluster extends Node implements Serializable{
 				findRepPointsBasedOnCentrality(list);
 			}
 			//merging clusters to form a merged cluster
-			else if(nodes.get(0) instanceof Cluster){
+			else if(nodes.get(0) instanceof Cluster || nodes.get(0) instanceof LeafCluster){
 				this.children.addAll(nodes);
 				//find rep points for cluster
 				findRepPointsBasedOnMSTDegree();
