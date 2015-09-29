@@ -31,7 +31,8 @@ public class DistributedLSH {
 			System.out.println("List is Empty");
 			return;
 		}
-		LSH lsh = new LSH(nodeList[0].getSignature().length, 30, 4, 70);
+		pairPoints = new ArrayList<Data>();
+		LSH lsh = new LSH(nodeList[0].getSignature().length);
 		
 		Map<String, Set<DocNode>> localBuckets[] = new HashMap[1];
 		Map<String, Set<DocNode>> globalBuckets[] = new HashMap[1];// = new HashMap<String, Set<DocNode>>();

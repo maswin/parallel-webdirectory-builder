@@ -80,6 +80,20 @@ public class InitialClusteringTester {
 			System.out.println(" ");
 		}*/
 		List<Cluster> clusters= graph.formLeafClusters(components, 0, directory);
+		for(int i=0; i<MPI.COMM_WORLD.Size(); i++){
+			MPI.COMM_WORLD.Barrier();
+			if(i==MPI.COMM_WORLD.Rank()){
+				System.out.println("Process "+i+":");
+				for(Integer j: directory.directoryMap.keySet()){
+					List<DocNode> l = directory.directoryMap.get(j);
+					System.out.print("Directory "+j+": ");
+					for(DocNode d: l){
+						System.out.print(d.fileName+" ");
+					}
+					System.out.println(" ");
+				}
+			}
+		}
 		MPI.COMM_WORLD.Barrier();
 
 		return distributeInitialClusters(clusters.toArray());
@@ -114,10 +128,6 @@ public class InitialClusteringTester {
 				}
 			}
 		}
-		//ArrayList<Cluster> c = new ArrayList<>();
-		MPI.COMM_WORLD.Barrier();
-		System.out.println("Done!");
-		
 		return clusterMap;
 	}
 }

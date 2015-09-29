@@ -60,7 +60,10 @@ public class DocumentInitializer {
         documentList.parallelStream().forEach(doc -> 
         	doc.calculateTfIdf(N, globalDocumentFrequency[0]));
         
-        reduceTfIDF();
+        documentList.parallelStream().forEach(doc -> 
+    		doc.generateSignature());
+        
+        //reduceTfIDF();
         
 	}
 
@@ -121,7 +124,6 @@ public class DocumentInitializer {
 			int count = this.endIndex - this.startIndex + 1;
 			tfIdfMatrix = new double[count][];
 			MPI.COMM_WORLD.Recv(tfIdfMatrix, 0, count, MPI.OBJECT, 0, this.processorID);
-			System.out.println(this.processorID+" "+documentList.size()+" "+tfIdfMatrix.length);
 		}
 		index = 0;
 		for(Document doc : documentList){
