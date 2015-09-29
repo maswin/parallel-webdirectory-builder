@@ -29,7 +29,7 @@ public class Graph<E extends Node> {
 		adjList = new HashMap<E, List<Edge>>();
 		V.addAll(nodes);
 	}
-	
+
 	//to add an edge from a->b and b->a 
 	public void addEdge(E a, E b, float weight){
 		Edge e = new Edge(a, b, weight);
@@ -41,7 +41,7 @@ public class Graph<E extends Node> {
 			adjList.put(b, new ArrayList<Edge>());
 		adjList.get(b).add(e);
 	}
-	
+
 	//to form a complete graph 
 	public void addEdges(){
 		adjList.put(V.get(0), new ArrayList<Edge>());
@@ -63,11 +63,11 @@ public class Graph<E extends Node> {
 			}
 		}
 	}
-	
+
 	public float findEdgeWeight(E node1, E node2){			
 		return node1.findDistance(node2);
 	}
-	
+
 	//to sparsify the graph by retaining d^e edges (based on weight) for each node (d=degree of node) 
 	public void sparsify(float e){
 		Thread[] threads = new Thread[NTHREAD];
@@ -108,7 +108,6 @@ public class Graph<E extends Node> {
 	//to perform depth first search and find connected components of the graph
 	public List<List<Node>> findConnectedComponents(){
 		BitSet bs = new BitSet(V.size());
-		int count = 1;
 		List<List<Node>> clusters=new ArrayList<List<Node>>();
 		List<Node> cluster;
 		for(int i=0; i<V.size(); i++){
@@ -117,8 +116,6 @@ public class Graph<E extends Node> {
 				cluster=new ArrayList<Node>();
 				findComponent(bs, V.get(i), cluster);
 				clusters.add(cluster);
-				count++;
-
 			}
 		}
 		return clusters;
@@ -127,18 +124,18 @@ public class Graph<E extends Node> {
 		bs.set(V.indexOf(v));
 		cluster.add(v);
 		if(adjList.containsKey(v)){
-		for(int j=0; j<adjList.get(v).size(); j++){
-			Node neighbour = adjList.get(v).get(j).getDst();
-			if(!bs.get(V.indexOf(neighbour))){
-				findComponent(bs, neighbour, cluster);
+			for(int j=0; j<adjList.get(v).size(); j++){
+				Node neighbour = adjList.get(v).get(j).getDst();
+				if(!bs.get(V.indexOf(neighbour))){
+					findComponent(bs, neighbour, cluster);
+				}
 			}
 		}
-		}
 	}
-	
+
 	//to form MST using Kruskal's algorithm
 	public Graph findMST(){
-		
+
 		Graph<E> mst = new Graph(V);
 		DisjointSet<E> dSet = new DisjointSet();
 		for(E node: V){
@@ -148,46 +145,46 @@ public class Graph<E extends Node> {
 		edges.sort(new WeightComparator());
 		int numEdges=0;
 		for (Edge edge: edges) {
-            /* If the endpoints are connected, skip this edge. */
-            if (dSet.findSet((E) edge.getSrc()) == dSet.findSet((E) edge.getDst()))
-                continue;
+			/* If the endpoints are connected, skip this edge. */
+			if (dSet.findSet((E) edge.getSrc()) == dSet.findSet((E) edge.getDst()))
+				continue;
 
-            /* Otherwise, add the edge. */
-            mst.addEdge((E)edge.getSrc(), (E)edge.getDst(), edge.getWeight());
+			/* Otherwise, add the edge. */
+			mst.addEdge((E)edge.getSrc(), (E)edge.getDst(), edge.getWeight());
 
-            /* Link the endpoints together. */
-            dSet.union((E)edge.getSrc(), (E)edge.getDst());
+			/* Link the endpoints together. */
+			dSet.union((E)edge.getSrc(), (E)edge.getDst());
 
-            /* If we've added enough edges already, we can quit. */
-            if (++numEdges == V.size()) break;
-        }
+			/* If we've added enough edges already, we can quit. */
+			if (++numEdges == V.size()) break;
+		}
 		return mst;
 	}
-	
+
 	public List<Edge> getEdges(){
 		List<Edge> edges = new ArrayList();
 		for(int i=0; i<V.size(); i++){
 			if(adjList.containsKey(V.get(i))){
-			for(int j=0; j<adjList.get(V.get(i)).size(); j++){
-				Edge e = adjList.get(V.get(i)).get(j);
-				if(e.getSrc().nodeID<e.getDst().nodeID)
-				edges.add(e);
+				for(int j=0; j<adjList.get(V.get(i)).size(); j++){
+					Edge e = adjList.get(V.get(i)).get(j);
+					if(e.getSrc().nodeID<e.getDst().nodeID)
+						edges.add(e);
+				}
 			}
-		 }
 		}
 		return edges;
 	}
-	
+
 	//to run Brandes' algorithm to find centrality scores for each vertex
 	public void findCentrality(){
-		
+
 		Thread[] threads = new Thread[NTHREAD];
 		int share=(int)Math.ceil(V.size()/NTHREAD);
 		List<DocNode> myList;
 		//DocNode[] minNodes = new DocNode[NTHREAD];
 		//PriorityQueue<DocNode>[] queues = new FibonacciPriorityQueue[NTHREAD];
 		PriorityQueue<DocNode>[] queues2 = new PriorityQueue[NTHREAD];
-		
+
 		//fix each vertex in graph as source vertex
 		for(int source = 0; source<V.size(); source++){
 			DocNode src = (DocNode)(V.get(source));
@@ -195,7 +192,7 @@ public class Graph<E extends Node> {
 			src.container.priority=0;
 			src.container.sig=1;
 			HashMap<Integer, List<Edge<DocNode>>> edgesMap = new HashMap<Integer, List<Edge<DocNode>>>();	
-			
+
 			//perform one iteration of Dijkstra's algo 
 			for (int i = 0; i < NTHREAD; i++) {
 				if(i!=NTHREAD-1)
@@ -234,7 +231,7 @@ public class Graph<E extends Node> {
 					break;
 				DocNode nextNode = queues2[next].poll();
 				PriorityQueue<DocNode>[] newQueues = new PriorityQueue[NTHREAD];
-				
+
 				//perform an iteration of Dijkstra's with 'nextNode' 
 				for (int i = 0; i < NTHREAD; i++) {
 					if(i!=NTHREAD-1)
@@ -255,7 +252,7 @@ public class Graph<E extends Node> {
 				}
 				queues2 = newQueues;
 			}
-			
+
 			//queues of all threads are empty now
 			//combine pred of all nodes to form edgesMap (key = level, value = edges explored at that level)
 			for(int i=0; i<V.size(); i++){
@@ -272,7 +269,7 @@ public class Graph<E extends Node> {
 			List<Integer> levels = new ArrayList<Integer>();
 			levels.addAll(keyset);
 			Collections.sort(levels , new LevelComparator());
-			
+
 			//iterate beginning from the last level 
 			for(int level: levels){
 				//perform the backward phase
@@ -294,7 +291,7 @@ public class Graph<E extends Node> {
 					}
 				}
 			}
-			
+
 			//partial centrality values for all vertices when considering 'source' as source vertex have been computed
 			//update centrality score for all vertices
 			for(int v=0; v<V.size(); v++){
@@ -311,10 +308,10 @@ public class Graph<E extends Node> {
 				System.out.println(i+" "+graph.V.get(i).nodeID+" "+graph.V.get(i).centrality);
 			}
 			System.out.println();
-			*/
+			 */
 		}
 	}
-	
+
 	//to remove inter-cluster edges based on 'threshold' value
 	public void removeInterClusterEdges(float threshold, boolean removeLessThanThreshold){
 		Thread[] threads = new Thread[NTHREAD];
@@ -346,9 +343,9 @@ public class Graph<E extends Node> {
 			System.out.println("");
 			//System.out.println(" ");
 		}*/
-		
+
 	}
-	
+
 	//process each connected component to create Cluster objects
 	public Map<Long,Cluster> formClusters(List<List<DocNode>> list, int startingClusterID){
 		Thread[] threads = new Thread[NTHREAD];
@@ -375,7 +372,7 @@ public class Graph<E extends Node> {
 		}
 		return clusters;
 	}
-	
+
 	//process each connected component to create LeafCluster objects
 	public List<Cluster> formLeafClusters(List<List<Node>> list, int startingClusterID, Directory directory){
 		Thread[] threads = new Thread[NTHREAD];
@@ -561,14 +558,14 @@ class EdgeRemoverRunnable implements Runnable{
 			if(list==null)
 				continue;
 			if(isDocNode){
-			for(Edge e: list){
-				DocNode neighbour = (DocNode)(e.getDst());
-				float min=(float)Math.min(neighbour.centrality, ((DocNode)myNodes.get(i)).centrality);
-				if(!removeLessThanThreshold&&min>=threshold)	
-					toRemove.add(e);
-				else if(removeLessThanThreshold&&min<threshold)	
-					toRemove.add(e);
-			}
+				for(Edge e: list){
+					DocNode neighbour = (DocNode)(e.getDst());
+					float min=(float)Math.min(neighbour.centrality, ((DocNode)myNodes.get(i)).centrality);
+					if(!removeLessThanThreshold&&min>=threshold)	
+						toRemove.add(e);
+					else if(removeLessThanThreshold&&min<threshold)	
+						toRemove.add(e);
+				}
 			}
 			else{
 				for(Edge e: list){
@@ -605,9 +602,9 @@ class FormingClustersRunnable<E extends Node> implements Runnable{
 		Map<Long, Cluster> list = new HashMap();
 		for(int i=0; i<components.size(); i++){
 			if(components.get(i).size()>1){
-			Cluster c = new Cluster(id+i);
-			c.formCluster(components.get(i));
-			list.put(c.nodeID, c);
+				Cluster c = new Cluster(id+i);
+				c.formCluster(components.get(i));
+				list.put(c.nodeID, c);
 			}
 			else{
 				list.put(components.get(i).get(0).nodeID, (Cluster)components.get(i).get(0));
