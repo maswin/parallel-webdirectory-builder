@@ -5,6 +5,7 @@
 	<classpathentry kind="lib" path="lib/lucene-analyzers-common-5.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/lucene-core-5.2.1.jar"/>
 	<classpathentry kind="lib" path="lib/mpj_lib/mpj.jar"/>
-	<classpathentry kind="lib" path="/home/aswin/workspace/parallel-webdirectory-builder/lib/parallelcolt-0.9.4.jar"/>
+	<classpathentry kind="lib" path="lib/parallelcolt-0.9.4.jar"/>
+	<classpathentry kind="lib" path="lib/colt.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -24,7 +24,7 @@ public class DocumentTester {
 		for (String word : words) {
 			E1 = 0;
 			E2 = 0;
-			
+
 			if(tfIdf1.containsKey(word)){
 				E2 = tfIdf1.get(word);
 			}
@@ -33,7 +33,7 @@ public class DocumentTester {
 			}
 			E += Math.pow((E1-E2), 2);
 		}
-		
+
 		return (float)(Math.abs(Math.sqrt(E)));
 	}
 	public static float findCosineSimilarity(Map<String, Double> tfIdf1, Map<String, Double> tfIdf2){
@@ -60,35 +60,51 @@ public class DocumentTester {
 		return (float)(Math.abs(E));
 	}
 	public static void main(String args[]) throws IOException{ 
-		
+
 		MPI.Init(args);
 		int id = MPI.COMM_WORLD.Rank();
 		int size = MPI.COMM_WORLD.Size();
 		System.out.println("Started Id : "+id+"/"+size);
-		
+
 		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
 		List<Document> docList=new ArrayList<Document>();
-		
+
 		docList = DI.getDocumentList();
-		
+
 		//Testing
-		Document primary = docList.get(0);
+		printMatrix(docList);
+
+		MPI.Finalize();
+
+	}
+	private static void printMatrix(List<Document> docList){
 		double sim = 0.0;
+		int id = MPI.COMM_WORLD.Rank();
+		int size = MPI.COMM_WORLD.Size();
 		MPI.COMM_WORLD.Barrier();
-		
+
 		for(int i=0;i<size;i++){
 			MPI.COMM_WORLD.Barrier();
 			if(id==i){
-				System.out.println("Primary Node : "+primary.getFilePath());
-				for(int index = 1;index<docList.size();index++){
-					sim = primary.findCosSimilarity(docList.get(index));
-					System.out.println(docList.get(index).getFilePath()+" "+sim);
+
+				for(int j = -1;j<docList.size();j++){
+						for(int k = -1;k<docList.size();k++){
+							if(j==-1 && k==-1){
+								System.out.printf("%12s","");
+							}else if(k==-1){
+					             System.out.printf("%12s ", (docList.get(j).getFileName().length() > 12) ? docList.get(j).getFileName().substring(0, 12) : docList.get(j).getFileName());
+							}else if(j==-1){
+					             System.out.printf("%12s ", (docList.get(k).getFileName().length() > 12) ? docList.get(k).getFileName().substring(0, 12) : docList.get(k).getFileName());
+
+							}else{
+								sim = docList.get(j).findCosSimilarity(docList.get(k));
+								System.out.printf("%.10f ",sim);
+							}
+						}
+					System.out.println("");
 				}
-				System.out.println();
+				System.out.println("");
 			}
 		}
-		
-		MPI.Finalize();
-		
 	}
 }

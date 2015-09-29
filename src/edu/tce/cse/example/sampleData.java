@@ -13,6 +13,7 @@ import mpi.MPI;
 import mpi.Op;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
+import edu.tce.cse.util.SVDReducer;
 
 public class sampleData {
 	public static String documentDirectory = "TestDocuments";
@@ -40,7 +41,10 @@ public class sampleData {
         
         for(Document doc : documentList){
         	doc.calculateTfIdf(files.length, documentFrequency);
+        	doc.generateSignature();
         }
+        SVDReducer svd = new SVDReducer();
+        svd.reduceDocTfIdf(documentList);
         
 	}
 	public List<Document> getSampleDoc() throws IOException{

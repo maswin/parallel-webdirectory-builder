@@ -143,9 +143,9 @@ public class HierarchicalClusteringTester {
 		System.out.println("Started Id : "+id+"/"+size);
 		InitialClusteringTester obj = new InitialClusteringTester();
 		HierarchicalClusteringTester hc = new HierarchicalClusteringTester();
-		DistributedLSH dLSH = new DistributedLSH();
 
 		List<DocNode> nodeList = obj.preprocess();
+		DistributedLSH dLSH = new DistributedLSH(nodeList.get(0).signature.length);
 		hc.clustersAtThisLevel = obj.performInitialClustering(nodeList, directory);
 		int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
 		
@@ -197,4 +197,3 @@ public class HierarchicalClusteringTester {
 		MPI.Finalize();
 	}
 }
-

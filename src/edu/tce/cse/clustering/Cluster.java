@@ -78,11 +78,23 @@ public class Cluster extends Node implements Serializable{
 			numOfRepPoints = Math.min(numOfRepPoints, c.repPoints.size());
 			for(int j=0; j< numOfRepPoints; j++){
 				c.repPoints.get(j).setClusterID(nodeID);
+				repPoints.add(c.repPoints.get(j));			
+			}
+			
+		}
+		
+	}
+
+	void addAllRepresentativePoints(){
+		Cluster c;
+		for(int i=0; i<children.size(); i++){
+			c = ((Cluster)(children.get(i)));
+			for(int j=0;j<c.repPoints.size();j++){
+				c.repPoints.get(j).setClusterID(nodeID);
 				repPoints.add(c.repPoints.get(j));
 			}
 		}
 	}
-
 	void checkCentralityHeuristic(List<DocNode> nodes){
 		if(nodes.size()==1)
 			return ;
@@ -125,7 +137,9 @@ public class Cluster extends Node implements Serializable{
 			else if(nodes.get(0) instanceof Cluster || nodes.get(0) instanceof LeafCluster){
 				this.children.addAll(nodes);
 				//find rep points for cluster
-				findRepPointsBasedOnMSTDegree();
+				//findRepPointsBasedOnMSTDegree();
+				addAllRepresentativePoints();
+				
 			}
 		}
 		catch(Exception e){
@@ -144,6 +158,44 @@ public class Cluster extends Node implements Serializable{
 		}
 		avgDistance/=(repPoints.size()*c.getRepPoints().size());
 		return avgDistance;
+	}
+	
+	//Cluster Utility Functions
+	public static double findMinClusterDiameter(List<Cluster> clusters){
+		double minDist = Double.MAX_VALUE;		
+		for(Cluster c : clusters){
+			c.children.sort(new CentralityComparator());
+			DocNode minCentralityPoint = (DocNode) c.children.get(0);
+			DocNode maxCentralityPoint = (DocNode) c.children.get(c.children.size());
+			if(!minCentralityPoint.equals(maxCentralityPoint)){
+				double dist = minCentralityPoint.findEuclideanSimilarity(maxCentralityPoint);
+				if(dist<minDist){
+					minDist = dist;
+				}
+			}
+		}
+		return minDist;
+	}
+	
+	public static double findMinInterClusterDistance(List<Cluster> clusters){
+		double minDist = Double.MAX_VALUE;
+		List<DocNode> highCentralityPoints = new ArrayList<>(clusters.size());
+		for(Cluster c : clusters){
+			c.children.sort(new CentralityComparator());
+			DocNode maxCentralityPoint = (DocNode) c.children.get(c.children.size());
+			highCentralityPoints.add(maxCentralityPoint);
+		}
+		for(int i=0;i<highCentralityPoints.size();i++){
+			for(int j=i+1;j<highCentralityPoints.size();j++){
+				double dist = highCentralityPoints.get(i).
+						findEuclideanSimilarity(highCentralityPoints.get(j));
+				
+				if(dist<minDist){
+					minDist = dist;
+				}
+			}
+		}
+		return minDist;
 	}
 }
 

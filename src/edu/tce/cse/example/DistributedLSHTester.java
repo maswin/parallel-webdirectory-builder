@@ -38,9 +38,19 @@ public class DistributedLSHTester {
 		}*/
 		//System.out.println(maxDist);
 		//LSH DLHS = new LSH(docList.get(0).getSignature().length,7,maxDist/2);
-		DistributedLSH dLSH = new DistributedLSH();
+		DistributedLSH dLSH = new DistributedLSH(docList.get(0).signature.length);
 		dLSH.hash(docList);
 		int count = 1;
+		if(MPI.COMM_WORLD.Rank()==0){
+			List<Data> data = dLSH.getPairPoints();
+			for(Data d : data){
+				System.out.println(count+" . "+d.a.fileName+"\t"+d.b.fileName);
+				count++;
+			}
+		}
+		
+		dLSH.hash(docList);
+		count = 1;
 		if(MPI.COMM_WORLD.Rank()==0){
 			List<Data> data = dLSH.getPairPoints();
 			for(Data d : data){
