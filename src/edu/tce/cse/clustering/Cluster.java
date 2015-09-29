@@ -15,11 +15,32 @@ public class Cluster extends Node implements Serializable{
     List<Node> children;
 	List<DocNode> repPoints;
 	float weightedDegreeInMST;
-	public Cluster(long id){
+	
+	public Cluster(long id, List<? extends Node> nodes){
 		super(id);
 		children = new ArrayList<Node>();
 		repPoints = new ArrayList<DocNode>();
+		try{
+			//merging DocNode objects to form an initial cluster
+			if(nodes.get(0) instanceof DocNode){
+				List<DocNode> list = (List<DocNode>)nodes;
+				//checkCentralityHeuristic(list);
+				findRepPointsBasedOnCentrality(list);
+			}
+			//merging clusters to form a merged cluster
+			else if(nodes.get(0) instanceof Cluster || nodes.get(0) instanceof LeafCluster){
+				this.children.addAll(nodes);
+				//find rep points for cluster
+				//findRepPointsBasedOnMSTDegree();
+				addAllRepresentativePoints();
+				
+			}
+		}
+		catch(Exception e){
+			System.out.println("couldn't form cluster");
+		}
 	}
+	
 	public void setNodeID(long id){
 		nodeID = id;
 	}
@@ -122,29 +143,6 @@ public class Cluster extends Node implements Serializable{
 		}
 		float heuristicMax = nodes.get(minNode).findEuclideanSimilarity(nodes.get(maxNode));
 		System.out.println(heuristicMax+", actual = "+max);
-	}
-	
-	//to add the DocNode objects to a list and call findRepPoints()
-	void formCluster(List<? extends Node> nodes){
-		try{
-			//merging DocNode objects to form an initial cluster
-			if(nodes.get(0) instanceof DocNode){
-				List<DocNode> list = (List<DocNode>)nodes;
-				//checkCentralityHeuristic(list);
-				findRepPointsBasedOnCentrality(list);
-			}
-			//merging clusters to form a merged cluster
-			else if(nodes.get(0) instanceof Cluster || nodes.get(0) instanceof LeafCluster){
-				this.children.addAll(nodes);
-				//find rep points for cluster
-				//findRepPointsBasedOnMSTDegree();
-				addAllRepresentativePoints();
-				
-			}
-		}
-		catch(Exception e){
-			System.out.println("couldn't form an inital cluster");
-		}
 	}
 
 	//to find similarity/distance between two clusters

@@ -95,14 +95,6 @@ public class Graph<E extends Node> {
 				ee.printStackTrace();
 			}
 		}
-		/*for(int i=0; i<V.size(); i++){
-			List<Edge> list=adjList.get(V.get(i));
-			for(int j=0; j<list.size(); j++){
-				System.out.print("Edge ("+V.get(i).nodeID+","+list.get(j).getDst().nodeID+") ");
-			}
-			System.out.println("");
-			//System.out.println(" ");
-		}*/
 	}
 
 	//to perform depth first search and find connected components of the graph
@@ -133,15 +125,16 @@ public class Graph<E extends Node> {
 		}
 	}
 
-	//to form MST using Kruskal's algorithm
-	public Graph findMST(){
+	//to form MST using Kruskal's algorithm 
+	//performed on a part of the graph, by considering the nodes in 'vertexSet' and edges connected to these nodes
+	public Graph findMST(List<E> vertexSet){
 
-		Graph<E> mst = new Graph(V);
+		Graph<E> mst = new Graph(vertexSet);
 		DisjointSet<E> dSet = new DisjointSet();
 		for(E node: V){
 			dSet.makeSet(node);
 		}
-		List<Edge> edges = getEdges();
+		List<Edge> edges = getEdges(vertexSet);
 		edges.sort(new WeightComparator());
 		int numEdges=0;
 		for (Edge edge: edges) {
@@ -161,12 +154,13 @@ public class Graph<E extends Node> {
 		return mst;
 	}
 
-	public List<Edge> getEdges(){
+	//to return edges that emanate from the nodes in 'vertexSet'
+	public List<Edge> getEdges(List<E> vertexSet){
 		List<Edge> edges = new ArrayList();
-		for(int i=0; i<V.size(); i++){
-			if(adjList.containsKey(V.get(i))){
-				for(int j=0; j<adjList.get(V.get(i)).size(); j++){
-					Edge e = adjList.get(V.get(i)).get(j);
+		for(int i=0; i<vertexSet.size(); i++){
+			if(adjList.containsKey(vertexSet.get(i))){
+				for(int j=0; j<adjList.get(vertexSet.get(i)).size(); j++){
+					Edge e = adjList.get(vertexSet.get(i)).get(j);
 					if(e.getSrc().nodeID<e.getDst().nodeID)
 						edges.add(e);
 				}
@@ -313,16 +307,17 @@ public class Graph<E extends Node> {
 	}
 
 	//to remove inter-cluster edges based on 'threshold' value
-	public void removeInterClusterEdges(float threshold, boolean removeLessThanThreshold){
+	//performed on a part of the graph, by considering the nodes in 'vertexSet' and edges connected to these nodes
+	public void removeInterClusterEdges(List<E> vertexSet, float threshold, boolean removeLessThanThreshold){
 		Thread[] threads = new Thread[NTHREAD];
 		List<Node> myList;
-		int share = (int)Math.ceil(V.size()/NTHREAD);
+		int share = (int)Math.ceil(vertexSet.size()/NTHREAD);
 		Object lock=new Object();
 		for (int i = 0; i < NTHREAD; i++) {
 			if(i!=NTHREAD-1)
-				myList = (List<Node>)V.subList(i*share, (i+1)*share);
+				myList = (List<Node>)vertexSet.subList(i*share, (i+1)*share);
 			else
-				myList = (List<Node>)V.subList(i*share, V.size());
+				myList = (List<Node>)vertexSet.subList(i*share, vertexSet.size());
 			threads[i] = new Thread(new EdgeRemoverRunnable(i, (Map<Node, List<Edge>>)adjList, myList, threshold, removeLessThanThreshold, lock));
 			threads[i].start();
 		}
@@ -552,7 +547,9 @@ class EdgeRemoverRunnable implements Runnable{
 	}
 	public void run(){
 		List<Edge> toRemove=new LinkedList<Edge>();
-		boolean isDocNode = myNodes.get(0) instanceof DocNode;
+		boolean isDocNode = false;
+		if(myNodes.size()>0)
+			isDocNode = myNodes.get(0) instanceof DocNode;
 		for(int i=0; i<myNodes.size(); i++){
 			List<Edge> list=adjList.get(myNodes.get(i));
 			if(list==null)
@@ -602,8 +599,7 @@ class FormingClustersRunnable<E extends Node> implements Runnable{
 		Map<Long, Cluster> list = new HashMap();
 		for(int i=0; i<components.size(); i++){
 			if(components.get(i).size()>1){
-				Cluster c = new Cluster(id+i);
-				c.formCluster(components.get(i));
+				Cluster c = new Cluster(id+i, components.get(i));
 				list.put(c.nodeID, c);
 			}
 			else{
@@ -634,8 +630,7 @@ class FormingLeafClustersRunnable<E extends Node> implements Runnable{
 		for(int i=0; i<components.size(); i++){
 			List<DocNode> temp = (List<DocNode>)components.get(i);
 			directory.directoryMap.put(id+i, temp);
-			LeafCluster c = new LeafCluster(id+i, MPI.COMM_WORLD.Rank(), id+i);
-			c.formCluster(components.get(i));
+			LeafCluster c = new LeafCluster(id+i, MPI.COMM_WORLD.Rank(), id+i, components.get(i));
 			list.add(c);
 		}
 		synchronized(lock){
