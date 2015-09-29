@@ -18,22 +18,31 @@ public class DistributedLSH {
 
 	private List<Data> pairPoints;
 	private Set<String> flag;
-	public DistributedLSH(){
+	private LSH lsh;
+	
+	public DistributedLSH(int dimensions){
 		pairPoints = new ArrayList<Data>();
 		flag = new HashSet<String>();
+		lsh = new LSH(dimensions);
+	}
+	
+	public void setR(int r){
+		lsh.setR(r);
 	}
 	public void hash(List<DocNode> nodeList){
-		hash(nodeList.toArray(new DocNode[nodeList.size()]));
-		
+		hash(nodeList.toArray(new DocNode[nodeList.size()]));		
 	}
 	public void hash(DocNode[] nodeList){
+		if(MPI.COMM_WORLD.Rank()==0){
+			System.out.println("Hashing Details\nNum Of Hash Function : "
+					+lsh.numOfFunctions+"\nCode Depth : "+lsh.K);
+		}
 		if(nodeList.length<=0){
 			System.out.println("List is Empty");
 			return;
 		}
 		pairPoints = new ArrayList<Data>();
-		LSH lsh = new LSH(nodeList[0].getSignature().length);
-		
+
 		Map<String, Set<DocNode>> localBuckets[] = new HashMap[1];
 		Map<String, Set<DocNode>> globalBuckets[] = new HashMap[1];// = new HashMap<String, Set<DocNode>>();
 		Set bucket;
@@ -57,10 +66,11 @@ public class DistributedLSH {
 				processBucket(globalBuckets[0]);
 			}
 		}
-		
+		//Change to setR
+		lsh.incrementParameters();
 	}
 	public void processBucket(Map<String, Set<DocNode>> bucket){
-		
+
 		DocNode A,B;
 		String flagCode;
 		for(Map.Entry<String, Set<DocNode>> entry : bucket.entrySet()){
@@ -86,7 +96,7 @@ public class DistributedLSH {
 			}
 		}
 	}
-	
+
 	public List<Data> getPairPoints(){
 		return pairPoints;
 	}

@@ -30,11 +30,22 @@ public class LSH {
 		this.signatureLength = signatureLength;
 	}
 
-	public void increamentK(){
-		
+	public void incrementParameters(){
+		this.incrementK();
+		this.incrementNumOfHashFunctions();
+		generateHashFunctions();
 	}
-	public void increamentNumOfHashFunctions(){
-		
+	public void incrementK(){
+		this.K++;
+	}
+	public void incrementNumOfHashFunctions(){
+		this.numOfFunctions++;
+	}
+	public void setR(int r){
+		this.r = r;
+		setK();
+		setNumOfHashFunctions();
+		generateHashFunctions();
 	}
 	public LSH(int signatureLength){
 		this.signatureLength = signatureLength;
@@ -70,7 +81,6 @@ public class LSH {
 	private void generateHashFunctions(){
 		A = new int[numOfFunctions][K];
 		if(MPI.COMM_WORLD.Rank()==0){
-			System.out.println(K+" "+numOfFunctions);
 			Random r = new Random();
 			for(int i=0;i<numOfFunctions;i++){
 				for(int j=0;j<K;j++){
