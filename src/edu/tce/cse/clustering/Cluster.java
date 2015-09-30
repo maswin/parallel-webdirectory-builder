@@ -16,11 +16,43 @@ public class Cluster extends Node implements Serializable{
 	List<DocNode> repPoints;
 	float weightedDegreeInMST;
 	public String files;
-	public Cluster(long id){
+	public Cluster(long id, List<? extends Node> nodes){
 		super(id);
 		children = new ArrayList<Node>();
 		repPoints = new ArrayList<DocNode>();
 		files = "";
+		try{
+			//merging DocNode objects to form an initial cluster
+			if(nodes.get(0) instanceof DocNode){
+				List<DocNode> list = (List<DocNode>)nodes;
+				//checkCentralityHeuristic(list);
+				findRepPointsBasedOnCentrality(list);
+				addFiles(list);
+			}
+			//merging clusters to form a merged cluster
+			else if(nodes.get(0) instanceof Cluster || nodes.get(0) instanceof LeafCluster){
+				this.children.addAll(nodes);
+				//find rep points for cluster
+				//findRepPointsBasedOnMSTDegree();
+				addAllRepresentativePoints();
+				addFiles();
+			}
+		}
+		catch(Exception e){
+			System.out.println("couldn't form cluster");
+		}
+	}
+	void addFiles(){
+		Cluster c;
+		for(int i=0; i<children.size(); i++){
+			c = ((Cluster)(children.get(i)));
+			this.files = this.files+" "+c.files;
+		}
+	}
+	void addFiles(List<DocNode> nodes){
+		for(DocNode node : nodes){
+			this.files = this.files+" "+node.fileName;
+		}
 	}
 	public void setNodeID(long id){
 		nodeID = id;
@@ -97,19 +129,6 @@ public class Cluster extends Node implements Serializable{
 			}
 		}
 	}
-	
-	void addFiles(){
-		Cluster c;
-		for(int i=0; i<children.size(); i++){
-			c = ((Cluster)(children.get(i)));
-			this.files = this.files+" "+c.files;
-		}
-	}
-	void addFiles(List<DocNode> nodes){
-		for(DocNode node : nodes){
-			this.files = this.files+" "+node.fileName;
-		}
-	}
 	void checkCentralityHeuristic(List<DocNode> nodes){
 		if(nodes.size()==1)
 			return ;
@@ -137,31 +156,6 @@ public class Cluster extends Node implements Serializable{
 		}
 		float heuristicMax = nodes.get(minNode).findEuclideanSimilarity(nodes.get(maxNode));
 		System.out.println(heuristicMax+", actual = "+max);
-	}
-	
-	//to add the DocNode objects to a list and call findRepPoints()
-	void formCluster(List<? extends Node> nodes){
-		try{
-			//merging DocNode objects to form an initial cluster
-			if(nodes.get(0) instanceof DocNode){
-				List<DocNode> list = (List<DocNode>)nodes;
-				//checkCentralityHeuristic(list);
-				addFiles(list);
-				findRepPointsBasedOnCentrality(list);
-			}
-			//merging clusters to form a merged cluster
-			else if(nodes.get(0) instanceof Cluster || nodes.get(0) instanceof LeafCluster){
-				this.children.addAll(nodes);
-				//find rep points for cluster
-				//findRepPointsBasedOnMSTDegree();
-				addFiles();
-				addAllRepresentativePoints();
-				
-			}
-		}
-		catch(Exception e){
-			System.out.println("couldn't form an inital cluster");
-		}
 	}
 
 	//to find similarity/distance between two clusters
