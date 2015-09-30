@@ -36,7 +36,8 @@ public class LSH {
 		generateHashFunctions();
 	}
 	public void incrementK(){
-		this.K++;
+		if(this.K>4)
+			this.K--;
 	}
 	public void incrementNumOfHashFunctions(){
 		this.numOfFunctions++;
@@ -78,7 +79,7 @@ public class LSH {
 		double val = 1 - (r/(C*dimensions));
 		this.numOfFunctions = (int) (Math.log(Pmiss)/Math.log(1-(Math.pow(val, K))));
 	}
-	private void generateHashFunctions(){
+	public void generateHashFunctions(){
 		A = new int[numOfFunctions][K];
 		if(MPI.COMM_WORLD.Rank()==0){
 			Random r = new Random();

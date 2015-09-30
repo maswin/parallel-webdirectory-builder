@@ -1,4 +1,4 @@
-package edu.tce.cse.example;
+package edu.tce.cse.clustering;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -18,16 +18,17 @@ import edu.tce.cse.clustering.Node;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.document.DocumentInitializer;
+import edu.tce.cse.example.sampleData;
 import edu.tce.cse.model.Data;
 import edu.tce.cse.model.Directory;
 import edu.tce.cse.model.EdgeData;
 import edu.tce.cse.util.Statistics;
 import gui.TreeView;
 
-public class HierarchicalClusteringTester {
-	Map<Long, Cluster> clustersAtThisLevel;
-	DocNode[] localRepPoints;
-	boolean[] flagToStop = new boolean[1];
+public class HierarchicalClustering {
+	public Map<Long, Cluster> clustersAtThisLevel;
+	public DocNode[] localRepPoints;
+	public boolean[] flagToStop = new boolean[1];
 	int shareDetails[]=new int[2];
 
 	//to merge clusters to form the next level clusters, when given the results of LSH as input 
@@ -290,81 +291,7 @@ public class HierarchicalClusteringTester {
 			clusterList.add(entry.getValue());
 		}
 		return new Cluster(0,(List<? extends Node>) clusterList);
-	}
-	public static void main(String args[]){
-
-		//fix threshold for number of clusters
-		int k = 8; 
-		//gather Clusters (initial) from all processors
-		MPI.Init(args);
-		int id = MPI.COMM_WORLD.Rank();
-		int size = MPI.COMM_WORLD.Size();
-		Directory directory = new Directory();
-		System.out.println("Started Id : "+id+"/"+size);
-		HierarchicalClusteringTester hc = new HierarchicalClusteringTester();
-
-		List<DocNode> nodeList = hc.preprocess();
-
-		DistributedLSH dLSH = new DistributedLSH(nodeList.get(0).signature.length);
-
-		hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory);
-		int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
-		int startID = hc.clustersAtThisLevel.size();
-
-		while(true){
-			MPI.COMM_WORLD.Barrier();
-			clustersInPreviousLevel = hc.clustersAtThisLevel.size();
-			List<Cluster> temp = new ArrayList<Cluster>();
-			temp.addAll(hc.clustersAtThisLevel.values());
-
-			hc.distributeRepPoints(temp);
-			temp.clear();
-			MPI.COMM_WORLD.Barrier();
-			if(MPI.COMM_WORLD.Rank()==0)
-				System.out.println("\nRepresentative points are distributed");
-
-			dLSH.hash(hc.localRepPoints);
-			if(MPI.COMM_WORLD.Rank()==0)
-				System.out.println("Representative points are hashed");
-
-			if(MPI.COMM_WORLD.Rank()==0){
-				List<Data> data = dLSH.getPairPoints();
-				hc.mergeClusters(data, startID);
-				startID+=hc.clustersAtThisLevel.size();
-				System.out.println("--Merging of clusters--");
-				System.out.println("\n \n");
-				for(Cluster c: hc.clustersAtThisLevel.values()){
-					System.out.println("\n Cluster "+c.nodeID+" - Files:");
-					/*for(DocNode d: c.getRepPoints()){
-						d.setClusterID(c.nodeID);
-						System.out.print(((DocNode)d).fileName+" ");
-
-					}*/
-					System.out.println(c.files);
-					if(c.getChildren().size()>1){
-						System.out.println("\n Children:");
-						for(Node n: c.getChildren()){
-							System.out.print(n.nodeID+" ");
-						}
-					}
-				}
-				System.out.println("Number of clusters formed : "+hc.clustersAtThisLevel.size());
-				//or check if clusters don't change between two levels?
-				if(hc.clustersAtThisLevel.size()<=k){ //|| hc.clustersAtThisLevel.size()==clustersInPreviousLevel){
-					hc.flagToStop[0]=true;
-				}
-			}
-			MPI.COMM_WORLD.Bcast(hc.flagToStop, 0, 1, MPI.BOOLEAN, 0);
-			if(hc.flagToStop[0])
-				break;
-
-		}
-		
-		if(MPI.COMM_WORLD.Rank()==0){
-			new TreeView(hc.mergeAllCluster()).setVisible(true);
-		}
-		MPI.Finalize();
-	}
+	}		
 	
 }
 //combo 1: 0.3f-sparsification Math.min mean+stdDev
