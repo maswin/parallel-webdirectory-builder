@@ -15,10 +15,12 @@ public class Cluster extends Node implements Serializable{
     List<Node> children;
 	List<DocNode> repPoints;
 	float weightedDegreeInMST;
+	public String files;
 	public Cluster(long id){
 		super(id);
 		children = new ArrayList<Node>();
 		repPoints = new ArrayList<DocNode>();
+		files = "";
 	}
 	public void setNodeID(long id){
 		nodeID = id;
@@ -95,6 +97,19 @@ public class Cluster extends Node implements Serializable{
 			}
 		}
 	}
+	
+	void addFiles(){
+		Cluster c;
+		for(int i=0; i<children.size(); i++){
+			c = ((Cluster)(children.get(i)));
+			this.files = this.files+" "+c.files;
+		}
+	}
+	void addFiles(List<DocNode> nodes){
+		for(DocNode node : nodes){
+			this.files = this.files+" "+node.fileName;
+		}
+	}
 	void checkCentralityHeuristic(List<DocNode> nodes){
 		if(nodes.size()==1)
 			return ;
@@ -131,6 +146,7 @@ public class Cluster extends Node implements Serializable{
 			if(nodes.get(0) instanceof DocNode){
 				List<DocNode> list = (List<DocNode>)nodes;
 				//checkCentralityHeuristic(list);
+				addFiles(list);
 				findRepPointsBasedOnCentrality(list);
 			}
 			//merging clusters to form a merged cluster
@@ -138,6 +154,7 @@ public class Cluster extends Node implements Serializable{
 				this.children.addAll(nodes);
 				//find rep points for cluster
 				//findRepPointsBasedOnMSTDegree();
+				addFiles();
 				addAllRepresentativePoints();
 				
 			}

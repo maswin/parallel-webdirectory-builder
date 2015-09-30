@@ -130,7 +130,7 @@ public class HierarchicalClusteringTester {
 	public static void main(String args[]){
 
 		//fix threshold for number of clusters
-		int k = 5; 
+		int k = 8; 
 		//gather Clusters (initial) from all processors
 		MPI.Init(args);
 		int id = MPI.COMM_WORLD.Rank();
@@ -167,12 +167,13 @@ public class HierarchicalClusteringTester {
 				System.out.println("--Merging of clusters--");
 				System.out.println("\n \n");
 				for(Cluster c: hc.clustersAtThisLevel.values()){
-					System.out.println("\n Cluster "+c.nodeID+" - representative points:");
-					for(DocNode d: c.getRepPoints()){
+					System.out.println("\n Cluster "+c.nodeID+" - Files:");
+					/*for(DocNode d: c.getRepPoints()){
 						d.setClusterID(c.nodeID);
 						System.out.print(((DocNode)d).fileName+" ");
 
-					}
+					}*/
+					System.out.println(c.files);
 					if(c.getChildren().size()>1){
 						System.out.println("\n Children:");
 						for(Node n: c.getChildren()){
@@ -180,6 +181,7 @@ public class HierarchicalClusteringTester {
 						}
 					}
 				}
+				System.out.println("Number of clusters formed : "+hc.clustersAtThisLevel.size());
 				//or check if clusters don't change between two levels?
 				if(hc.clustersAtThisLevel.size()<=k || hc.clustersAtThisLevel.size()==clustersInPreviousLevel){
 					hc.flag[0]=true;

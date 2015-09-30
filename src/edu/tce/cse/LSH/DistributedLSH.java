@@ -67,7 +67,7 @@ public class DistributedLSH {
 			}
 		}
 		//Change to setR
-		lsh.incrementParameters();
+		//lsh.incrementParameters();
 	}
 	public void processBucket(Map<String, Set<DocNode>> bucket){
 

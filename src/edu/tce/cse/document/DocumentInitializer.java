@@ -63,7 +63,7 @@ public class DocumentInitializer {
         documentList.parallelStream().forEach(doc -> 
     		doc.generateSignature());
         
-        //reduceTfIDF();
+        reduceTfIDF();
         
 	}
 
