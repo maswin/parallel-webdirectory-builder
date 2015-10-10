@@ -2,7 +2,10 @@ package edu.tce.cse.example;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import mpi.MPI;
 import edu.tce.cse.LSH.DistributedLSH;
@@ -10,6 +13,7 @@ import edu.tce.cse.LSH.LSH;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.document.DocumentInitializer;
+import edu.tce.cse.model.Centroid;
 import edu.tce.cse.model.Data;
 
 public class DistributedLSHTester {
@@ -22,41 +26,21 @@ public class DistributedLSHTester {
 		
 		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
 		List<DocNode> docList=new ArrayList<>();
-		
+		List<Centroid> cList=new ArrayList<>();
+		Map<Long, String> nameMap = new HashMap<>();
 		docList = DI.getDocNodeList();
 		
-		/*double dist;
-		double maxDist = Double.MIN_VALUE;
-		for(int i=0;i<docList.size();i++){
-			for(int j=i+1;j<docList.size();j++){
-				dist = docList.get(i).findEuclideanSimilarity(docList.get(j));
-				//System.out.println(dist);
-				if(dist>maxDist){
-					maxDist = dist;
-				}
-			}
-		}*/
-		//System.out.println(maxDist);
-		//LSH DLHS = new LSH(docList.get(0).getSignature().length,7,maxDist/2);
-		DistributedLSH dLSH = new DistributedLSH(docList.get(0).signature.length);
-		dLSH.hash(docList);
-		int count = 1;
-		if(MPI.COMM_WORLD.Rank()==0){
-			List<Data> data = dLSH.getPairPoints();
-			for(Data d : data){
-				System.out.println(count+" . "+d.a.fileName+"\t"+d.b.fileName);
-				count++;
-			}
+		for(DocNode d : docList){
+			//System.out.println(d.nodeID+" "+d.fileName);
+			Centroid c = new Centroid(d.nodeID,d.tfIdf);
+			nameMap.put(d.nodeID, d.fileName);
+			cList.add(c);
 		}
 		
-		dLSH.hash(docList);
-		count = 1;
-		if(MPI.COMM_WORLD.Rank()==0){
-			List<Data> data = dLSH.getPairPoints();
-			for(Data d : data){
-				System.out.println(count+" . "+d.a.fileName+"\t"+d.b.fileName);
-				count++;
-			}
+		DistributedLSH dLSH = new DistributedLSH(cList.get(0).tfIdf.length);
+		dLSH.hash(cList);
+		for(Data d : dLSH.getPairPoints()){
+			System.out.println(nameMap.get(d.a)+" "+nameMap.get(d.b));
 		}
 		MPI.Finalize();
 	}

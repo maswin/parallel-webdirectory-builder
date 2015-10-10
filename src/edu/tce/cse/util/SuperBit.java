@@ -129,13 +129,13 @@ public class SuperBit implements Serializable {
     
     /**
      * Initialize SuperBit algorithm.
-     * With code length K = 10000
-     * The K vectors are orthogonalized in d batches of 10000/d vectors
+     * With code length K = 100
+     * The K vectors are orthogonalized in d batches of 100/d vectors
      * The resulting mean error is 0.01
      * @param d 
      */
     public SuperBit(int d) {
-        this(d, d, 10000/d);
+        this(d, d, 100/d);
     }
     
     public SuperBit() {

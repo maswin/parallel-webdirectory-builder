@@ -47,8 +47,7 @@ public class Document {
 
 	//Computed during Initialization
 	private double[] tfIdf;
-	private boolean[] signatureVector;
-	private static SuperBit sb;
+
 
 	/*
 	 * Call ParseDocument & generateTfIdfVector to complete Initialization
@@ -70,9 +69,6 @@ public class Document {
 		termFrequency = new HashMap<String, Integer>();
 		totalTokens = 0;
 		totalNumOfWords = 0;
-		
-		//Generate Signature - - To be done after initializing all Documents
-		signatureVector = null;
 		
 		//Generate tfIdfVector - - To be done after initializing all Documents
 		tfIdf = null;
@@ -98,13 +94,6 @@ public class Document {
 
 	public int getTotalTokens() {
 		return totalTokens;
-	}
-
-	public boolean[] getSignatureVector() {
-		if(signatureVector == null){
-			generateSignature();
-		}
-		return signatureVector;
 	}
 
 	public double[] getTfIdf() {
@@ -174,7 +163,6 @@ public class Document {
 			stemmer.stem();
 			words.add(stemmer.getCurrent());
 		}
-		
 		return words;
 	}
 	public void calculateTfIdf(int totalDocuments, Map<String, Integer> documentFrequency){		
@@ -199,45 +187,6 @@ public class Document {
 		}
 
 	}
-	public void generateSignature(){
-		//Initialized only once
-		if(sb==null){
-			initializeSuperBit();
-		}
-
-		double[] vector = this.getTfIdf();
-		signatureVector = sb.signature(vector);
-	}
-	private void initializeSuperBit(){
-		File f = new File("SuperBit/superbit.ser");
-		if(f.exists()){
-			FileInputStream fin;
-			try {
-				fin = new FileInputStream("SuperBit/superbit.ser");
-				ObjectInputStream ois = new ObjectInputStream(fin);
-				sb = (SuperBit) ois.readObject();
-				ois.close();
-				fin.close();
-			} catch (IOException | ClassNotFoundException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}else{
-			sb = new SuperBit(tfIdf.length,30,30);
-			System.out.println("New Super Bit Generated");
-			FileOutputStream fout;
-			try {
-				fout = new FileOutputStream("SuperBit/superbit.ser");
-				ObjectOutputStream oos = new ObjectOutputStream(fout);   
-				oos.writeObject(sb);
-				oos.close();
-				fout.close();
-			} catch (IOException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}		
-	}
 	
 	public float findCosSimilarity(Document d){
 		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
@@ -251,5 +200,11 @@ public class Document {
 	public float findCosDistance(Document d){
 		return (1-findCosSimilarity(d));
 	}
-
+	public float findEuclideanSimilarity(Document d){
+		float E = 0.0f;
+		for(int i=0; i<tfIdf.length; i++){
+			E += Math.pow((tfIdf[i]-d.tfIdf[i]), 2);
+		}
+		return (float)(Math.abs(Math.sqrt(E)));
+	}
 }

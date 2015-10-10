@@ -8,18 +8,23 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
+import cern.colt.matrix.tdouble.DoubleMatrix2D;
+import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix2D;
 import edu.tce.cse.document.DocNode;
+import edu.tce.cse.model.Centroid;
 
 public class Cluster extends Node implements Serializable{
 	
     List<Node> children;
 	List<DocNode> repPoints;
+	Centroid centroid;
 	float weightedDegreeInMST;
 	public String files;
 	public Cluster(long id, List<? extends Node> nodes){
 		super(id);
 		children = new ArrayList<Node>();
 		repPoints = new ArrayList<DocNode>();
+		centroid = null;
 		files = "";
 		try{
 			//merging DocNode objects to form an initial cluster
@@ -27,6 +32,7 @@ public class Cluster extends Node implements Serializable{
 				List<DocNode> list = (List<DocNode>)nodes;
 				//checkCentralityHeuristic(list);
 				findRepPointsBasedOnCentrality(list);
+				findInitialCentroid();
 				addFiles(list);
 			}
 			//merging clusters to form a merged cluster
@@ -35,6 +41,7 @@ public class Cluster extends Node implements Serializable{
 				//find rep points for cluster
 				//findRepPointsBasedOnMSTDegree();
 				addAllRepresentativePoints();
+				findCentroid();
 				addFiles();
 			}
 		}
@@ -54,8 +61,14 @@ public class Cluster extends Node implements Serializable{
 			this.files = this.files+" "+node.fileName;
 		}
 	}
-	public void setNodeID(long id){
+	public void changeNodeID(long id){
 		nodeID = id;
+		//modify clusterID of centroid
+		centroid.clusterId = id;
+		//modify clusterID of representative points
+		for(DocNode r: repPoints){
+			r.setClusterID(id);
+		}
 	}
 	public List<DocNode> getRepPoints() {
 		return repPoints;
@@ -78,7 +91,12 @@ public class Cluster extends Node implements Serializable{
 	public void setDegreeInMST(float degreeInMST) {
 		this.weightedDegreeInMST = degreeInMST;
 	}
-	
+	public Centroid getCentroid(){
+		if(centroid == null){
+			System.out.println("Centroid Not Found");
+		}
+		return this.centroid;
+	}
 	//to find representative points when documents are grouped to form initial cluster
 	//fix number of repPoints & ratio of high centrality and low centrality points mix
 	void findRepPointsBasedOnCentrality(List<DocNode> nodes){
@@ -171,6 +189,41 @@ public class Cluster extends Node implements Serializable{
 		return avgDistance;
 	}
 	
+	public Centroid findInitialCentroid(){
+		double[][] vector = new double[this.repPoints.size()][];
+        for (int i = 0; i < this.repPoints.size(); i++) {
+            vector[i] = this.repPoints.get(i).getTfIdf();
+        }
+
+        DoubleMatrix2D matrix = new DenseDoubleMatrix2D(vector);
+
+        double[] centroidTfIdf = new double[matrix.columns()];
+        for (int col = 0; col < matrix.columns(); col++) {
+            centroidTfIdf[col] = matrix.viewColumn(col).zSum();
+        }
+        Centroid centroid = new Centroid(this.nodeID, centroidTfIdf);
+        this.centroid = centroid;
+        return this.centroid;
+	}
+	
+	public Centroid findCentroid(){
+		double[][] vector = new double[this.children.size()][];
+
+        for (int i = 0; i < this.children.size(); i++) {
+        	Cluster c = (Cluster) this.children.get(i);
+            vector[i] = c.getCentroid().tfIdf;
+        }
+
+        DoubleMatrix2D matrix = new DenseDoubleMatrix2D(vector);
+
+        double[] centroidTfIdf = new double[matrix.columns()];
+        for (int col = 0; col < matrix.columns(); col++) {
+            centroidTfIdf[col] = matrix.viewColumn(col).zSum();
+        }
+        Centroid centroid = new Centroid(this.nodeID, centroidTfIdf);
+        this.centroid = centroid;
+        return this.centroid;
+	}
 	//Cluster Utility Functions
 	public static double findMinClusterDiameter(List<Cluster> clusters){
 		double minDist = Double.MAX_VALUE;		
@@ -192,8 +245,8 @@ public class Cluster extends Node implements Serializable{
 		double minDist = Double.MAX_VALUE;
 		List<DocNode> highCentralityPoints = new ArrayList<>(clusters.size());
 		for(Cluster c : clusters){
-			c.children.sort(new CentralityComparator());
-			DocNode maxCentralityPoint = (DocNode) c.children.get(c.children.size());
+			c.repPoints.sort(new CentralityComparator());
+			DocNode maxCentralityPoint = (DocNode) c.repPoints.get(c.repPoints.size()-1);
 			highCentralityPoints.add(maxCentralityPoint);
 		}
 		for(int i=0;i<highCentralityPoints.size();i++){

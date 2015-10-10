@@ -23,7 +23,7 @@ public class WebDirectoryBuilder {
 	
 	public static void main(String args[]){
 		//fix threshold for number of clusters
-				int k = 8; 
+				int k = 1; 
 				//gather Clusters (initial) from all processors
 				MPI.Init(args);
 				int id = MPI.COMM_WORLD.Rank();
@@ -33,35 +33,38 @@ public class WebDirectoryBuilder {
 				HierarchicalClustering hc = new HierarchicalClustering();
 
 				List<DocNode> nodeList = hc.preprocess();
-
-				DistributedLSH dLSH = new DistributedLSH(nodeList.get(0).signature.length);
+				System.out.println("Processor "+MPI.COMM_WORLD.Rank()+" ---Data Received---");
+				DistributedLSH dLSH = new DistributedLSH(nodeList.get(0).tfIdf.length);
 
 				hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory);
+				
 				int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
 				int startID = hc.clustersAtThisLevel.size();
-
+				int iteration = 1;
+				
 				while(true){
 					MPI.COMM_WORLD.Barrier();
 					clustersInPreviousLevel = hc.clustersAtThisLevel.size();
 					List<Cluster> temp = new ArrayList<Cluster>();
 					temp.addAll(hc.clustersAtThisLevel.values());
-
-					hc.distributeRepPoints(temp);
+					
+					hc.distributeCentroids(temp);
 					temp.clear();
 					MPI.COMM_WORLD.Barrier();
 					if(MPI.COMM_WORLD.Rank()==0)
-						System.out.println("\nRepresentative points are distributed");
+						System.out.println("\nCentroids are distributed");
 
-					dLSH.hash(hc.localRepPoints);
+					dLSH.hash(hc.centroids);
 					if(MPI.COMM_WORLD.Rank()==0)
-						System.out.println("Representative points are hashed");
+						System.out.println("Centroid points are hashed");
 
 					if(MPI.COMM_WORLD.Rank()==0){
 						List<Data> data = dLSH.getPairPoints();
 						hc.mergeClusters(data, startID);
 						startID+=hc.clustersAtThisLevel.size();
 						System.out.println("--Merging of clusters--");
-						System.out.println("\n \n");
+						
+					   System.out.println("\n \n");
 						for(Cluster c: hc.clustersAtThisLevel.values()){
 							System.out.println("\n Cluster "+c.nodeID+" - Files:");
 							/*for(DocNode d: c.getRepPoints()){
@@ -79,14 +82,14 @@ public class WebDirectoryBuilder {
 						}
 						System.out.println("Number of clusters formed : "+hc.clustersAtThisLevel.size());
 						//or check if clusters don't change between two levels?
-						if(hc.clustersAtThisLevel.size()<=k){ //|| hc.clustersAtThisLevel.size()==clustersInPreviousLevel){
+						if(hc.clustersAtThisLevel.size()<=k || hc.clustersAtThisLevel.size()==clustersInPreviousLevel){
 							hc.flagToStop[0]=true;
 						}
 					}
 					MPI.COMM_WORLD.Bcast(hc.flagToStop, 0, 1, MPI.BOOLEAN, 0);
 					if(hc.flagToStop[0])
 						break;
-
+					iteration++;
 				}
 				
 				if(MPI.COMM_WORLD.Rank()==0){
