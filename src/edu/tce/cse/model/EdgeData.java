@@ -12,6 +12,7 @@ public class EdgeData {
 		this.weight = weight;
 	}
 	public float getEdgeWeight(){
-		return (float)(weight/(count*1.0));
+		return weight;
+		//return (float)(weight/(count*1.0));
 	}
 }

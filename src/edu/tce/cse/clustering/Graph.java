@@ -73,9 +73,6 @@ public class Graph<E extends Node> {
 		Thread[] threads = new Thread[NTHREAD];
 		List<DocNode> myList;
 		int share = (int)Math.ceil(V.size()/NTHREAD);
-		System.out.println("");
-		System.out.println("");
-		System.out.println("After sparsification: ");
 		int d = V.size();
 		int toRetain = (int)Math.abs(Math.pow(d, e));
 		for (int i = 0; i < NTHREAD; i++) {
