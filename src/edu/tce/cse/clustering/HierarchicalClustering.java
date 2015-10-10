@@ -49,11 +49,11 @@ public class HierarchicalClustering {
 					adjList.put(a, new HashMap());
 				EdgeData eData;
 				if(adjList.get(a).containsKey(b)){
-					eData = adjList.get(a).get(b);
+					/*eData = adjList.get(a).get(b);
 					eData.count++;
-					eData.weight += a.findDistance(b);
+					eData.weight += data.a.findDistance(data.b);*/
 				}else{
-					eData = new EdgeData(1,a.findDistance(b));
+					eData = new EdgeData(1, a.findDistance(b));
 					adjList.get(a).put(b, eData);
 				}
 							
@@ -63,11 +63,11 @@ public class HierarchicalClustering {
 					adjList.put(b, new HashMap());
 				EdgeData eData;
 				if(adjList.get(b).containsKey(a)){
-					eData = adjList.get(b).get(a);
+					/*eData = adjList.get(b).get(a);
 					eData.count++;
-					eData.weight += a.findDistance(b);
+					eData.weight += data.a.findDistance(data.b);*/
 				}else{
-					eData = new EdgeData(1,a.findDistance(b));
+					eData = new EdgeData(1, a.findDistance(b));
 					adjList.get(b).put(a, eData);
 				}
 			}
@@ -76,8 +76,9 @@ public class HierarchicalClustering {
 			temp.remove(c);
 			for(Cluster neighbour: adjList.get(c).keySet()){
 				temp.remove(neighbour);
-				System.out.println("Weight : "+c.nodeID+" "+neighbour.nodeID+" "+adjList.get(c).get(neighbour).getEdgeWeight());
-				graph.addEdge(c, neighbour, adjList.get(c).get(neighbour).getEdgeWeight());
+				float w = (adjList.get(c).get(neighbour).getEdgeWeight());///(c.repPoints.size()*neighbour.repPoints.size());
+				System.out.println("Weight : "+c.nodeID+" "+neighbour.nodeID+" "+w);
+				graph.addEdge(c, neighbour, w);
 				//System.out.print(c.nodeID+","+neighbour.nodeID+"("+adjList.get(c).get(neighbour)+") ");
 			}
 		}
@@ -237,9 +238,10 @@ public class HierarchicalClustering {
 			MPI.COMM_WORLD.Barrier();
 			if(i==MPI.COMM_WORLD.Rank()){
 				System.out.println("Process "+i+":");
+				System.out.println("Mean centrality value = "+mean);
 				for(Integer j: directory.directoryMap.keySet()){
 					List<DocNode> l = directory.directoryMap.get(j);
-					System.out.print("Directory "+j+": ");
+					System.out.print("\nDirectory "+j+": ");
 					for(DocNode d: l){
 						System.out.print(d.fileName+" ");
 					}
