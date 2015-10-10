@@ -19,33 +19,47 @@ public class DocumentInitializer {
     private final int numberOfProcessors;
     private final int startIndex;
     private final int endIndex;
-    private List<Document> documentList;
+    private List<DocNode> docNodeList;
 	public DocumentInitializer(String documentDirectory){
 		this.documentDirectory = documentDirectory;
-        this.N = new File(documentDirectory).listFiles().length;
+		List<File> files = new ArrayList<>();
+		parseDirectory(documentDirectory, files);
+        this.N = files.size();
         this.processorID = MPI.COMM_WORLD.Rank();
         this.numberOfProcessors = MPI.COMM_WORLD.Size();
         this.startIndex = (N / numberOfProcessors) * processorID;
         this.endIndex = (processorID != numberOfProcessors - 1)
                 ? (N / numberOfProcessors) * (processorID + 1) - 1
                 : N - 1;
-       this.documentList = new ArrayList<>(endIndex - startIndex + 1);
+       this.docNodeList = new ArrayList<>(endIndex - startIndex + 1);
        try {
-    	   InitializeDocuments();
+    	   InitializeDocuments(files);
        } catch (IOException e) {
     	   e.printStackTrace();
        }
 	}
-	
-	private void InitializeDocuments() throws IOException{
+	public void parseDirectory(String documentDirectory, List files){
 		File inputDirectory = new File(documentDirectory);
-        File[] files = inputDirectory.listFiles();
+        File[] tmpFiles = inputDirectory.listFiles();
+        for(File f : tmpFiles){
+        	if(f.isDirectory()){
+        		parseDirectory(f.getAbsolutePath(), files);
+        	}else{
+        		files.add(f);
+        	}
+        }
+		
+	}
+	private void InitializeDocuments(List<File> files) throws IOException{
+		File inputDirectory = new File(documentDirectory);
+        
+        List<Document> documentList = new ArrayList<>(endIndex - startIndex + 1);;
         
         Map<String, Integer>[] localDocumentFrequency = new LinkedHashMap[1];
         localDocumentFrequency[0] = new LinkedHashMap();
         
         for (int i = startIndex; i <= endIndex; i++) {
-            Document document = new Document(i, files[i].getAbsolutePath(), files[i].getName());
+            Document document = new Document(i, files.get(i).getAbsolutePath(), files.get(i).getName());
             document.parseDocument(localDocumentFrequency[0]);
             documentList.add(document);
         }
@@ -57,93 +71,48 @@ public class DocumentInitializer {
         
         //System.out.println(this.processorID+" "+globalDocumentFrequency[0].keySet().size());
         
-        documentList.parallelStream().forEach(doc -> 
+        documentList.stream().forEach(doc -> 
         	doc.calculateTfIdf(N, globalDocumentFrequency[0]));
         
-        documentList.parallelStream().forEach(doc -> 
-    		doc.generateSignature());
-        
-        reduceTfIDF();
-        
+        generateDocNodeList(documentList);
 	}
 
-	private void reduceTfIDF(){
-		List<double[]>[] localTfIdf = new ArrayList[1];
-		localTfIdf[0] = new ArrayList<double[]>(documentList.size());
-		
-		
-		for( Document doc : documentList){
-			localTfIdf[0].add(doc.getTfIdf());
-		}
-		
-		//MPI.COMM_WORLD.Reduce(localTfIdf, 0, 
-				//globalTfIdf, 0, 1, MPI.OBJECT, new Op(new TfIdfReducer(),false), 0);
-
-		
-		double[][] tfIdfMatrix;
+	private void reduceTfIDF(List<DocNode> documentList){
+		double[][] tfIdfMatrix = new double[documentList.size()][];		
 		int index = 0;
-		if(MPI.COMM_WORLD.Rank() == 0){
-			//Initialize globalTfIdf
-			List<double[]>[] globalTfIdf = new ArrayList[1];
-			globalTfIdf[0] = new ArrayList<double[]>(N);
-			
-			//Collect TfIdf
-			globalTfIdf[0].addAll(localTfIdf[0]);
-			for(int i=1;i<MPI.COMM_WORLD.Size();i++){
-				localTfIdf[0] = new ArrayList<double[]>();
-				MPI.COMM_WORLD.Recv(localTfIdf, 0, 1, MPI.OBJECT, i, i);
-				globalTfIdf[0].addAll(localTfIdf[0]);
-			}
-			
-			//Create TfIdfMatrix
-			tfIdfMatrix = new double[N][];
-			for(double[] tfIdf : globalTfIdf[0]){
-				tfIdfMatrix[index] = tfIdf;
-				index++;
-			}
-			
-			//Reduce TfIdf
-			SVDReducer svd = new SVDReducer(30);
-			tfIdfMatrix = svd.reduceTfIdf(tfIdfMatrix);
-			
-			//Send Reduced TfIdf
-			for(int i=1;i<MPI.COMM_WORLD.Size();i++){
-				int offset = (N / numberOfProcessors) * i;
-		        int count = (i != numberOfProcessors - 1)
-		                ? (N / numberOfProcessors) * (i + 1) - 1
-		                : N - 1;
-		       count = count - offset + 1;
-		       MPI.COMM_WORLD.Send(tfIdfMatrix, offset, count, MPI.OBJECT, i, i);
-			}
-		}else{
-			
-			//Send TfIdf
-			MPI.COMM_WORLD.Send(localTfIdf, 0, 1, MPI.OBJECT, 0, this.processorID);
-			
-			//Receive Reduced TfIdf
-			int count = this.endIndex - this.startIndex + 1;
-			tfIdfMatrix = new double[count][];
-			MPI.COMM_WORLD.Recv(tfIdfMatrix, 0, count, MPI.OBJECT, 0, this.processorID);
+		for( DocNode doc : documentList){
+			tfIdfMatrix[index] = doc.getTfIdf();
+			index++;
 		}
+		
+		
+		//Set reduced size
+		//Default size
+		int size = documentList.size();
+		if(documentList.size() >= 30)
+			size = 30;
+		
+		//Reduce TfIdf
+		SVDReducer svd = new SVDReducer(size);
+		tfIdfMatrix = svd.reduceTfIdf(tfIdfMatrix);
+		
 		index = 0;
-		for(Document doc : documentList){
-			//System.out.println(this.processorID+" "+tfIdfMatrix[index].length);
-			doc.setTfIdf(tfIdfMatrix[index]);
+		for( DocNode doc : documentList){
+			doc.setReducedTfIdf(tfIdfMatrix[index]);
 			index++;
 		}
 	}
-	public List<Document> getDocumentList() {
-		return documentList;
+	public List<DocNode> getDocNodeList() {
+		return docNodeList;
 	}
 
-	public List<DocNode> getDocNodeList(){
-		List<DocNode> docNodeList = new ArrayList<DocNode>();
+	public void generateDocNodeList(List<Document> documentList){
 		DocNode node;
 		for(Document document : documentList){
-			node = new DocNode(document.getDocID(),document.getFileName(),document.getSignatureVector(), document.getTfIdf());
-			docNodeList.add(node);
+			node = new DocNode(document.getDocID(),document.getFileName(), document.getTfIdf());
+			this.docNodeList.add(node);
 		}
-		return docNodeList;
+		reduceTfIDF(this.docNodeList);
 	}
 	
 }

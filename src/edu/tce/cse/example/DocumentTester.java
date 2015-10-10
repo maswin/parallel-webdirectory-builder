@@ -67,9 +67,9 @@ public class DocumentTester {
 		System.out.println("Started Id : "+id+"/"+size);
 
 		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
-		List<Document> docList=new ArrayList<Document>();
+		List<DocNode> docList=new ArrayList<>();
 
-		docList = DI.getDocumentList();
+		docList = DI.getDocNodeList();
 
 		//Testing
 		printMatrix(docList);
@@ -77,7 +77,7 @@ public class DocumentTester {
 		MPI.Finalize();
 
 	}
-	private static void printMatrix(List<Document> docList){
+	private static void printMatrix(List<DocNode> docList){
 		double sim = 0.0;
 		int id = MPI.COMM_WORLD.Rank();
 		int size = MPI.COMM_WORLD.Size();
@@ -92,12 +92,12 @@ public class DocumentTester {
 							if(j==-1 && k==-1){
 								System.out.printf("%12s","");
 							}else if(k==-1){
-					             System.out.printf("%12s ", (docList.get(j).getFileName().length() > 12) ? docList.get(j).getFileName().substring(0, 12) : docList.get(j).getFileName());
+					             System.out.printf("%12s ", (docList.get(j).fileName.length() > 12) ? docList.get(j).fileName.substring(0, 12) : docList.get(j).fileName);
 							}else if(j==-1){
-					             System.out.printf("%12s ", (docList.get(k).getFileName().length() > 12) ? docList.get(k).getFileName().substring(0, 12) : docList.get(k).getFileName());
+					             System.out.printf("%12s ", (docList.get(k).fileName.length() > 12) ? docList.get(k).fileName.substring(0, 12) : docList.get(k).fileName);
 
 							}else{
-								sim = docList.get(j).findCosSimilarity(docList.get(k));
+								sim = docList.get(j).findEuclideanSimilarity(docList.get(k));
 								System.out.printf("%.10f ",sim);
 							}
 						}

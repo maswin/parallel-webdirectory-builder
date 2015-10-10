@@ -12,10 +12,6 @@ import mpi.Datatype;
 import mpi.MPIException;
 import mpi.User_function;
 
-/**
- *
- * @author Sidharth Manohar
- */
 
 class DocumentFrequencyReducer extends User_function {
 

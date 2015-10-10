@@ -19,6 +19,7 @@ import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.document.DocumentInitializer;
 import edu.tce.cse.example.sampleData;
+import edu.tce.cse.model.Centroid;
 import edu.tce.cse.model.Data;
 import edu.tce.cse.model.Directory;
 import edu.tce.cse.model.EdgeData;
@@ -28,47 +29,39 @@ import gui.TreeView;
 public class HierarchicalClustering {
 	public Map<Long, Cluster> clustersAtThisLevel;
 	public DocNode[] localRepPoints;
+	public Centroid[] centroids;
 	public boolean[] flagToStop = new boolean[1];
 	int shareDetails[]=new int[2];
+	public double R;
 
 	//to merge clusters to form the next level clusters, when given the results of LSH as input 
 	public void mergeClusters(List<Data> list, int startID){
 		List<Cluster> temp = new ArrayList<Cluster>();
-		HashMap<Cluster, HashMap<Cluster, EdgeData>> adjList=new HashMap(); 
+		HashMap<Cluster, HashMap<Cluster, Float>> adjList=new HashMap(); 
 		temp.addAll(clustersAtThisLevel.values());
-
 		//form graph where each node is a cluster
 		Graph graph = new Graph(temp);
 		//use addEdge() to add each edge between cluster nodes. Update edge weight accordingly
 		for(Data data: list){
-			Cluster a = clustersAtThisLevel.get(data.a.clusterID);
-			Cluster b = clustersAtThisLevel.get(data.b.clusterID);
-
+			Cluster a = clustersAtThisLevel.get(data.a);
+			Cluster b = clustersAtThisLevel.get(data.b);
 			if(a.nodeID<b.nodeID){
 				if(!adjList.containsKey(a))
 					adjList.put(a, new HashMap());
-				EdgeData eData;
-				if(adjList.get(a).containsKey(b)){
-					eData = adjList.get(a).get(b);
-					eData.count++;
-					eData.weight += a.findDistance(b);
-				}else{
-					eData = new EdgeData(1,a.findDistance(b));
-					adjList.get(a).put(b, eData);
+				float weight;
+				if(!adjList.get(a).containsKey(b)){
+					weight = a.findDistance(b);
+					adjList.get(a).put(b, weight);
 				}
-							
+
 			}
 			else if(a.nodeID>b.nodeID){
 				if(!adjList.containsKey(b))
 					adjList.put(b, new HashMap());
-				EdgeData eData;
-				if(adjList.get(b).containsKey(a)){
-					eData = adjList.get(b).get(a);
-					eData.count++;
-					eData.weight += a.findDistance(b);
-				}else{
-					eData = new EdgeData(1,a.findDistance(b));
-					adjList.get(b).put(a, eData);
+				float weight;
+				if(!adjList.get(b).containsKey(a)){
+					weight = a.findDistance(b);
+					adjList.get(b).put(a, weight);
 				}
 			}
 		}
@@ -76,8 +69,7 @@ public class HierarchicalClustering {
 			temp.remove(c);
 			for(Cluster neighbour: adjList.get(c).keySet()){
 				temp.remove(neighbour);
-				System.out.println("Weight : "+c.nodeID+" "+neighbour.nodeID+" "+adjList.get(c).get(neighbour).getEdgeWeight());
-				graph.addEdge(c, neighbour, adjList.get(c).get(neighbour).getEdgeWeight());
+				graph.addEdge(c, neighbour, adjList.get(c).get(neighbour));
 				//System.out.print(c.nodeID+","+neighbour.nodeID+"("+adjList.get(c).get(neighbour)+") ");
 			}
 		}
@@ -99,13 +91,11 @@ public class HierarchicalClustering {
 			mean = 0;
 			stdDev = 0;
 			for(List<Node> component: components){
-				System.out.println(component.size());
 				if(component.size()>2){				
 					component.forEach(n -> System.out.print(n.nodeID+" "));
 					Graph mst = graph.findMST(component);
 					float[] values = getMSTEdgeWeights(mst);
 					stats = new Statistics(values);
-					System.out.print("\n"+stats.getMean()+" "+stats.getStdDev()+" ");
 					mean += stats.getMean();
 					stdDev += stats.getStdDev();	
 					count ++;
@@ -115,7 +105,7 @@ public class HierarchicalClustering {
 				mean = (float) (mean/(count*1.0));
 				stdDev = (float) (stdDev/(count*1.0));
 			}
-			 
+
 			for(List<Node> component: components){
 				if(component.size()>2)
 					graph.removeInterClusterEdges(component, mean+(1f*stdDev), true);
@@ -175,6 +165,28 @@ public class HierarchicalClustering {
 
 	}
 
+	public void distributeCentroids(List<Cluster> clusters){
+		Object[] centroidPoints = getCentroidPoints(clusters);
+		MPI.COMM_WORLD.Bcast(shareDetails, 1, 1, MPI.INT, 0);
+		int numOfThreads = MPI.COMM_WORLD.Size();
+		MPI.COMM_WORLD.Bcast(shareDetails, 0, 1, MPI.INT, 0);
+		centroids = new Centroid[shareDetails[0]];
+		int displs[] = new int[numOfThreads];
+		int sendcount[] = new int[numOfThreads];
+		for(int i=0; i<numOfThreads; i++){
+			displs[i]=i*shareDetails[0];
+			if(i!=numOfThreads-1){
+				sendcount[i]=shareDetails[0];
+			}
+			else{
+				sendcount[i]=(shareDetails[1]-(i*shareDetails[0]));
+				if(MPI.COMM_WORLD.Rank()==i)
+					centroids = new Centroid[sendcount[i]];
+			}
+		}
+		MPI.COMM_WORLD.Scatterv(centroidPoints, 0, sendcount, displs, MPI.OBJECT, centroids, 0, centroids.length, MPI.OBJECT, 0);
+		
+	}
 	//to return all the representative points
 	public Object[] getRepPoints(List<Cluster> clusters){
 		List<DocNode> repPoints = new ArrayList<DocNode>();
@@ -190,19 +202,26 @@ public class HierarchicalClustering {
 		return store;
 	}
 
+	//to return all the centroid points
+	public Object[] getCentroidPoints(List<Cluster> clusters){
+		List<Centroid> centroidPoints = new ArrayList<Centroid>();
+		for(Cluster c: clusters){
+			if(c==null)
+				break;
+			centroidPoints.add(c.getCentroid());
+		}
+		Object[] store = centroidPoints.toArray();
+		int numOfThreads = MPI.COMM_WORLD.Size();
+		shareDetails[0] = (int)Math.ceil(store.length/numOfThreads);
+		shareDetails[1] = centroidPoints.size();
+		return store;
+	}
+
 	//preprocessing steps
 	public List<DocNode> preprocess(){
-		List<Document> list=new ArrayList<Document>();
 		List<DocNode> nodeList=new ArrayList<DocNode>();
 		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
-		list = DI.getDocumentList();
-		sampleData sd = new sampleData();
-		try {
-			nodeList = sd.getSampleDocNodes(list);
-		} catch (IOException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
+		nodeList = DI.getDocNodeList();
 		return nodeList;
 	}
 
@@ -286,13 +305,13 @@ public class HierarchicalClustering {
 	}
 
 	public Cluster mergeAllCluster(){
-		List<Cluster> clusterList = new ArrayList();
-		for(Map.Entry<Long, Cluster> entry : this.clustersAtThisLevel.entrySet()){
+		List<Cluster> clusterList = new ArrayList(this.clustersAtThisLevel.values());
+		/*for(Map.Entry<Long, Cluster> entry : this.clustersAtThisLevel.entrySet()){
 			clusterList.add(entry.getValue());
-		}
+		}*/
 		return new Cluster(0,(List<? extends Node>) clusterList);
 	}		
-	
+
 }
 //combo 1: 0.3f-sparsification Math.min mean+stdDev
 //combo 2: 0.4f-sparsification Math.max mean+1.5*stdDev

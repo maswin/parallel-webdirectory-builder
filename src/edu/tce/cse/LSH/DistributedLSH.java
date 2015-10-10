@@ -10,6 +10,7 @@ import java.util.Random;
 import java.util.Set;
 
 import edu.tce.cse.document.DocNode;
+import edu.tce.cse.model.Centroid;
 import edu.tce.cse.model.Data;
 import mpi.MPI;
 import mpi.Op;
@@ -23,33 +24,35 @@ public class DistributedLSH {
 	public DistributedLSH(int dimensions){
 		pairPoints = new ArrayList<Data>();
 		flag = new HashSet<String>();
-		lsh = new LSH(dimensions);
+		lsh = new LSH(dimensions, 10, 5);
 	}
-	
-	public void setR(int r){
-		lsh.setR(r);
+
+	public void hash(List<Centroid> nodeList){
+		hash(nodeList.toArray(new Centroid[nodeList.size()]));		
 	}
-	public void hash(List<DocNode> nodeList){
-		hash(nodeList.toArray(new DocNode[nodeList.size()]));		
+
+	public void printLSHParams(){
+		System.out.println("Num of hash functions : "+lsh.l);
+		System.out.println("Code depth : "+lsh.K);
 	}
-	public void hash(DocNode[] nodeList){
+	public void hash(Centroid[] nodeList){
+		
 		if(MPI.COMM_WORLD.Rank()==0){
-			System.out.println("Hashing Details\nNum Of Hash Function : "
-					+lsh.numOfFunctions+"\nCode Depth : "+lsh.K);
+			printLSHParams();
 		}
 		if(nodeList.length<=0){
 			System.out.println("List is Empty");
 			return;
 		}
-		pairPoints = new ArrayList<Data>();
+		this.pairPoints = new ArrayList<Data>();
 
-		Map<String, Set<DocNode>> localBuckets[] = new HashMap[1];
-		Map<String, Set<DocNode>> globalBuckets[] = new HashMap[1];// = new HashMap<String, Set<DocNode>>();
+		Map<String, Set<Centroid>> localBuckets[] = new HashMap[1];
+		Map<String, Set<Centroid>> globalBuckets[] = new HashMap[1];// = new HashMap<String, Set<DocNode>>();
 		Set bucket;
-		for(int i=0;i<lsh.getNumOfFunctions();i++){
-			localBuckets[0] = new HashMap<String, Set<DocNode>>();
-			for(DocNode node : nodeList){
-				String hash = lsh.hash(i, node.signature);
+		for(int i=0;i<lsh.l;i++){
+			localBuckets[0] = new HashMap<String, Set<Centroid>>();
+			for(Centroid node : nodeList){
+				String hash = lsh.hash(i, node.tfIdf);
 				if(localBuckets[0].containsKey(hash)){
 					localBuckets[0].get(hash).add(node);
 				}else{
@@ -58,7 +61,7 @@ public class DistributedLSH {
 					localBuckets[0].put(hash, bucket);
 				}
 			}
-			globalBuckets[0] = new HashMap<String, Set<DocNode>>();
+			globalBuckets[0] = new HashMap<String, Set<Centroid>>();
 			MPI.COMM_WORLD.Reduce(localBuckets, 0, globalBuckets, 
 					0, 1, MPI.OBJECT, new Op(new BucketReducer(), true),0);
 
@@ -66,17 +69,15 @@ public class DistributedLSH {
 				processBucket(globalBuckets[0]);
 			}
 		}
-		//Change to setR
-		lsh.generateHashFunctions();
 	}
-	public void processBucket(Map<String, Set<DocNode>> bucket){
+	public void processBucket(Map<String, Set<Centroid>> bucket){
 
-		DocNode A,B;
+		Centroid A,B;
 		String flagCode;
-		for(Map.Entry<String, Set<DocNode>> entry : bucket.entrySet()){
-			List<DocNode> nodes = new ArrayList<>(entry.getValue());
+		for(Map.Entry<String, Set<Centroid>> entry : bucket.entrySet()){
+			List<Centroid> nodes = new ArrayList<>(entry.getValue());
 			Collections.sort(nodes, (a,b) -> {
-				if(a.nodeID < b.nodeID){
+				if(a.clusterId < b.clusterId){
 					return +1;
 				}else{
 					return -1;
@@ -86,7 +87,7 @@ public class DistributedLSH {
 				for(int j=i+1;j<nodes.size();j++){
 					A = nodes.get(i);
 					B = nodes.get(j);
-					flagCode = ""+A.nodeID+B.nodeID;
+					flagCode = ""+A.clusterId+B.clusterId;
 					if(!flag.contains(flagCode)){
 						flag.add(flagCode);
 						Data data = new Data(A,B);
@@ -98,6 +99,7 @@ public class DistributedLSH {
 	}
 
 	public List<Data> getPairPoints(){
+		System.out.println("Size :"+pairPoints.size());
 		return pairPoints;
 	}
 }
