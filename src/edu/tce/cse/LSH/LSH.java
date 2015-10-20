@@ -29,9 +29,9 @@ public class LSH {
 	}
 
 	public void generateSuperBit(){
-		System.out.println("New Super Bit Generated");
 		this.sb = new SuperBit[l];
 		if(MPI.COMM_WORLD.Rank()==0){
+			System.out.println("New Super Bit Generated");
 			for(int i=0; i<l; i++){
 				sb[i] = new SuperBit(this.dimensions, this.K, 1);
 			}

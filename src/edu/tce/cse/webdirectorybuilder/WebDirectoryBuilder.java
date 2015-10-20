@@ -1,5 +1,10 @@
 package edu.tce.cse.webdirectorybuilder;
 
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.InputStream;
+import java.io.OutputStream;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -21,10 +26,11 @@ public class WebDirectoryBuilder {
 	public static final String inputFolder = "TestDocuments";
 	
 	
-	public static void main(String args[]){
+	public static void main(String args[]) throws FileNotFoundException{
 		//fix threshold for number of clusters
 				int k = 1; 
 				//gather Clusters (initial) from all processors
+				long startTime = System.currentTimeMillis();
 				MPI.Init(args);
 				int id = MPI.COMM_WORLD.Rank();
 				int size = MPI.COMM_WORLD.Size();
@@ -93,11 +99,47 @@ public class WebDirectoryBuilder {
 				}
 				
 				if(MPI.COMM_WORLD.Rank()==0){
-					new TreeView(hc.mergeAllCluster()).setVisible(true);
+					long endTime = System.currentTimeMillis();
+					System.out.println("Time Taken: "+(endTime-startTime));
+					Cluster root = hc.mergeAllCluster();
+					new TreeView(root).setVisible(true);
+					
+					//Print Result to File
+					PrintWriter out = new PrintWriter(new File("output.txt"));
+					generateOutputFile(out, root, 0);
+					out.close();
 				}
 				MPI.Finalize();
+				
 	}
 	
+	//Generate Output File
+	public static void generateOutputFile(PrintWriter out, Cluster root, int indent){
+		for(int i=0;i<indent;i++){
+			out.print("\t");
+		}
+		out.println(root.files.toString());
+		if(root.getChildren() != null && root.getChildren().size()>0){
+			for(Node child : root.getChildren()){
+				generateOutputFile(out, (Cluster) child, indent+1);
+			}
+		}
+		/*if(root.getChildren() != null && root.getChildren().size()>0){
+			for(int i=0;i<indent;i++){
+				out.print(" ");
+			}
+			out.println("Cluster "+ root.nodeID);
+			for(Node child : root.getChildren()){
+				generateOutputFile(out, (Cluster) child, indent+1);
+			}
+		}else{
+			for(int i=0;i<indent;i++){
+				out.print(" ");
+			}
+			out.print("Cluster "+ root.nodeID+" ");
+			out.println(root.files.toString());
+		}*/
+	}
 	//Testing Purpose Prints
 	public static void printComponent(List<List<DocNode>> components){
 		MPI.COMM_WORLD.Barrier();

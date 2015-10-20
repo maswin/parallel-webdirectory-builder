@@ -19,13 +19,13 @@ public class Cluster extends Node implements Serializable{
 	List<DocNode> repPoints;
 	Centroid centroid;
 	float weightedDegreeInMST;
-	public String files;
+	public StringBuilder files;
 	public Cluster(long id, List<? extends Node> nodes){
 		super(id);
 		children = new ArrayList<Node>();
 		repPoints = new ArrayList<DocNode>();
 		centroid = null;
-		files = "";
+		files = new StringBuilder();
 		try{
 			//merging DocNode objects to form an initial cluster
 			if(nodes.get(0) instanceof DocNode){
@@ -53,12 +53,14 @@ public class Cluster extends Node implements Serializable{
 		Cluster c;
 		for(int i=0; i<children.size(); i++){
 			c = ((Cluster)(children.get(i)));
-			this.files = this.files+" "+c.files;
+			this.files.append(";");
+			this.files.append(c.files);
 		}
 	}
 	void addFiles(List<DocNode> nodes){
 		for(DocNode node : nodes){
-			this.files = this.files+" "+node.fileName;
+			this.files.append(";");
+			this.files.append(node.fileName);
 		}
 	}
 	public void changeNodeID(long id){
@@ -69,6 +71,7 @@ public class Cluster extends Node implements Serializable{
 		for(DocNode r: repPoints){
 			r.setClusterID(id);
 		}
+
 	}
 	public List<DocNode> getRepPoints() {
 		return repPoints;
@@ -201,6 +204,7 @@ public class Cluster extends Node implements Serializable{
         for (int col = 0; col < matrix.columns(); col++) {
             centroidTfIdf[col] = matrix.viewColumn(col).zSum();
         }
+        
         Centroid centroid = new Centroid(this.nodeID, centroidTfIdf);
         this.centroid = centroid;
         return this.centroid;

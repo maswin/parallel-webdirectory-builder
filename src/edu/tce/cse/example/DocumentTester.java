@@ -2,6 +2,7 @@ package edu.tce.cse.example;
 
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -69,15 +70,22 @@ public class DocumentTester {
 		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
 		List<DocNode> docList=new ArrayList<>();
 
+		
 		docList = DI.getDocNodeList();
 
+		/*for(DocNode d : docList){
+			System.out.println("File Neme : "+d.fileName);
+			System.out.println("Actual Tf-Idf Vector : "+Arrays.toString(d.tfIdf));
+			System.out.println("Reduced Tf-Idf Vector : "+Arrays.toString(d.reducedTfIdf));
+			System.out.println();
+		}*/
 		//Testing
 		printMatrix(docList);
 
 		MPI.Finalize();
 
 	}
-	private static void printMatrix(List<DocNode> docList){
+	/*private static void printMatrix(List<DocNode> docList){
 		double sim = 0.0;
 		int id = MPI.COMM_WORLD.Rank();
 		int size = MPI.COMM_WORLD.Size();
@@ -106,5 +114,26 @@ public class DocumentTester {
 				System.out.println("");
 			}
 		}
+	}*/
+	private static void printMatrix(List<DocNode> docList){
+		double sim = 0.0;
+		int id = MPI.COMM_WORLD.Rank();
+		int size = MPI.COMM_WORLD.Size();
+		MPI.COMM_WORLD.Barrier();
+
+		for(int i=0;i<size;i++){
+			MPI.COMM_WORLD.Barrier();
+			if(id==i){
+
+				System.out.println("Processor "+i);
+				System.out.println("Documents Assigned : ");
+				for(int j = 0;j<docList.size();j++){
+						System.out.println(docList.get(j).fileName);
+				}
+				System.out.println("Total Number of Documents Assigned : "+docList.size());
+				System.out.println("");
+			}
+		}
 	}
+
 }

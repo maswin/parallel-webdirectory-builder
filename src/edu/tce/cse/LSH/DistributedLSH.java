@@ -18,13 +18,14 @@ import mpi.Op;
 public class DistributedLSH {
 
 	private List<Data> pairPoints;
+	private int dimensions;
 	private Set<String> flag;
 	private LSH lsh;
 	
 	public DistributedLSH(int dimensions){
 		pairPoints = new ArrayList<Data>();
 		flag = new HashSet<String>();
-		lsh = new LSH(dimensions, 10, 5);
+		this.dimensions = dimensions;
 	}
 
 	public void hash(List<Centroid> nodeList){
@@ -36,7 +37,7 @@ public class DistributedLSH {
 		System.out.println("Code depth : "+lsh.K);
 	}
 	public void hash(Centroid[] nodeList){
-		
+		lsh = new LSH(dimensions, 12, 4);
 		if(MPI.COMM_WORLD.Rank()==0){
 			printLSHParams();
 		}
@@ -99,7 +100,7 @@ public class DistributedLSH {
 	}
 
 	public List<Data> getPairPoints(){
-		System.out.println("Size :"+pairPoints.size());
+		System.out.println("Reduced No. of Comparisions :"+pairPoints.size());
 		return pairPoints;
 	}
 }

@@ -59,7 +59,7 @@ public class TreeView extends JFrame {
 			}
 		}else{
 			DefaultMutableTreeNode tmp;
-			StringTokenizer st = new StringTokenizer(topicTreeRoot.files);
+			StringTokenizer st = new StringTokenizer(topicTreeRoot.files.toString(),";");
 			while(st.hasMoreTokens()){
 				tmp = new DefaultMutableTreeNode(
 						st.nextToken());

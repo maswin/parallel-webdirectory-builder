@@ -36,9 +36,13 @@ public class DistributedLSHTester {
 			nameMap.put(d.nodeID, d.fileName);
 			cList.add(c);
 		}
-		
+		System.out.println("LSH Testing :");
+		System.out.println("No. of Data points : "+docList.size());
+		System.out.println("Actual number of comparisions : "+(docList.size()*docList.size()));
+		System.out.println("Performing Hashing...");
 		DistributedLSH dLSH = new DistributedLSH(cList.get(0).tfIdf.length);
 		dLSH.hash(cList);
+		System.out.println("Comparision Points : ");
 		for(Data d : dLSH.getPairPoints()){
 			System.out.println(nameMap.get(d.a)+" "+nameMap.get(d.b));
 		}
