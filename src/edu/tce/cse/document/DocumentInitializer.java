@@ -59,7 +59,7 @@ public class DocumentInitializer {
         localDocumentFrequency[0] = new LinkedHashMap();
         
         for (int i = startIndex; i <= endIndex; i++) {
-            Document document = new Document(i, files.get(i).getAbsolutePath(), files.get(i).getName());
+            Document document = new Document(i, files.get(i).getAbsolutePath(), files.get(i).getName().trim());
             document.parseDocument(localDocumentFrequency[0]);
             documentList.add(document);
         }

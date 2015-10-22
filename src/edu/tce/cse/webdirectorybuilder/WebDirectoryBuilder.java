@@ -28,7 +28,7 @@ public class WebDirectoryBuilder {
 	
 	public static void main(String args[]) throws FileNotFoundException{
 		//fix threshold for number of clusters
-				int k = 1; 
+				int k = 8; 
 				//gather Clusters (initial) from all processors
 				long startTime = System.currentTimeMillis();
 				MPI.Init(args);
@@ -116,7 +116,7 @@ public class WebDirectoryBuilder {
 	//Generate Output File
 	public static void generateOutputFile(PrintWriter out, Cluster root, int indent){
 		for(int i=0;i<indent;i++){
-			out.print("\t");
+			out.print(" ");
 		}
 		out.println(root.files.toString());
 		if(root.getChildren() != null && root.getChildren().size()>0){

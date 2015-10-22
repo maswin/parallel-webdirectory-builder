@@ -65,8 +65,7 @@ public class TreeView extends JFrame {
 						st.nextToken());
 				root.add(tmp);
 			}
-		}
-		
+		}	
 		
 		return root;
 	}
