@@ -7,5 +7,6 @@
 	<classpathentry kind="lib" path="lib/mpj_lib/mpj.jar"/>
 	<classpathentry kind="lib" path="lib/parallelcolt-0.9.4.jar"/>
 	<classpathentry kind="lib" path="lib/colt.jar"/>
+	<classpathentry kind="lib" path="/home/aswin/workspace/parallel-webdirectory-builder/lib/kd.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>
