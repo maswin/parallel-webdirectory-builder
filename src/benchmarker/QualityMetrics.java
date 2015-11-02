@@ -1,5 +1,6 @@
 package benchmarker;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public class QualityMetrics {
@@ -21,6 +22,16 @@ public class QualityMetrics {
 		System.out.println("Cluster Purity :");
 		ClusterPurity cp = new ClusterPurity();
 		cp.ClusterPurity(hActual, hCalculated);
+		
+		List<MinCluster> actualList=new ArrayList();
+		List<MinCluster> calcList = new ArrayList();
+		for(List<MinCluster> l: hActual)
+			actualList.addAll(l);
+		for(List<MinCluster> l: hCalculated)
+			calcList.addAll(l);
+		RandIndex ri = new RandIndex();
+		System.out.println("RI = "+ri.findRandIndex(actualList, calcList));
+		
 		
 	}
 }
