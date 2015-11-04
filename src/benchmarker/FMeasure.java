@@ -30,7 +30,7 @@ public class FMeasure {
 		
 		return precision;
 	}
-	public double FMeasureByLevel(List<MinCluster> actual, List<MinCluster> calculated){
+	public double FMeasure(List<MinCluster> actual, List<MinCluster> calculated){
 		double fMeasure = 0d;
 		
 		int[][] confusionMatrix = new int[calculated.size()][actual.size()];
@@ -49,6 +49,10 @@ public class FMeasure {
 				if(confusionMatrix[i][j] > maxValue){
 					max = j;
 					maxValue = confusionMatrix[i][j];
+				}else if(confusionMatrix[i][j] == maxValue){
+					if(actual.get(j).files.size() < actual.get(max).files.size()){
+						max = j;
+					}
 				}
 			}
 			maxMatch[i] = max;
@@ -71,13 +75,13 @@ public class FMeasure {
 		return fMeasure;
 	}
 	
-	public void FMeasure(List<List<MinCluster>> actual, List<List<MinCluster>> calculated){
+	public void FMeasureByLevel(List<List<MinCluster>> actual, List<List<MinCluster>> calculated){
 		
 		double fMeasure = 0d;
 		double levelFMeasure = 0d;
 		int count = 0;
 		for(int i=0;i<actual.size() && i<calculated.size(); i++){
-			levelFMeasure = FMeasureByLevel(actual.get(i),calculated.get(i));
+			levelFMeasure = FMeasure(actual.get(i),calculated.get(i));
 			System.out.println("Level "+(i+1)+" : "+levelFMeasure);
 			fMeasure += levelFMeasure;
 			count++;

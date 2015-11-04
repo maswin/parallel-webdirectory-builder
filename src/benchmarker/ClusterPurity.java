@@ -6,7 +6,7 @@ import java.util.Set;
 
 public class ClusterPurity {
 
-	public double ClusterPurityByLevel(List<MinCluster> actual, List<MinCluster> calculated){
+	public double ClusterPurity(List<MinCluster> actual, List<MinCluster> calculated){
 		double purity = 0d;
 		
 		int[][] confusionMatrix = new int[calculated.size()][actual.size()];
@@ -36,13 +36,13 @@ public class ClusterPurity {
 		return purity;
 	}
 	
-	public void ClusterPurity(List<List<MinCluster>> actual, List<List<MinCluster>> calculated){
+	public void ClusterPurityByLevel(List<List<MinCluster>> actual, List<List<MinCluster>> calculated){
 		
 		double purity = 0d;
 		double levelPurity= 0d;
 		int count = 0;
 		for(int i=0;i<actual.size() && i<calculated.size(); i++){
-			levelPurity = ClusterPurityByLevel(actual.get(i),calculated.get(i));
+			levelPurity = ClusterPurity(actual.get(i),calculated.get(i));
 			System.out.println("Level "+(i+1)+" : "+levelPurity);
 			purity += levelPurity;
 			count++;

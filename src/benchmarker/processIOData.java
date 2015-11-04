@@ -117,6 +117,13 @@ public class processIOData {
 		getLevelsOfClustersUtil(hCluster, root);
 		return hCluster;	
 	}
+	//Generate All Clusters
+	public List<MinCluster>  getAllClusters(MinCluster root){
+		List<MinCluster> clusters = new ArrayList<MinCluster>();
+		getAllClustersUtil(clusters, root);
+		return clusters;	
+	}
+	
 	public void getLevelsOfClustersUtil(List<List<MinCluster>> hCluster, MinCluster root){
 		List<MinCluster> clusters;
 		//Assuming level i will get added before level i+1
@@ -128,6 +135,16 @@ public class processIOData {
 		clusters.add(root);
 		for(MinCluster child : root.children){
 			getLevelsOfClustersUtil(hCluster, child);
+		}
+	}
+	
+	public void getAllClustersUtil(List<MinCluster> clusters, MinCluster root){
+		if(root == null){
+			return;
+		}
+		clusters.add(root);
+		for(MinCluster child : root.children){
+			getAllClustersUtil(clusters, child);
 		}
 	}
 	
