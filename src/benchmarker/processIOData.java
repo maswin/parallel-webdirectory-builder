@@ -142,7 +142,9 @@ public class processIOData {
 		if(root == null){
 			return;
 		}
-		clusters.add(root);
+		if(root.level != 0){
+			clusters.add(root);
+		}
 		for(MinCluster child : root.children){
 			getAllClustersUtil(clusters, child);
 		}

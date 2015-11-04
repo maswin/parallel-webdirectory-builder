@@ -16,35 +16,48 @@ import edu.tce.cse.document.Document;
 import edu.tce.cse.util.SVDReducer;
 
 public class sampleData {
-	public static String documentDirectory = "report";
+	public static String documentDirectory = "TestDocuments";
 	private List<Document> documentList;
 	public sampleData(){
 		documentList = new ArrayList<Document>();
 		try {
-			InitializeDocuments();
+			List<File> files = new ArrayList<>();
+			parseDirectory(documentDirectory, files);
+			InitializeDocuments(files);
 		} catch (IOException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
 	}
-	private void InitializeDocuments() throws IOException{
+	public void parseDirectory(String documentDirectory, List files){
 		File inputDirectory = new File(documentDirectory);
-        File[] files = inputDirectory.listFiles();
+        File[] tmpFiles = inputDirectory.listFiles();
+        for(File f : tmpFiles){
+        	if(f.isDirectory()){
+        		parseDirectory(f.getAbsolutePath(), files);
+        	}else{
+        		files.add(f);
+        	}
+        }
+		
+	}
+	private void InitializeDocuments(List<File> files) throws IOException{
+
         
         Map<String, Integer> documentFrequency = new LinkedHashMap<String, Integer>();
-        
-        for (int i = 0; i < files.length; i++) {
-            Document document = new Document(i, files[i].getAbsolutePath(), files[i].getName());
+        File f;
+        for (int i = 0; i < files.size(); i++) {
+        	f = files.get(i);
+            Document document = new Document(i, f.getAbsolutePath(), f.getName());
             document.parseDocument(documentFrequency);
             documentList.add(document);
         }
         
-       /* for(Document doc : documentList){
-        	doc.calculateTfIdf(files.length, documentFrequency);
-        	doc.generateSignature();
+       for(Document doc : documentList){
+        	doc.calculateTfIdf(files.size(), documentFrequency);
         }
-        SVDReducer svd = new SVDReducer();
-        svd.reduceDocTfIdf(documentList);*/
+        //SVDReducer svd = new SVDReducer();
+        //svd.reduceDocTfIdf(documentList);
         
 	}
 	public List<Document> getSampleDoc() throws IOException{

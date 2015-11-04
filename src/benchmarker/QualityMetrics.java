@@ -1,14 +1,17 @@
 package benchmarker;
 
 import java.util.List;
+import java.util.Scanner;
 
 public class QualityMetrics {
 	public static void main(String args[]){
 		
+		Scanner sc = new Scanner(System.in);
 		//Get Data
 		processIOData po = new processIOData();
 		MinCluster actual = po.processInputData("TestDocuments");
-		MinCluster calculated = po.processOutputData("output.txt");
+		System.out.println("Enter Output File Name");
+		MinCluster calculated = po.processOutputData(sc.nextLine());
 		List<MinCluster> hActual = po.getAllClusters(actual);
 		List<MinCluster> hCalculated = po.getAllClusters(calculated);
 		

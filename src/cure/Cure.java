@@ -3,6 +3,9 @@ package cure;
 import java.io.*;
 import java.util.*;
 
+import edu.tce.cse.document.DocNode;
+import edu.tce.cse.example.sampleData;
+
 /**
  * CURE Clustering Algorithm
  * The algorithm follows the six steps as specified in the original paperwork by Guha et. al.
@@ -13,7 +16,6 @@ import java.util.*;
 public class Cure {
 	
 	/** The Input Parameters to the algorithm **/
-	private String dataFile;
 	private int totalNumberOfPoints;
 	private int numberOfClusters;
 	private int minRepresentativeCount;
@@ -22,6 +24,8 @@ public class Cure {
 	private int numberOfPartitions;
 	private int reducingFactorForEachPartition;
 	
+	//Added by Aswin
+	int tfIdfSize = 0;
 	
 	private Point[] dataPoints;
 	private ArrayList outliers;
@@ -31,20 +35,30 @@ public class Cure {
 	private Hashtable integerTable;
 	
 
-	public Cure(String[] args) {
+	public Cure(String[] args) throws IOException {
 
 		System.out.println("CURE Clustering Algorithm");
 		System.out.println("-------------------------\n");
 		
-		initializeParameters(args);
-		readDataPoints();
+		//Time Calc
+		long startTimeData = System.currentTimeMillis();
 		
-		long beginTime = System.currentTimeMillis();
+		sampleData s = new sampleData();
+		initializeParameters(args, s);
+		readDataPoints(s);
+		System.out.println("Data Received");
+
+		//Time Calc
+		long startTimeExec = System.currentTimeMillis();
 
 		int sampleSize = calculateSampleSize();
 		ArrayList randomPointSet = selectRandomPoints(sampleSize);
+		System.out.println("Random Points selected");
 		ArrayList[] partitionedPointSet = partitionPointSet(randomPointSet);
+		System.out.println("Partitioned");
 		ArrayList subClusters = clusterSubPartitions(partitionedPointSet);
+		System.out.println("Sub Clusters :");
+		displayClusters(subClusters);
 		if(reducingFactorForEachPartition >= 10) {
 			eliminateOutliersFirstStage(subClusters, 1);
 		}
@@ -53,24 +67,29 @@ public class Cure {
 		}
 		ArrayList clusters = clusterAll(subClusters);
 		clusters = labelRemainingDataPoints(clusters);
-
-		long time = System.currentTimeMillis() - beginTime;
 		
-		System.out.println("The Algorithm took " + time + " milliseconds to complete.");
-		System.out.println("\nPlease Use GNUPlot to show the clusters by rendering the file using \"load plotcure.txt\" on GNUPlot Console");
 		
+		
+		System.out.println("Final Clusters :");
+		displayClusters(clusters);
+		
+		long endTime = System.currentTimeMillis();
+		System.out.println("Data Processing + Execution Time: "+(endTime-startTimeData));
+		System.out.println("Execution Time: "+(endTime-startTimeExec));
 		showClusters(clusters);
 	}
+	
 	
 	/**
 	 * Initializes the Parameters
 	 * @param args The Command Line Argument
+	 * @throws IOException 
 	 */
-	private void initializeParameters(String[] args) {
+	private void initializeParameters(String[] args, sampleData s) throws IOException {
 		if(args.length == 0) {
-			dataFile = "data.txt";
-			totalNumberOfPoints = 40;
-			numberOfClusters = 5;
+			//dataFile = "data.txt";
+			totalNumberOfPoints = s.getSampleDocNodes().size();
+			numberOfClusters = 6;
 			minRepresentativeCount = 6;
 			shrinkFactor = 0.5;
 			requiredRepresentationProbablity = 0.1;
@@ -78,7 +97,7 @@ public class Cure {
 			reducingFactorForEachPartition = 2;
 		}
 		else {
-			dataFile = args[1];
+			//dataFile = args[1];
 			totalNumberOfPoints = Integer.parseInt(args[2]);
 			numberOfClusters = Integer.parseInt(args[3]);
 			minRepresentativeCount = Integer.parseInt(args[4]);
@@ -87,6 +106,7 @@ public class Cure {
 			numberOfPartitions = Integer.parseInt(args[7]);
 			reducingFactorForEachPartition = Integer.parseInt(args[8]);
 		}
+		tfIdfSize = s.getSampleDocNodes().get(0).tfIdf.length;
 		dataPoints = new Point[totalNumberOfPoints];
 		dataPointsMap = new HashMap();
 		currentRepAdditionCount = totalNumberOfPoints;
@@ -97,23 +117,17 @@ public class Cure {
 	/**
 	 * Reads the data points from file
 	 */
-	private void readDataPoints() {
+	private void readDataPoints(sampleData s) {
 		int pointIndex = 0;
 		FileReader fr = null;
 		try {
-			fr = new FileReader(dataFile);
-			BufferedReader in = new BufferedReader(fr);
-			String data = in.readLine();
-			while(data != null) {
-				StringTokenizer st = new StringTokenizer(data);
-				double x = Double.parseDouble(st.nextToken());
-				double y = Double.parseDouble(st.nextToken());
-				dataPoints[pointIndex] = new Point(x,y,pointIndex);
+			List<DocNode> docNodes = s.getSampleDocNodes();
+			for(DocNode d : docNodes){
+				dataPoints[pointIndex] = new Point(d.tfIdf,pointIndex,d.fileName);
 				dataPointsMap.put(pointIndex, dataPoints[pointIndex]);
 				pointIndex++;
-				data = in.readLine();
 			}
-			in.close();
+			
 		} catch(Exception e){
 			System.out.println("Data point Reading Error");
 			debug(e);
@@ -138,7 +152,7 @@ public class Cure {
 	private ArrayList selectRandomPoints(int sampleSize) {
 		ArrayList randomPointSet = new ArrayList();
 		Random random = new Random();
-		for(int i=0; i<sampleSize; i++) {
+		for(int i=0; i<sampleSize && i < totalNumberOfPoints; i++) {
 			int index = random.nextInt(totalNumberOfPoints);
 			if(integerTable.containsKey(index)) {
 				i--; continue;
@@ -224,7 +238,7 @@ public class Cure {
 	 * ArrayList Set of clusters
 	 */
 	private ArrayList clusterAll(ArrayList clusters) {
-		ClusterSet clusterSet = new ClusterSet(clusters, numberOfClusters, minRepresentativeCount, shrinkFactor, dataPointsMap, true);
+		ClusterSet clusterSet = new ClusterSet(clusters, numberOfClusters, minRepresentativeCount, shrinkFactor, dataPointsMap, true, tfIdfSize);
 		return clusterSet.mergeClusters();
 	}
 	
@@ -283,15 +297,49 @@ public class Cure {
 		return ++currentRepAdditionCount;
 	}
 	
-	public void showClusters(ArrayList clusters) {
-		for(int i=0; i<numberOfClusters; i++) {
+	public void showClusters(ArrayList clusters) throws FileNotFoundException {
+		PrintWriter out = new PrintWriter(new File("CureOutput.txt"));
+		
+		StringBuilder files = new StringBuilder("");
+		
+		for(int i=0; i<numberOfClusters; i++) {			
 			Cluster cluster = (Cluster)clusters.get(i);
-			logCluster(cluster, "cluster" + i);
+			for(int j=0; j<cluster.pointsInCluster.size(); j++) {
+				Point p = (Point)cluster.pointsInCluster.get(j);
+				files.append(p.fileName+";");
+			}
 		}
+		//System.out.println(files.toString());
+		out.println(files.toString());		
+		
+		for(int i=0; i<numberOfClusters; i++) {	
+			files = new StringBuilder(" ");
+			Cluster cluster = (Cluster)clusters.get(i);
+			for(int j=0; j<cluster.pointsInCluster.size(); j++) {
+				Point p = (Point)cluster.pointsInCluster.get(j);
+				files.append(p.fileName+";");
+			}
+			//System.out.println(files.toString());
+			out.println(files.toString());
+		}
+		
+		
+		out.close();
 		logOutlier();
-		logPlotScript(clusters.size());
+		//logPlotScript(clusters.size());
 	}
 	
+	public void displayClusters(ArrayList clusters){
+		for(int i=0; i<numberOfClusters; i++) {
+			Cluster cluster = (Cluster)clusters.get(i);
+			System.out.println("Cluster "+(i+1));
+			for(int j=0; j<cluster.pointsInCluster.size(); j++) {
+				Point p = (Point)cluster.pointsInCluster.get(j);
+				System.out.print(p.fileName + "\n");
+			}
+			System.out.println();
+		}
+	}
 	private BufferedWriter getWriterHandle(String filename) {
 		BufferedWriter out = null;
 		try {
@@ -315,10 +363,10 @@ public class Cure {
 	private void logCluster(Cluster cluster, String filename) {
 		BufferedWriter out = getWriterHandle(filename);
 		try {
-			out.write("#\tX\tY\n");
+			//out.write("#\tX\tY\n");
 			for(int j=0; j<cluster.pointsInCluster.size(); j++) {
 				Point p = (Point)cluster.pointsInCluster.get(j);
-				out.write("\t" + p.x + "\t" + p.y + "\n");
+				out.write(p.fileName + "\n");
 			}
 		} catch(Exception e){
 			debug(e);
@@ -329,10 +377,10 @@ public class Cure {
 	private void logOutlier() {
 		BufferedWriter out = getWriterHandle("outliers");
 		try {
-			out.write("#\tX\tY\n");
+			//out.write("#\tX\tY\n");
 			for(int j=0; j<outliers.size(); j++) {
 				Point p = (Point)outliers.get(j);
-				out.write("\t" + p.x + "\t" + p.y + "\n");
+				out.write(p.fileName + "\n");
 			}
 		} catch(Exception e){
 			debug(e);
@@ -340,32 +388,7 @@ public class Cure {
 		closeWriterHandle(out);
 	}
 	
-	private void logPlotScript(int totalClusters) {
-		BufferedWriter out = getWriterHandle("plotcure.txt");
-		try {
-			setPlotStyle(out);
-			out.write("plot");
-			for(int i = 0; i< totalClusters; i++) {
-				out.write(" \"cluster" + i + "\",");
-			}
-			out.write(" \"outliers\"");
-		} catch(Exception e){
-			debug(e);
-		}
-		closeWriterHandle(out);
-	}
-	
-	private void setPlotStyle(BufferedWriter out) {
-		try {
-			out.write("reset\n");
-			out.write("set size ratio 2\n");
-			out.write("unset key\n");
-			out.write("set title \"CURE\"\n");
-		} catch(Exception e) {
-			debug(e);
-		}
-	}
-	public static void main(String args[]){
+	public static void main(String args[]) throws IOException{
 		Cure c = new Cure(args);
 	}
 }

@@ -42,12 +42,12 @@ public class ClusterSet {
 	 * @param numberOfRepInCluster Number of Representative Points for every Cluster
 	 * @param shrinkFactor Shrink Factor for a Cluster
 	 */
-	public void initializeContainers(int numberOfPoints, int clustersToBeFound, int numberOfRepInCluster, double shrinkFactor) {
+	public void initializeContainers(int numberOfPoints, int clustersToBeFound, int numberOfRepInCluster, double shrinkFactor, int tfIdfSize) {
 		this.numberOfPoints = numberOfPoints;
 		points = new Point[numberOfPoints];
 		cc = new CompareCluster();
 		heap = new PriorityQueue(1000,cc);
-		kdtree = new KDTree(2);
+		kdtree = new KDTree(tfIdfSize);
 		this.clustersToBeFound = clustersToBeFound;
 		this.numberofRepInCluster = numberOfRepInCluster;
 		this.shrinkFactor = shrinkFactor;
@@ -64,7 +64,7 @@ public class ClusterSet {
 	 * @param dataPointMap Data Point Map
 	 * @param clusterMerge True
 	 */
-	public ClusterSet(ArrayList clusters, int numberOfClusters, int numberOfRepInCluster, double shrinkFactor, HashMap dataPointMap, boolean clusterMerge) {
+	public ClusterSet(ArrayList clusters, int numberOfClusters, int numberOfRepInCluster, double shrinkFactor, HashMap dataPointMap, boolean clusterMerge, int tfIdfSize) {
 		numberOfPoints = 0;
 		for(int i = 0; i < clusters.size(); i++) {
 			numberOfPoints += ((Cluster)clusters.get(i)).getClusterSize();
@@ -72,7 +72,7 @@ public class ClusterSet {
 		points = new Point[numberOfPoints];
 		cc = new CompareCluster();
 		heap = new PriorityQueue(1000,cc);
-		kdtree = new KDTree(2);
+		kdtree = new KDTree(tfIdfSize);
 		int pointIndex = 0;
 		
 		if(clusterMerge) {
@@ -111,7 +111,8 @@ public class ClusterSet {
 	 * @param dataPointMap The HashMap to store the data points
 	 */
 	public ClusterSet(ArrayList dataPoints, int numberOfClusters, int numberOfRepInCluster, double shrinkFactor, HashMap dataPointMap) {
-		initializeContainers(dataPoints.size(), numberOfClusters, numberOfRepInCluster, shrinkFactor);
+		int tfIdfSize = ((Point)dataPoints.get(0)).tfIdf.length;
+		initializeContainers(dataPoints.size(), numberOfClusters, numberOfRepInCluster, shrinkFactor, tfIdfSize);
 		initializePoints(dataPoints,dataPointMap);
 		buildKDTree();
 		buildHeap();
@@ -167,11 +168,11 @@ public class ClusterSet {
 	 * Builds the KD Tree to store the data points 
 	 */
 	public void buildKDTree() {
-		for(Integer i=0; i<numberOfPoints; i++) {
+		for(Integer i=0; i<numberOfPoints; i++) {		
 			try {
 				kdtree.insert(points[i].toDouble(), points[i].index);
 			} catch(Exception e) {
-				debug(e);
+				//debug(e);
 			}
 		}
 	}
@@ -188,7 +189,7 @@ public class ClusterSet {
 			cluster.pointsInCluster.add(points[i]);
 			int nearestPoint = getNearestNeighbour(points[i]);
 			Point nearest = (Point)dataPointMap.get(nearestPoint);
-			if(points[i]==null)
+			if(nearest==null)
 				System.out.println("err");
 			cluster.distanceFromClosest = points[i].calcDistanceFromPoint(nearest);	//changed here from indexing to hashmap
 			cluster.closestClusterRep.add(nearestPoint);
@@ -306,6 +307,7 @@ public class ClusterSet {
 		}
 	}
 	
+	//Change made by Aswin
 	/**
 	 * Computes the mean point of the cluster
 	 * @param cluster Cluster
@@ -314,12 +316,23 @@ public class ClusterSet {
 	 */
 	public Point computeMeanOfCluster(Cluster cluster) {
 		Point point = new Point();
-		for(int i=0; i<cluster.pointsInCluster.size(); i++) {
-			point.x += ((Point)cluster.pointsInCluster.get(i)).x;
-			point.y += ((Point)cluster.pointsInCluster.get(i)).y;
+		//Find size
+		int tfIdfSize = ((Point)cluster.pointsInCluster.get(0)).tfIdf.length;
+		//Initialize to zero
+		point.tfIdf = new double[tfIdfSize];
+		for(int j=0;j<tfIdfSize;j++){
+			point.tfIdf[j] += 0;
 		}
-		point.x /= cluster.pointsInCluster.size();
-		point.y /= cluster.pointsInCluster.size();
+		//Add all tfIdf
+		for(int i=0; i<cluster.pointsInCluster.size(); i++) {
+			for(int j=0;j<tfIdfSize;j++){
+				point.tfIdf[j] += ((Point)cluster.pointsInCluster.get(i)).tfIdf[j];
+			}
+		}
+		//Average it out
+		for(int j=0;j<tfIdfSize;j++){
+			point.tfIdf[j] /= cluster.pointsInCluster.size();
+		}
 		return point;
 	}
 	
@@ -359,12 +372,15 @@ public class ClusterSet {
 			}
 			tempset.add(maxPoint);
 		}
-		
+		//Changed by Aswin
 		for(int i=0; i<tempset.size(); i++) {
 			Point p = (Point) tempset.get(i);
 			Point rep = new Point();
-			rep.x = p.x + shrinkFactor*(mean.x - p.x);
-			rep.y = p.y + shrinkFactor*(mean.y - p.y);
+			int tfIdfSize = p.tfIdf.length;
+			rep.tfIdf = new double[tfIdfSize];
+			for(int j=0;j<tfIdfSize;j++){
+				rep.tfIdf[j] = p.tfIdf[j] + shrinkFactor*(mean.tfIdf[j] - p.tfIdf[j]);
+			}
 			//rep.index = newPointCount++;
 			rep.index = Cure.getCurrentRepCount();
 			newCluster.rep.add(rep);
@@ -408,7 +424,7 @@ public class ClusterSet {
 	 * @param e Exception e
 	 */
 	public void debug(Exception e) {
-		//e.printStackTrace(System.out);
+		e.printStackTrace(System.out);
 	}
 	
 	/**
@@ -421,10 +437,10 @@ public class ClusterSet {
 		try {
 			fw = new FileWriter(filename, true);
 			BufferedWriter out = new BufferedWriter(fw);
-			out.write("#\tX\tY\n");
+			//out.write("#\tX\tY\n");
 			for(int j=0; j<cluster.pointsInCluster.size(); j++) {
 				Point p = (Point)cluster.pointsInCluster.get(j);
-				out.write("\t" + p.x + "\t" + p.y + "\n");
+				out.write(p.fileName + "\n");
 			}
 			out.flush();
 			fw.close();

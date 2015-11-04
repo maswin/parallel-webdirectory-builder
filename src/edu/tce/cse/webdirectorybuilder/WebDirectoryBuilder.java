@@ -28,9 +28,10 @@ public class WebDirectoryBuilder {
 	
 	public static void main(String args[]) throws FileNotFoundException{
 		//fix threshold for number of clusters
-				int k = 8; 
+				int k = 6; 
 				//gather Clusters (initial) from all processors
-				long startTime = System.currentTimeMillis();
+				//Time Calc
+				long startTimeData = System.currentTimeMillis();
 				MPI.Init(args);
 				int id = MPI.COMM_WORLD.Rank();
 				int size = MPI.COMM_WORLD.Size();
@@ -40,8 +41,10 @@ public class WebDirectoryBuilder {
 
 				List<DocNode> nodeList = hc.preprocess();
 				System.out.println("Processor "+MPI.COMM_WORLD.Rank()+" ---Data Received---");
+				//Time Calc
+				long startTimeExec = System.currentTimeMillis();
+				
 				DistributedLSH dLSH = new DistributedLSH(nodeList.get(0).tfIdf.length);
-
 				hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory);
 				
 				int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
@@ -100,8 +103,10 @@ public class WebDirectoryBuilder {
 				
 				if(MPI.COMM_WORLD.Rank()==0){
 					long endTime = System.currentTimeMillis();
-					System.out.println("Time Taken: "+(endTime-startTime));
+					System.out.println("Data Processing + Execution Time: "+(endTime-startTimeData));
+					System.out.println("Execution Time: "+(endTime-startTimeExec));
 					Cluster root = hc.mergeAllCluster();
+					//GUI
 					new TreeView(root).setVisible(true);
 					
 					//Print Result to File

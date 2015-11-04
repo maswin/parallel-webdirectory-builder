@@ -1,33 +1,49 @@
 package cure;
 import java.util.StringTokenizer;
 
+import cern.colt.matrix.tdouble.DoubleMatrix1D;
+import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
+import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
+import edu.tce.cse.document.DocNode;
+
 /**
  * Represents a Point Class. Also stores the KD Tree index for search.
  * @version 1.0
  * @author jmishra
  */
 public class Point {
-	public double x;
-	public double y;
+	public double[] tfIdf;
 	public int index;
+	public String fileName;
 	
 	public Point() {
+		this.fileName = "Temp File";	
 	}
 	
-	public Point(double x, double y, int index) {
-		this.x = x;
-		this.y = y;
+	public Point(double[] tfIdf, int index, String fileName) {
+		this.tfIdf = tfIdf;
 		this.index = index;
+		this.fileName = fileName;
 	}
 	
+	/*public double[] copyTfIdf(double[] tfIdf){
+		/*double[] tmpTfIdf = new double[tfIdf.length];
+		for(int i=0;i<tfIdf.length;i++){
+			tmpTfIdf[i] = tfIdf[i];
+		}
+		return tmpTfIdf;
+		return tfIdf;
+	}*/
 	public Point(Point point) {
-		this.x = point.x;
-		this.y = point.y;
+		
+		this.tfIdf = point.tfIdf;
+		this.fileName = "Temp File";
+		//Source code didn't do this
+		//this.index = point.index;
 	}
 	
 	public double[] toDouble() {
-		double[] xy = {x,y};
-		return xy; 
+		return this.tfIdf; 
 	}
 	
 	public static Point parseString(String str) {
@@ -36,6 +52,16 @@ public class Point {
 		return point;
 	}
 	
+	public float findCosSimilarity(Point t){
+
+		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.tfIdf);
+        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(t.tfIdf);
+
+        DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
+        
+        return (float) (vector1.zDotProduct(vector2) / 
+                (algebra.norm2(vector1)*algebra.norm2(vector2)));
+	}
 	/**
 	 * Calculates the Euclidean Distance from a Point t
 	 * @param t Point t
@@ -43,14 +69,19 @@ public class Point {
 	 * double Euclidean Distance from a Point t
 	 */
 	public double calcDistanceFromPoint(Point t) {
-		return Math.sqrt(Math.pow(x-t.x, 2) + Math.pow(y-t.y, 2));
+		return (1-findCosSimilarity(t));
 	}
 	
 	public String toString() {
-		return "{" + x + "," + y + "}";
+		return fileName;
 	}
 	
-	public boolean equals(Point t) {
-		return (x == t.x) && (y == t.y);
+	public boolean equals(Point t) {		
+		for(int i=0;i<this.tfIdf.length;i++){
+			if(this.tfIdf[i]!=t.tfIdf[i]){
+				return false;
+			}
+		}
+		return true;
 	}
 }
