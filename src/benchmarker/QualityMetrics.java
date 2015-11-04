@@ -26,14 +26,10 @@ public class QualityMetrics {
 		ClusterPurity cp = new ClusterPurity();
 		System.out.println(cp.ClusterPurity(hActual, hCalculated));
 		
-		List<MinCluster> actualList=new ArrayList();
-		List<MinCluster> calcList = new ArrayList();
-		for(List<MinCluster> l: hActual)
-			actualList.addAll(l);
-		for(List<MinCluster> l: hCalculated)
-			calcList.addAll(l);
+		//Rand Index
+		System.out.println("Rand Index :");
 		RandIndex ri = new RandIndex();
-		System.out.println("RI = "+ri.findRandIndex(actualList, calcList));
+		System.out.println("RI = "+ri.findRandIndex(hActual, hCalculated));
 		
 		
 	}
