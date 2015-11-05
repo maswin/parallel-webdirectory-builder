@@ -71,8 +71,9 @@ public class DocumentInitializer {
         
         //System.out.println(this.processorID+" "+globalDocumentFrequency[0].keySet().size());
         
-        documentList.stream().forEach(doc -> 
-        	doc.calculateTfIdf(N, globalDocumentFrequency[0]));
+        for(Document doc : documentList){
+        	doc.calculateTfIdf(N, globalDocumentFrequency[0]);
+        }
         
         generateDocNodeList(documentList);
 	}
