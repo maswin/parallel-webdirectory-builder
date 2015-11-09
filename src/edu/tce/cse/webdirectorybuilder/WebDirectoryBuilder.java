@@ -28,7 +28,7 @@ public class WebDirectoryBuilder {
 	
 	public static void main(String args[]) throws FileNotFoundException{
 		//fix threshold for number of clusters
-				int k = 6; 
+				int k = 5; 
 				//gather Clusters (initial) from all processors
 				//Time Calc
 				long startTimeData = System.currentTimeMillis();
