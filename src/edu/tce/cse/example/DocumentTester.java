@@ -67,11 +67,17 @@ public class DocumentTester {
 		int size = MPI.COMM_WORLD.Size();
 		System.out.println("Started Id : "+id+"/"+size);
 
+		long startTimeData = System.currentTimeMillis();
+		
 		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
 		List<DocNode> docList=new ArrayList<>();
 
 		
 		docList = DI.getDocNodeList();
+		
+		long endTimeData = System.currentTimeMillis();
+		
+		System.out.println(endTimeData-startTimeData);
 
 		/*for(DocNode d : docList){
 			System.out.println("File Neme : "+d.fileName);
@@ -80,12 +86,12 @@ public class DocumentTester {
 			System.out.println();
 		}*/
 		//Testing
-		printMatrix(docList);
+		//printMatrix(docList);
 
 		MPI.Finalize();
 
 	}
-	/*private static void printMatrix(List<DocNode> docList){
+	private static void printMatrix(List<DocNode> docList){
 		double sim = 0.0;
 		int id = MPI.COMM_WORLD.Rank();
 		int size = MPI.COMM_WORLD.Size();
@@ -105,7 +111,7 @@ public class DocumentTester {
 					             System.out.printf("%12s ", (docList.get(k).fileName.length() > 12) ? docList.get(k).fileName.substring(0, 12) : docList.get(k).fileName);
 
 							}else{
-								sim = docList.get(j).findEuclideanSimilarity(docList.get(k));
+								sim = docList.get(j).findCosSimilarity(docList.get(k));
 								System.out.printf("%.10f ",sim);
 							}
 						}
@@ -114,8 +120,8 @@ public class DocumentTester {
 				System.out.println("");
 			}
 		}
-	}*/
-	private static void printMatrix(List<DocNode> docList){
+	}
+	/*private static void printMatrix(List<DocNode> docList){
 		double sim = 0.0;
 		int id = MPI.COMM_WORLD.Rank();
 		int size = MPI.COMM_WORLD.Size();
@@ -134,6 +140,6 @@ public class DocumentTester {
 				System.out.println("");
 			}
 		}
-	}
+	}*/
 
 }

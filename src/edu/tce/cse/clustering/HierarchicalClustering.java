@@ -312,7 +312,7 @@ public class HierarchicalClustering {
 		/*for(Map.Entry<Long, Cluster> entry : this.clustersAtThisLevel.entrySet()){
 			clusterList.add(entry.getValue());
 		}*/
-		return new Cluster(0,(List<? extends Node>) clusterList);
+		return new Cluster(0,(List<? extends Node>) clusterList, 0.0);
 	}		
 
 }
