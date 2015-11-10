@@ -33,7 +33,10 @@ public class HierarchicalClustering {
 	public boolean[] flagToStop = new boolean[1];
 	int shareDetails[]=new int[2];
 	public double R;
-
+	public String inputFolder;
+	public HierarchicalClustering(String fName){
+		inputFolder = fName;
+	}
 	//to merge clusters to form the next level clusters, when given the results of LSH as input 
 	public void mergeClusters(List<Data> list, int startID){
 		List<Cluster> temp = new ArrayList<Cluster>();
@@ -92,7 +95,7 @@ public class HierarchicalClustering {
 			stdDev = 0;
 			for(List<Node> component: components){
 				if(component.size()>2){				
-					component.forEach(n -> System.out.print(n.nodeID+" "));
+					//component.forEach(n -> System.out.print(n.nodeID+" "));
 					Graph mst = graph.findMST(component);
 					float[] values = getMSTEdgeWeights(mst);
 					stats = new Statistics(values);
@@ -220,7 +223,7 @@ public class HierarchicalClustering {
 	//preprocessing steps
 	public List<DocNode> preprocess(){
 		List<DocNode> nodeList=new ArrayList<DocNode>();
-		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
+		DocumentInitializer DI = new DocumentInitializer(inputFolder);
 		nodeList = DI.getDocNodeList();
 		return nodeList;
 	}

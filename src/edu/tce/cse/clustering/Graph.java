@@ -132,7 +132,8 @@ public class Graph<E extends Node> {
 			dSet.makeSet(node);
 		}
 		List<Edge> edges = getEdges(vertexSet);
-		edges.sort(new WeightComparator());
+		Collections.sort(edges, new WeightComparator());
+		//edges.sort(new WeightComparator());
 		int numEdges=0;
 		for (Edge edge: edges) {
 			/* If the endpoints are connected, skip this edge. */

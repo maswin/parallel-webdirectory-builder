@@ -37,7 +37,7 @@ public class WebDirectoryBuilder {
 				int size = MPI.COMM_WORLD.Size();
 				Directory directory = new Directory();
 				System.out.println("Started Id : "+id+"/"+size);
-				HierarchicalClustering hc = new HierarchicalClustering();
+				HierarchicalClustering hc = new HierarchicalClustering(inputFolder);
 
 				List<DocNode> nodeList = hc.preprocess();
 				System.out.println("Processor "+MPI.COMM_WORLD.Rank()+" ---Data Received---");
