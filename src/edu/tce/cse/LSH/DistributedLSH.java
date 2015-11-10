@@ -17,6 +17,11 @@ import mpi.Op;
 
 public class DistributedLSH {
 
+	private double l = 10.0;
+	private double k = 5.0;
+	private double lRatio = 0.0; //Decreasing Ratio
+	private double kRatio = 0.0; //Increasing Ratio
+	
 	private List<Data> pairPoints;
 	private int dimensions;
 	private Set<String> flag;
@@ -27,17 +32,32 @@ public class DistributedLSH {
 		flag = new HashSet<String>();
 		this.dimensions = dimensions;
 	}
+	public DistributedLSH(int dimensions, double k, double l, double kRatio, double lRatio){
+		pairPoints = new ArrayList<Data>();
+		flag = new HashSet<String>();
+		this.dimensions = dimensions;
+		this.k = k;
+		this.l = l;
+		this.kRatio = kRatio;
+		this.lRatio = lRatio;
+	}
 
 	public void hash(List<Centroid> nodeList){
 		hash(nodeList.toArray(new Centroid[nodeList.size()]));		
 	}
 
 	public void printLSHParams(){
-		System.out.println("Num of hash functions : "+lsh.l);
-		System.out.println("Code depth : "+lsh.K);
+		System.out.println("Num of hash functions : "+lsh.l+" ("+this.l+" )");
+		System.out.println("Code depth : "+lsh.K+" ("+this.k+" )");
+	}
+	private void updateLSHParams(){
+		//Increasing K
+		this.k += (this.k*kRatio/100.0);
+		//Decreasing L
+		this.l -= (this.l*lRatio/100.0);
 	}
 	public void hash(Centroid[] nodeList){
-		lsh = new LSH(dimensions, 12, 4);
+		lsh = new LSH(dimensions, (int)Math.ceil(this.l), (int)Math.floor(this.k));
 		if(MPI.COMM_WORLD.Rank()==0){
 			printLSHParams();
 		}
@@ -70,6 +90,7 @@ public class DistributedLSH {
 				processBucket(globalBuckets[0]);
 			}
 		}
+		updateLSHParams();
 	}
 	public void processBucket(Map<String, Set<Centroid>> bucket){
 

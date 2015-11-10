@@ -20,18 +20,23 @@ public class Cluster extends Node implements Serializable{
 	Centroid centroid;
 	float weightedDegreeInMST;
 	public StringBuilder files;
-	public Cluster(long id, List<? extends Node> nodes){
+	public double percent = 50.0;
+	
+	public Cluster(long id, List<? extends Node> nodes, double percent){
 		super(id);
 		children = new ArrayList<Node>();
 		repPoints = new ArrayList<DocNode>();
 		centroid = null;
 		files = new StringBuilder();
+		if(percent != 0.0)
+			this.percent = percent;
+		
 		try{
 			//merging DocNode objects to form an initial cluster
 			if(nodes.get(0) instanceof DocNode){
 				List<DocNode> list = (List<DocNode>)nodes;
 				//checkCentralityHeuristic(list);
-				findRepPointsBasedOnCentrality(list);
+				findRepPointsBasedOnCentrality(list, this.percent);
 				findInitialCentroid();
 				addFiles(list);
 			}
@@ -49,6 +54,8 @@ public class Cluster extends Node implements Serializable{
 			System.out.println("couldn't form cluster");
 		}
 	}
+	
+	
 	void addFiles(){
 		Cluster c;
 		for(int i=0; i<children.size(); i++){
@@ -102,12 +109,12 @@ public class Cluster extends Node implements Serializable{
 	}
 	//to find representative points when documents are grouped to form initial cluster
 	//fix number of repPoints & ratio of high centrality and low centrality points mix
-	void findRepPointsBasedOnCentrality(List<DocNode> nodes){
+	void findRepPointsBasedOnCentrality(List<DocNode> nodes, double percent){
 		nodes.sort(new CentralityComparator());
 		//this.repPoints.addAll(nodes);
 		int size = nodes.size();
 		
-		int numOfRepPoints = (int)Math.ceil(size/2.0);
+		int numOfRepPoints = (int)Math.ceil(size*(percent/100.0));
 		int numOfHighCentrality = (int)Math.ceil(1*numOfRepPoints);
 		int numOfLowCentrality= numOfRepPoints - numOfHighCentrality;
 		repPoints.addAll(nodes.subList(size-numOfHighCentrality, size));

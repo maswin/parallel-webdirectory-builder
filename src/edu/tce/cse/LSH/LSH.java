@@ -15,14 +15,11 @@ public class LSH {
 	
 	public LSH(int dimensions){
 		this.dimensions = dimensions;
+		generateSuperBit();
 	}
 	
 	public LSH(int dimensions, int l, int K){
 		this.dimensions = dimensions;
-		updateParameters(l, K);
-	}
-	
-	public void updateParameters(int l, int K){
 		this.l = l;
 		this.K = K;
 		generateSuperBit();

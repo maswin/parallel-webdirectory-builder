@@ -596,7 +596,7 @@ class FormingClustersRunnable<E extends Node> implements Runnable{
 		Map<Long, Cluster> list = new HashMap();
 		for(int i=0; i<components.size(); i++){
 			if(components.get(i).size()>1){
-				Cluster c = new Cluster(id+i, components.get(i));
+				Cluster c = new Cluster(id+i, components.get(i), 0.0);
 				list.put(c.nodeID, c);
 			}
 			else{
