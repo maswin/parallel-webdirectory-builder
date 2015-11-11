@@ -127,7 +127,7 @@ public class WebDirectoryBuilder {
 		long startTimeExec = System.currentTimeMillis();
 
 		DistributedLSH dLSH = new DistributedLSH(nodeList.get(0).tfIdf.length, initK, initL, kRatio, lRatio);
-		hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory);
+		hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory, repPointPercent);
 
 		int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
 		int startID = hc.clustersAtThisLevel.size();

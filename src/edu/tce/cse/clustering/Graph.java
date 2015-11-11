@@ -340,7 +340,7 @@ public class Graph<E extends Node> {
 	}
 
 	//process each connected component to create Cluster objects
-	public Map<Long,Cluster> formClusters(List<List<DocNode>> list, int startingClusterID){
+	public Map<Long,Cluster> formClusters(List<List<DocNode>> list, int startingClusterID, double percentOfRepPoints){
 		Thread[] threads = new Thread[NTHREAD];
 		List<List<DocNode>> myList;
 		int share = (int)Math.ceil(list.size()/NTHREAD);
@@ -351,7 +351,7 @@ public class Graph<E extends Node> {
 				myList = list.subList(i*share, (i+1)*share);
 			else
 				myList = list.subList(i*share, list.size());
-			threads[i] = new Thread(new FormingClustersRunnable(startingClusterID+(i*share), myList, lock, clusters));
+			threads[i] = new Thread(new FormingClustersRunnable(startingClusterID+(i*share), myList, lock, clusters, percentOfRepPoints));
 			threads[i].start();
 		}
 		for (Thread thread : threads) {
@@ -367,7 +367,7 @@ public class Graph<E extends Node> {
 	}
 
 	//process each connected component to create LeafCluster objects
-	public List<Cluster> formLeafClusters(List<List<Node>> list, int startingClusterID, Directory directory){
+	public List<Cluster> formLeafClusters(List<List<Node>> list, int startingClusterID, Directory directory, double percentOfRepPoints){
 		Thread[] threads = new Thread[NTHREAD];
 		List<List<Node>> myList;
 		int share = (int)Math.ceil(list.size()/NTHREAD);
@@ -378,7 +378,7 @@ public class Graph<E extends Node> {
 				myList = list.subList(i*share, (i+1)*share);
 			else
 				myList = list.subList(i*share, list.size());
-			threads[i] = new Thread(new FormingLeafClustersRunnable(startingClusterID+(i*share), myList, lock, clusters, directory));
+			threads[i] = new Thread(new FormingLeafClustersRunnable(startingClusterID+(i*share), myList, lock, clusters, directory, percentOfRepPoints));
 			threads[i].start();
 		}
 		for (Thread thread : threads) {
@@ -587,17 +587,19 @@ class FormingClustersRunnable<E extends Node> implements Runnable{
 	List<List<E>> components;
 	Object lock;
 	Map<Long, Cluster> clusters;
-	public FormingClustersRunnable(int id, List<List<E>> list, Object lock, Map<Long, Cluster> clusters){
+	double percentOfRepPoints;
+	public FormingClustersRunnable(int id, List<List<E>> list, Object lock, Map<Long, Cluster> clusters, double percent){
 		this.id = id;
 		components = list;
 		this.lock = lock;
 		this.clusters = clusters;
+		percentOfRepPoints = percent;
 	}
 	public void run(){
 		Map<Long, Cluster> list = new HashMap();
 		for(int i=0; i<components.size(); i++){
 			if(components.get(i).size()>1){
-				Cluster c = new Cluster(id+i, components.get(i), 0.0);
+				Cluster c = new Cluster(id+i, components.get(i), percentOfRepPoints);
 				list.put(c.nodeID, c);
 			}
 			else{
@@ -616,19 +618,21 @@ class FormingLeafClustersRunnable<E extends Node> implements Runnable{
 	Object lock;
 	List<Cluster> clusters;
 	Directory directory;
-	public FormingLeafClustersRunnable(int id, List<List<E>> list, Object lock, List<Cluster> clusters, Directory directory){
+	double percentOfRepPoints;
+	public FormingLeafClustersRunnable(int id, List<List<E>> list, Object lock, List<Cluster> clusters, Directory directory, double percent){
 		this.id = id;
 		components = list;
 		this.lock = lock;
 		this.clusters = clusters;
 		this.directory = directory;
+		percentOfRepPoints = percent;
 	}
 	public void run(){
 		List<Cluster> list = new ArrayList<Cluster>();
 		for(int i=0; i<components.size(); i++){
 			List<DocNode> temp = (List<DocNode>)components.get(i);
 			directory.directoryMap.put(id+i, temp);
-			LeafCluster c = new LeafCluster(id+i, MPI.COMM_WORLD.Rank(), id+i, components.get(i));
+			LeafCluster c = new LeafCluster(id+i, MPI.COMM_WORLD.Rank(), id+i, components.get(i), percentOfRepPoints);
 			list.add(c);
 		}
 		synchronized(lock){
