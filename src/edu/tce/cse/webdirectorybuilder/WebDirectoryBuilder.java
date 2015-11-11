@@ -121,7 +121,7 @@ public class WebDirectoryBuilder {
 		//gather Clusters (initial) from all processors
 		Directory directory = new Directory();
 		System.out.println("Started Id : "+id+"/"+size);
-		HierarchicalClustering hc = new HierarchicalClustering();
+		HierarchicalClustering hc = new HierarchicalClustering(inputFolder);
 
 		List<DocNode> nodeList = hc.preprocess();
 		System.out.println("Processor "+MPI.COMM_WORLD.Rank()+" ---Data Received---");
@@ -129,7 +129,7 @@ public class WebDirectoryBuilder {
 		long startTimeExec = System.currentTimeMillis();
 
 		DistributedLSH dLSH = new DistributedLSH(nodeList.get(0).tfIdf.length, initK, initL, kRatio, lRatio);
-		hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory);
+		hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory, repPointPercent);
 
 		int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
 		int startID = hc.clustersAtThisLevel.size();
@@ -163,7 +163,6 @@ public class WebDirectoryBuilder {
 					/*for(DocNode d: c.getRepPoints()){
 								d.setClusterID(c.nodeID);
 								System.out.print(((DocNode)d).fileName+" ");
-
 							}*/
 					System.out.println(c.files);
 					if(c.getChildren().size()>1){
@@ -200,7 +199,7 @@ public class WebDirectoryBuilder {
 			QualityMetrics.qualityMeasure(inputFolder,outputFile);
 		}
 		MPI.Finalize();
-
+							
 	}
 
 	//Generate Output File

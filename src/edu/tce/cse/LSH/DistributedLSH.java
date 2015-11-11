@@ -2,6 +2,7 @@ package edu.tce.cse.LSH;
 
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.List;
@@ -26,7 +27,7 @@ public class DistributedLSH {
 	private int dimensions;
 	private Set<String> flag;
 	private LSH lsh;
-	
+
 	public DistributedLSH(int dimensions){
 		pairPoints = new ArrayList<Data>();
 		flag = new HashSet<String>();
@@ -98,13 +99,7 @@ public class DistributedLSH {
 		String flagCode;
 		for(Map.Entry<String, Set<Centroid>> entry : bucket.entrySet()){
 			List<Centroid> nodes = new ArrayList<>(entry.getValue());
-			Collections.sort(nodes, (a,b) -> {
-				if(a.clusterId < b.clusterId){
-					return +1;
-				}else{
-					return -1;
-				}
-			});
+			Collections.sort(nodes, new BucketComparator());
 			for(int i=0;i<nodes.size();i++){
 				for(int j=i+1;j<nodes.size();j++){
 					A = nodes.get(i);
@@ -124,4 +119,18 @@ public class DistributedLSH {
 		System.out.println("Reduced No. of Comparisions :"+pairPoints.size());
 		return pairPoints;
 	}
+}
+class BucketComparator implements Comparator{
+
+	@Override
+	public int compare(Object arg0, Object arg1) {
+		Centroid a = (Centroid)arg0;
+		Centroid b = (Centroid)arg1;
+		if(a.clusterId < b.clusterId){
+			return +1;
+		}else{
+			return -1;
+		}
+	}
+
 }

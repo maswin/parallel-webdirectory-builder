@@ -33,7 +33,10 @@ public class HierarchicalClustering {
 	public boolean[] flagToStop = new boolean[1];
 	int shareDetails[]=new int[2];
 	public double R;
-
+	public String inputFolder;
+	public HierarchicalClustering(String fName){
+		inputFolder = fName;
+	}
 	//to merge clusters to form the next level clusters, when given the results of LSH as input 
 	public void mergeClusters(List<Data> list, int startID){
 		List<Cluster> temp = new ArrayList<Cluster>();
@@ -92,7 +95,7 @@ public class HierarchicalClustering {
 			stdDev = 0;
 			for(List<Node> component: components){
 				if(component.size()>2){				
-					component.forEach(n -> System.out.print(n.nodeID+" "));
+					//component.forEach(n -> System.out.print(n.nodeID+" "));
 					Graph mst = graph.findMST(component);
 					float[] values = getMSTEdgeWeights(mst);
 					stats = new Statistics(values);
@@ -115,7 +118,9 @@ public class HierarchicalClustering {
 		//change threshold value here
 		//graph.removeInterClusterEdges(mean+(1f*stdDev), true);
 		List<List<DocNode>> components = graph.findConnectedComponents();
-		clustersAtThisLevel = graph.formClusters(components, startID);
+		
+		//Assuming that all representative points are added
+		clustersAtThisLevel = graph.formClusters(components, startID, 100.0);
 
 	}
 
@@ -220,13 +225,13 @@ public class HierarchicalClustering {
 	//preprocessing steps
 	public List<DocNode> preprocess(){
 		List<DocNode> nodeList=new ArrayList<DocNode>();
-		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
+		DocumentInitializer DI = new DocumentInitializer(inputFolder);
 		nodeList = DI.getDocNodeList();
 		return nodeList;
 	}
 
 	//to form initial clusters in each processor
-	public Map<Long, Cluster> initialClustering(List<DocNode> docs, Directory directory){
+	public Map<Long, Cluster> initialClustering(List<DocNode> docs, Directory directory, double percentOfRepPoints){
 		//form graph where each node is a DocNode
 		Graph<DocNode> graph = new Graph(docs);
 		graph.addEdges();
@@ -251,7 +256,7 @@ public class HierarchicalClustering {
 		graph.removeInterClusterEdges(graph.V, mean+(1f*stdDev), false);
 		int count = 1;
 		List<List<Node>> components = graph.findConnectedComponents();
-		List<Cluster> clusters= graph.formLeafClusters(components, 0, directory);
+		List<Cluster> clusters= graph.formLeafClusters(components, 0, directory, percentOfRepPoints);
 		for(int i=0; i<MPI.COMM_WORLD.Size(); i++){
 			MPI.COMM_WORLD.Barrier();
 			if(i==MPI.COMM_WORLD.Rank()){
@@ -309,7 +314,7 @@ public class HierarchicalClustering {
 		/*for(Map.Entry<Long, Cluster> entry : this.clustersAtThisLevel.entrySet()){
 			clusterList.add(entry.getValue());
 		}*/
-		return new Cluster(0,(List<? extends Node>) clusterList, 0.0);
+		return new Cluster(0,(List<? extends Node>) clusterList, 100.0);
 	}		
 
 }

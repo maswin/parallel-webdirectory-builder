@@ -2,6 +2,7 @@ package edu.tce.cse.clustering;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -109,9 +110,10 @@ public class Cluster extends Node implements Serializable{
 	}
 	//to find representative points when documents are grouped to form initial cluster
 	//fix number of repPoints & ratio of high centrality and low centrality points mix
+		
 	void findRepPointsBasedOnCentrality(List<DocNode> nodes, double percent){
-		nodes.sort(new CentralityComparator());
-		//this.repPoints.addAll(nodes);
+	Collections.sort(nodes, new CentralityComparator());
+		//nodes.sort(new CentralityComparator());
 		int size = nodes.size();
 		
 		int numOfRepPoints = (int)Math.ceil(size*(percent/100.0));
@@ -126,7 +128,8 @@ public class Cluster extends Node implements Serializable{
 	void findRepPointsBasedOnMSTDegree(){
 		//fix max ration of rep points to be picked
 		float maxRatioOfRepPoints = 0.5f;
-		children.sort(new DegreeComparator());
+		Collections.sort(children, new DegreeComparator());
+		//children.sort(new DegreeComparator());
 		Cluster c = ((Cluster)(children.get(children.size()-1)));
 		//for node with maximum weighted degree, ratio of rep points picked = maxRatioOfRepPoints
 		int numOfRepPoints = c.repPoints.size();
@@ -239,7 +242,8 @@ public class Cluster extends Node implements Serializable{
 	public static double findMinClusterDiameter(List<Cluster> clusters){
 		double minDist = Double.MAX_VALUE;		
 		for(Cluster c : clusters){
-			c.children.sort(new CentralityComparator());
+			Collections.sort(c.children, new CentralityComparator());
+			//c.children.sort(new CentralityComparator());
 			DocNode minCentralityPoint = (DocNode) c.children.get(0);
 			DocNode maxCentralityPoint = (DocNode) c.children.get(c.children.size());
 			if(!minCentralityPoint.equals(maxCentralityPoint)){
@@ -256,7 +260,8 @@ public class Cluster extends Node implements Serializable{
 		double minDist = Double.MAX_VALUE;
 		List<DocNode> highCentralityPoints = new ArrayList<>(clusters.size());
 		for(Cluster c : clusters){
-			c.repPoints.sort(new CentralityComparator());
+			Collections.sort(c.repPoints, new CentralityComparator());
+			//c.repPoints.sort(new CentralityComparator());
 			DocNode maxCentralityPoint = (DocNode) c.repPoints.get(c.repPoints.size()-1);
 			highCentralityPoints.add(maxCentralityPoint);
 		}
