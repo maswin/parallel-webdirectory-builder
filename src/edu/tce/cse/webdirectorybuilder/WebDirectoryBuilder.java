@@ -8,6 +8,7 @@ import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.List;
 
+import benchmarker.QualityMetrics;
 import edu.tce.cse.LSH.DistributedLSH;
 import edu.tce.cse.clustering.Cluster;
 import edu.tce.cse.clustering.Graph;
@@ -24,7 +25,8 @@ import mpi.MPI;
 
 public class WebDirectoryBuilder {
 	public static final String inputFolder = "TestDocuments";
-
+	public static final String outputFile = "output.txt";
+	
 	public static int numOfCluster = 5; //-n
 	public static double repPointPercent = 50.0; //-r
 	public static double initK = 5; //-k
@@ -192,9 +194,10 @@ public class WebDirectoryBuilder {
 			new TreeView(root).setVisible(true);
 
 			//Print Result to File
-			PrintWriter out = new PrintWriter(new File("output.txt"));
+			PrintWriter out = new PrintWriter(new File(outputFile));
 			generateOutputFile(out, root, 0);
 			out.close();
+			QualityMetrics.qualityMeasure(inputFolder,outputFile);
 		}
 		MPI.Finalize();
 

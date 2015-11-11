@@ -18,7 +18,8 @@ import edu.tce.cse.util.SVDReducer;
 public class sampleData {
 	public static String documentDirectory = "TestDocuments";
 	private List<Document> documentList;
-	public sampleData(){
+	public sampleData(String directory){
+		documentDirectory = directory;
 		documentList = new ArrayList<Document>();
 		try {
 			List<File> files = new ArrayList<>();

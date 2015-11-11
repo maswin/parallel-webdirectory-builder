@@ -69,7 +69,8 @@ public class FMeasure {
 		
 		totalPrecision = (totalPrecision/(calculated.size()*1.0));
 		totalRecall = (totalRecall/(calculated.size()*1.0));
-		
+		System.out.println("Precision "+totalPrecision);
+		System.out.println("Recall "+totalRecall);
 		if(totalPrecision!= 0 && totalRecall != 0)
 			fMeasure = (double)(2*((totalPrecision*totalRecall)/((totalPrecision+totalRecall)*1.0)));
 		return fMeasure;

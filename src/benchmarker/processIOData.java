@@ -18,7 +18,7 @@ public class processIOData {
 	public MinCluster processInputData(String folder){
 		return processInputDataUtil(folder,0);
 	}
-	
+
 	public MinCluster processInputDataUtil(String folder, int level){
 		MinCluster root = new MinCluster();
 		root.level = level;
@@ -123,6 +123,13 @@ public class processIOData {
 		getAllClustersUtil(clusters, root);
 		return clusters;	
 	}
+
+	//Generate Level clusters
+	public List<MinCluster>  getLevelCluster(MinCluster root, int level){
+		List<MinCluster> clusters = new ArrayList<MinCluster>();
+		getLevelClustersUtil(clusters, root, level);
+		return clusters;	
+	}
 	
 	public void getLevelsOfClustersUtil(List<List<MinCluster>> hCluster, MinCluster root){
 		List<MinCluster> clusters;
@@ -137,7 +144,7 @@ public class processIOData {
 			getLevelsOfClustersUtil(hCluster, child);
 		}
 	}
-	
+
 	public void getAllClustersUtil(List<MinCluster> clusters, MinCluster root){
 		if(root == null){
 			return;
@@ -149,7 +156,18 @@ public class processIOData {
 			getAllClustersUtil(clusters, child);
 		}
 	}
-	
+
+	public void getLevelClustersUtil(List<MinCluster> clusters, MinCluster root, int level){
+		if(root == null){
+			return;
+		}
+		if(root.level == level){
+			clusters.add(root);
+		}
+		for(MinCluster child : root.children){
+			getLevelClustersUtil(clusters, child, level);
+		}
+	}
 	/*
 	public static void main(String args[]) throws FileNotFoundException{
 		processIOData po = new processIOData();
@@ -159,10 +177,10 @@ public class processIOData {
 		PrintWriter out = new PrintWriter(new File("output1.txt"));
 		generateOutputFile(out, root, 0);
 		out.close();
-		
+
 		//Levels of cluster Test
 		List<List<MinCluster>> hCluster = po.getLevelsOfClusters(root);
-		
+
 		//Print Levels of cluster
 		int count = 0;
 		for(int i=0;i<hCluster.size();i++){

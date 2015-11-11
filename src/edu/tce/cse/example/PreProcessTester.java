@@ -11,7 +11,7 @@ public class PreProcessTester {
 	public static void main(String args[]) throws IOException{
 		System.out.println("Pre-Processing Output");
 		System.out.println();
-		sampleData s = new sampleData();
+		sampleData s = new sampleData("TestDocuments");
 		List<Document> words = s.getSampleDoc();
 
 	}
