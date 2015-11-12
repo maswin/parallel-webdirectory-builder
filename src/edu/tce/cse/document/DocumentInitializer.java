@@ -28,7 +28,7 @@ public class DocumentInitializer {
 		parseDirectory(documentDirectory, files);
 		this.N = files.size();
 		//Sort Files
-		files.sort(new Comparator<File>() {
+		Collections.sort(files, new Comparator<File>() {
 			public int compare(File f1, File f2){
 				return f1.getAbsolutePath().compareTo(f2.getAbsolutePath());
 			}
@@ -67,15 +67,15 @@ public class DocumentInitializer {
 
 
 		//Sequential Code
-		/*for (int i = startIndex; i <= endIndex; i++) {
+		for (int i = startIndex; i <= endIndex; i++) {
             Document document = new Document(i, files.get(i).getAbsolutePath(), files.get(i).getName().trim());
             document.parseDocument(localDocumentFrequency[0]);
             documentList.add(document);
-        }*/
+        }
 		
 		//Parallel Code 
 		//Set Static Variables for DocumentParser Runnable
-		int numOfCores = Runtime.getRuntime().availableProcessors();
+		/*int numOfCores = Runtime.getRuntime().availableProcessors();
 		DocumentParser.documentList = documentList;
 		DocumentParser.startIndex = this.startIndex;
 		DocumentParser.endIndex = this.endIndex;
@@ -98,7 +98,7 @@ public class DocumentInitializer {
 			} catch (InterruptedException ee) {
 				ee.printStackTrace();
 			}
-		}
+		}*/
 		
 		//Collect Document Frequency from all Processors
 		Map<String, Integer>[] globalDocumentFrequency = new HashMap[1];
@@ -108,13 +108,13 @@ public class DocumentInitializer {
 		//System.out.println(this.processorID+" "+globalDocumentFrequency[0].keySet().size());
 
 		//Sequential Code
-		/*for(Document doc : documentList){
+		for(Document doc : documentList){
 			doc.calculateTfIdf(this.N, globalDocumentFrequency[0]);
-		}*/
+		}
 		
 		//Parallel Code
 		//Set static variables for TfIdfCalc
-		TfIdfCalc.documentList = documentList;
+		/*TfIdfCalc.documentList = documentList;
 		TfIdfCalc.startIndex = this.startIndex;
 		TfIdfCalc.endIndex = this.endIndex;
 		TfIdfCalc.numOfCores = numOfCores;
@@ -133,7 +133,7 @@ public class DocumentInitializer {
 			} catch (InterruptedException ee) {
 				ee.printStackTrace();
 			}
-		}
+		}*/
 		
 		generateDocNodeList(documentList);
 	}

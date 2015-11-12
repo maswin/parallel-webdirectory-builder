@@ -16,8 +16,8 @@ import edu.tce.cse.example.sampleData;
  */
 public class Cure {
 
-	public static final String inputFolder = "TestDocuments";
-	public static final String outputFile = "CureOutput.txt";
+	public static String inputFolder = "TestDocuments";
+	public static String outputFile = "CureOutput.txt";
 
 	/** The Input Parameters to the algorithm **/
 	private int totalNumberOfPoints;
@@ -104,13 +104,33 @@ public class Cure {
 		else {
 			//dataFile = args[1];
 			totalNumberOfPoints = s.getSampleDocNodes().size();
-			System.out.println("Number of Clusters Required : "+args[0]);
-			numberOfClusters = Integer.parseInt(args[0]);
+			numberOfClusters = 6;
 			minRepresentativeCount = 6;
 			shrinkFactor = 0.5;
 			requiredRepresentationProbablity = 0.1;
 			numberOfPartitions = 2;
 			reducingFactorForEachPartition = 2;
+			try{
+				for(int i=0;i<args.length;i++){
+					String word = args[i];
+					String pattern = "^-[a-zA-Z]*$";
+					if(word.matches(pattern)){
+						switch(word){
+						case "-i": inputFolder = args[i+1];
+						break;
+						case "-o": outputFile = args[i+1];
+						break;
+						case "-n": int nVal = Integer.parseInt(args[i+1]);
+						numberOfClusters = nVal;
+						break;
+						default: break;
+						}
+					}
+				}
+			} catch (Exception e){
+				System.out.println("Invalid Input");
+			}
+			System.out.println("Number of Clusters Required : "+numberOfClusters);
 			/*totalNumberOfPoints = Integer.parseInt(args[2]);
 			numberOfClusters = Integer.parseInt(args[3]);
 			minRepresentativeCount = Integer.parseInt(args[4]);

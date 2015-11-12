@@ -24,8 +24,8 @@ import gui.TreeView;
 import mpi.MPI;
 
 public class WebDirectoryBuilder {
-	public static final String inputFolder = "TestDocuments";
-	public static final String outputFile = "output.txt";
+	public static String inputFolder = "TestDocuments"; // -i
+	public static String outputFile = "output.txt"; // -o
 	
 	public static int numOfCluster = 5; //-n
 	public static double repPointPercent = 50.0; //-r
@@ -33,6 +33,8 @@ public class WebDirectoryBuilder {
 	public static double initL = 10; //-l
 	public static double kRatio = 0.0; //-kr
 	public static double lRatio = 0.0; //-lr
+	
+	public static boolean gui = true;
 
 	public static void errorReport(boolean help){
 		if(MPI.COMM_WORLD.Rank()==0){
@@ -40,6 +42,8 @@ public class WebDirectoryBuilder {
 				System.err.println("Invalid Option");
 			System.err.println("Usage : ");
 			System.err.println("--------------------------------------------------------------");
+			System.err.println("-i or Input file");
+			System.err.println("-o or Output Folder");
 			System.err.println("-h or --help Help");
 			System.err.println("-n (Integer value) Number of clusters");
 			System.err.println("-r (Double value) Percentage of representative points");
@@ -63,24 +67,27 @@ public class WebDirectoryBuilder {
 			for(int i=0;i<args.length;i++){
 				String word = args[i];
 				if(word.matches(pattern)){
-					String value = args[i+1];
 					switch(word){
-					case "-n": int nVal = Integer.parseInt(value);
+					case "-i": inputFolder = args[i+1];
+							break;
+					case "-o": outputFile = args[i+1];
+							break;
+					case "-n": int nVal = Integer.parseInt(args[i+1]);
 							numOfCluster = nVal;
 							break;
-					case "-r": double rVal = Double.parseDouble(value);
+					case "-r": double rVal = Double.parseDouble(args[i+1]);
 							repPointPercent = rVal;
 							break;
-					case "-k": int kVal = Integer.parseInt(value);
+					case "-k": int kVal = Integer.parseInt(args[i+1]);
 							initK = kVal;
 							break;
-					case "-l": int lVal = Integer.parseInt(value);
+					case "-l": int lVal = Integer.parseInt(args[i+1]);
 							initL = lVal;
 							break;
-					case "-kr": double krVal = Double.parseDouble(value);
+					case "-kr": double krVal = Double.parseDouble(args[i+1]);
 							kRatio = krVal;
 							break;
-					case "-lr": double lrVal = Double.parseDouble(value);
+					case "-lr": double lrVal = Double.parseDouble(args[i+1]);
 							lRatio = lrVal;
 							break;
 					case "-h": errorReport(true);
@@ -90,6 +97,8 @@ public class WebDirectoryBuilder {
 					default: errorReport(false);
 							return false;
 					}
+				}else if(word.equals("nogui")){
+					gui = false;
 				}
 			}
 		}catch(Exception e){
@@ -189,8 +198,11 @@ public class WebDirectoryBuilder {
 			System.out.println("Data Processing + Execution Time: "+(endTime-startTimeData));
 			System.out.println("Execution Time: "+(endTime-startTimeExec));
 			Cluster root = hc.mergeAllCluster();
-			//GUI
-			new TreeView(root).setVisible(true);
+			
+			if(gui){
+				//GUI
+				new TreeView(root).setVisible(true);
+			} 
 
 			//Print Result to File
 			PrintWriter out = new PrintWriter(new File(outputFile));
