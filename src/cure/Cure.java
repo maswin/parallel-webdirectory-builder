@@ -46,9 +46,18 @@ public class Cure {
 
 		//Time Calc
 		long startTimeData = System.currentTimeMillis();
-
+		initializeParameters(args);
 		sampleData s = new sampleData(inputFolder);
-		initializeParameters(args, s);
+		
+		//Init
+		this.totalNumberOfPoints = s.getSampleDocNodes().size();
+		this.tfIdfSize = s.getSampleDocNodes().get(0).tfIdf.length;
+		this.dataPoints = new Point[totalNumberOfPoints];
+		this.dataPointsMap = new HashMap();
+		this.currentRepAdditionCount = totalNumberOfPoints;
+		this.integerTable = new Hashtable();
+		this.outliers = new ArrayList();
+		
 		readDataPoints(s);
 		System.out.println("Data Received");
 
@@ -69,9 +78,11 @@ public class Cure {
 		else {
 			eliminateOutliersFirstStage(subClusters, 0);
 		}
+		System.out.println("Outlier Eliminated");
 		ArrayList clusters = clusterAll(subClusters);
+		System.out.println("Clustered");
 		clusters = labelRemainingDataPoints(clusters);
-
+		System.out.println("Labelled");
 
 
 		System.out.println("Final Clusters :");
@@ -90,10 +101,10 @@ public class Cure {
 	 * @param args The Command Line Argument
 	 * @throws IOException 
 	 */
-	private void initializeParameters(String[] args, sampleData s) throws IOException {
+	private void initializeParameters(String[] args) throws IOException {
 		if(args.length == 0) {
 			//dataFile = "data.txt";
-			totalNumberOfPoints = s.getSampleDocNodes().size();
+			
 			numberOfClusters = 6;
 			minRepresentativeCount = 6;
 			shrinkFactor = 0.5;
@@ -103,7 +114,6 @@ public class Cure {
 		}
 		else {
 			//dataFile = args[1];
-			totalNumberOfPoints = s.getSampleDocNodes().size();
 			numberOfClusters = 6;
 			minRepresentativeCount = 6;
 			shrinkFactor = 0.5;
@@ -139,12 +149,7 @@ public class Cure {
 			numberOfPartitions = Integer.parseInt(args[7]);
 			reducingFactorForEachPartition = Integer.parseInt(args[8]);*/
 		}
-		tfIdfSize = s.getSampleDocNodes().get(0).tfIdf.length;
-		dataPoints = new Point[totalNumberOfPoints];
-		dataPointsMap = new HashMap();
-		currentRepAdditionCount = totalNumberOfPoints;
-		integerTable = new Hashtable();
-		outliers = new ArrayList();
+		
 	}
 
 	/**

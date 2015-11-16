@@ -197,8 +197,9 @@ public class WebDirectoryBuilder {
 			long endTime = System.currentTimeMillis();
 			System.out.println("Data Processing + Execution Time: "+(endTime-startTimeData));
 			System.out.println("Execution Time: "+(endTime-startTimeExec));
-			Cluster root = hc.mergeAllCluster();
 			
+			Cluster root = hc.mergeAllCluster();
+			System.out.println("Dimension "+root.getRepPoints().get(0).getTfIdf().length);
 			if(gui){
 				//GUI
 				new TreeView(root).setVisible(true);

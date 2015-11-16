@@ -63,9 +63,13 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
         DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf());
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
-        
-        return (float) (vector1.zDotProduct(vector2) / 
+
+        float sim = (float) (vector1.zDotProduct(vector2) / 
                 (algebra.norm2(vector1)*algebra.norm2(vector2)));
+        if(Float.isNaN(sim)){
+        	return 0f;
+        }
+        return sim;
 	}
 	public float findCosDistance(DocNode d){
 		return (1-findCosSimilarity(d));

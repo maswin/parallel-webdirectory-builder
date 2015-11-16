@@ -59,8 +59,13 @@ public class Point {
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
         
-        return (float) (vector1.zDotProduct(vector2) / 
+        float sim = (float) (vector1.zDotProduct(vector2) / 
                 (algebra.norm2(vector1)*algebra.norm2(vector2)));
+        if(Float.isNaN(sim)){
+        	return 0;
+        }
+        return sim;
+        
 	}
 	/**
 	 * Calculates the Euclidean Distance from a Point t
