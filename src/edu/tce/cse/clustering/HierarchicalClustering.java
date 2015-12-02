@@ -15,6 +15,7 @@ import edu.tce.cse.clustering.Cluster;
 import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Graph;
 import edu.tce.cse.clustering.Node;
+import edu.tce.cse.document.DocMemManager;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.document.DocumentInitializer;
@@ -223,21 +224,28 @@ public class HierarchicalClustering {
 	}
 
 	//preprocessing steps
-	public List<DocNode> preprocess(){
-		List<DocNode> nodeList=new ArrayList<DocNode>();
+	public List<Long> preprocess(){
+		//List<DocNode> nodeList=new ArrayList<DocNode>();
 		DocumentInitializer DI = new DocumentInitializer(inputFolder);
-		nodeList = DI.getDocNodeList();
+		List<Long> nodeList = DI.getDocNodeList();
 		return nodeList;
 	}
 
 	//to form initial clusters in each processor
-	public Map<Long, Cluster> initialClustering(List<DocNode> docs, Directory directory, double percentOfRepPoints){
-		//form graph where each node is a DocNode
+	public Map<Long, Cluster> initialClustering(List<Long> docs, Directory directory, double percentOfRepPoints){
+		
+                List<DocNode> nodes = new ArrayList<>();
+                for(long id: docs){
+                    nodes.add(DocMemManager.getDocNode(id));
+                }
+
+                //form graph where each node is a DocNode
 		Graph<DocNode> graph = new Graph(docs);
-		graph.addEdges();
+		graph.addEdges(0.3f);
 		//FIX SPARSIFICATION EXPONENT HERE
-		graph.sparsify(0.3f);
-		graph.findCentrality();
+		//graph.sparsify(0.3f);
+		
+                graph.findCentrality();
 
 		float[] values = new float[graph.V.size()];
 		for(int i=0; i<graph.V.size(); i++){
@@ -336,4 +344,3 @@ count++;
 }
 mean/= count;
 stdDev/= count;*/
-
