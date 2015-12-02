@@ -10,6 +10,7 @@ import java.util.Map;
 import mpi.MPI;
 import edu.tce.cse.LSH.DistributedLSH;
 import edu.tce.cse.LSH.LSH;
+import edu.tce.cse.document.DocMemManager;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.document.DocumentInitializer;
@@ -25,12 +26,13 @@ public class DistributedLSHTester {
 		System.out.println("Started Id : "+id+"/"+size);
 		
 		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
-		List<DocNode> docList=new ArrayList<>();
+		List<Long> docList=new ArrayList<>();
 		List<Centroid> cList=new ArrayList<>();
 		Map<Long, String> nameMap = new HashMap<>();
 		docList = DI.getDocNodeList();
 		
-		for(DocNode d : docList){
+		for(Long dId : docList){
+			DocNode d = DocMemManager.getDocNode(dId);
 			//System.out.println(d.nodeID+" "+d.fileName);
 			Centroid c = new Centroid(d.nodeID,d.tfIdf);
 			nameMap.put(d.nodeID, d.fileName);

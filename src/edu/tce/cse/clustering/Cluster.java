@@ -11,13 +11,14 @@ import java.util.Set;
 
 import cern.colt.matrix.tdouble.DoubleMatrix2D;
 import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix2D;
+import edu.tce.cse.document.DocMemManager;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.model.Centroid;
 
 public class Cluster extends Node implements Serializable{
 	
     List<Node> children;
-	List<DocNode> repPoints;
+	List<Long> repPoints;
 	Centroid centroid;
 	float weightedDegreeInMST;
 	public StringBuilder files;
@@ -26,7 +27,7 @@ public class Cluster extends Node implements Serializable{
 	public Cluster(long id, List<? extends Node> nodes, double percent){
 		super(id);
 		children = new ArrayList<Node>();
-		repPoints = new ArrayList<DocNode>();
+		repPoints = new ArrayList<Long>();
 		centroid = null;
 		files = new StringBuilder();
 		if(percent != 0.0)
@@ -76,15 +77,18 @@ public class Cluster extends Node implements Serializable{
 		//modify clusterID of centroid
 		centroid.clusterId = id;
 		//modify clusterID of representative points
-		for(DocNode r: repPoints){
+		for(Long rId : repPoints){
+			DocNode r = DocMemManager.getDocNode(rId);
 			r.setClusterID(id);
+			//Special Change
+			DocMemManager.writeDocNode(r);
 		}
 
 	}
-	public List<DocNode> getRepPoints() {
+	public List<Long> getRepPoints() {
 		return repPoints;
 	}
-	public void setRepPoints(List<DocNode> repPoints) {
+	public void setRepPoints(List<Long> repPoints) {
 		this.repPoints = repPoints;
 	}
 
@@ -119,9 +123,17 @@ public class Cluster extends Node implements Serializable{
 		int numOfRepPoints = (int)Math.ceil(size*(percent/100.0));
 		int numOfHighCentrality = (int)Math.ceil(1*numOfRepPoints);
 		int numOfLowCentrality= numOfRepPoints - numOfHighCentrality;
-		repPoints.addAll(nodes.subList(size-numOfHighCentrality, size));
-		if(numOfLowCentrality>0)
-			repPoints.addAll(nodes.subList(0, numOfLowCentrality));
+		
+		for(DocNode d : nodes.subList(size-numOfHighCentrality, size)){
+			repPoints.add(d.nodeID);
+		}
+		//repPoints.addAll();
+		if(numOfLowCentrality>0) {
+			for(DocNode d : nodes.subList(0, numOfLowCentrality)){
+				repPoints.add(d.nodeID);
+			}
+			//repPoints.addAll(nodes.subList(0, numOfLowCentrality));
+		}
 	}
 	
 	//to find representative points when clusters are grouped to form next level cluster
@@ -142,7 +154,10 @@ public class Cluster extends Node implements Serializable{
 			numOfRepPoints = (int) Math.abs(Math.ceil(proportion*c.weightedDegreeInMST));
 			numOfRepPoints = Math.min(numOfRepPoints, c.repPoints.size());
 			for(int j=0; j< numOfRepPoints; j++){
-				c.repPoints.get(j).setClusterID(nodeID);
+				DocNode d = DocMemManager.getDocNode(c.repPoints.get(j));
+				d.setClusterID(nodeID);
+				//Special change
+				DocMemManager.writeDocNode(d);
 				repPoints.add(c.repPoints.get(j));			
 			}
 			
@@ -155,7 +170,10 @@ public class Cluster extends Node implements Serializable{
 		for(int i=0; i<children.size(); i++){
 			c = ((Cluster)(children.get(i)));
 			for(int j=0;j<c.repPoints.size();j++){
-				c.repPoints.get(j).setClusterID(nodeID);
+				DocNode d = DocMemManager.getDocNode(c.repPoints.get(j));
+				d.setClusterID(nodeID);
+				//Special change
+				DocMemManager.writeDocNode(d);
 				repPoints.add(c.repPoints.get(j));
 			}
 		}
@@ -195,7 +213,9 @@ public class Cluster extends Node implements Serializable{
 		float avgDistance = 0.0f;
 		for(int i=0; i<repPoints.size(); i++){
 			for(int j=0; j<c.getRepPoints().size(); j++){
-				avgDistance+=(repPoints.get(i).findDistance(c.getRepPoints().get(j)));
+				DocNode iNode = DocMemManager.getDocNode(repPoints.get(i));
+				DocNode jNode = DocMemManager.getDocNode(c.getRepPoints().get(j));
+				avgDistance+=(iNode.findDistance(jNode));
 			}
 		}
 		avgDistance/=(repPoints.size()*c.getRepPoints().size());
@@ -205,7 +225,8 @@ public class Cluster extends Node implements Serializable{
 	public Centroid findInitialCentroid(){
 		double[][] vector = new double[this.repPoints.size()][];
         for (int i = 0; i < this.repPoints.size(); i++) {
-            vector[i] = this.repPoints.get(i).getTfIdf();
+        	DocNode iNode = DocMemManager.getDocNode(this.repPoints.get(i));
+            vector[i] = iNode.getTfIdf();
         }
 
         DoubleMatrix2D matrix = new DenseDoubleMatrix2D(vector);
@@ -256,7 +277,7 @@ public class Cluster extends Node implements Serializable{
 		return minDist;
 	}
 	
-	public static double findMinInterClusterDistance(List<Cluster> clusters){
+	/*public static double findMinInterClusterDistance(List<Cluster> clusters){
 		double minDist = Double.MAX_VALUE;
 		List<DocNode> highCentralityPoints = new ArrayList<>(clusters.size());
 		for(Cluster c : clusters){
@@ -276,7 +297,7 @@ public class Cluster extends Node implements Serializable{
 			}
 		}
 		return minDist;
-	}
+	}*/
 }
 
 //to sort based on ascending order of centrality
