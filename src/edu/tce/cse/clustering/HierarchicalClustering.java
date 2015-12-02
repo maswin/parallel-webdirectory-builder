@@ -1,5 +1,6 @@
 package edu.tce.cse.clustering;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -240,7 +241,7 @@ public class HierarchicalClustering {
                 }
 
                 //form graph where each node is a DocNode
-		Graph<DocNode> graph = new Graph(docs);
+		Graph<DocNode> graph = new Graph(nodes);
 		graph.addEdges(0.3f);
 		//FIX SPARSIFICATION EXPONENT HERE
 		//graph.sparsify(0.3f);
@@ -281,10 +282,11 @@ public class HierarchicalClustering {
 			}
 		}
 		MPI.COMM_WORLD.Barrier();
-
+                gatherRepPoints(getRepPoints(clusters));
 		return distributeInitialClusters(clusters.toArray());
+                
 	}
-
+         
 	//to gather initial clusters from all processors in the main processor
 	public Map<Long, Cluster> distributeInitialClusters(Object[] localClusters){
 		int numOfClusters[]=new int[MPI.COMM_WORLD.Size()];
@@ -298,7 +300,6 @@ public class HierarchicalClustering {
 			totalNumOfClusters+=numOfClusters[i];
 		}
 		Cluster[] clusters = new Cluster[totalNumOfClusters];
-
 		MPI.COMM_WORLD.Gatherv(localClusters, 0, localClusters.length, MPI.OBJECT, clusters, 0, numOfClusters, displs, MPI.OBJECT, 0);
 		HashMap<Long, Cluster> clusterMap = new HashMap();
 		if(MPI.COMM_WORLD.Rank()==0){
@@ -316,6 +317,49 @@ public class HierarchicalClustering {
 			}
 		}
 		return clusterMap;
+	}
+
+        public void gatherRepPoints(Object[] localPoints){
+            int numOfPoints[]=new int[MPI.COMM_WORLD.Size()];
+		int displs[]=new int[MPI.COMM_WORLD.Size()];
+		int numOfLocalPoints[]=new int[1];
+		numOfLocalPoints[0]=localPoints.length;
+		MPI.COMM_WORLD.Gather(numOfLocalPoints, 0, 1, MPI.INT, numOfPoints, 0, 1, MPI.INT, 0);
+		int totalNumOfPoints = 0;
+		for(int i=0; i<numOfPoints.length; i++){
+			displs[i]=totalNumOfPoints;
+			totalNumOfPoints+=numOfPoints[i];
+		}
+		DocNode[] repPoints = new DocNode[totalNumOfPoints];
+		MPI.COMM_WORLD.Gatherv(localPoints, 0, localPoints.length, MPI.OBJECT, repPoints, 0, numOfPoints, displs, MPI.OBJECT, 0);
+                if(MPI.COMM_WORLD.Rank()==0){
+                    for(DocNode d: repPoints){
+                        DocMemManager.writeDocNode(d);
+                    }
+                }
+        }
+        
+	public void distributeSerializedDocNodeFiles(){
+		int numOfFiles[]=new int[MPI.COMM_WORLD.Size()];
+		int displs[]=new int[MPI.COMM_WORLD.Size()];
+		int numOfLocalFiles[]=new int[1];
+		File inputDirectory = new File("var");
+		File[] tmpFiles = inputDirectory.listFiles();
+		numOfLocalFiles[0]=tmpFiles.length;
+		MPI.COMM_WORLD.Gather(numOfLocalFiles, 0, 1, MPI.INT, numOfFiles, 0, 1, MPI.INT, 0);
+		int totalNumOfFiles = 0;
+		for(int i=0; i<numOfFiles.length; i++){
+			displs[i]=totalNumOfFiles;
+			totalNumOfFiles+=numOfFiles[i];
+		}
+		File[] files = new File[totalNumOfFiles];
+		MPI.COMM_WORLD.Gatherv(tmpFiles, 0, tmpFiles.length, MPI.OBJECT, files, 0, numOfFiles, displs, MPI.OBJECT, 0);
+		if(MPI.COMM_WORLD.Rank()==0)
+		{
+			for(File file: files){
+				System.out.println(file.getAbsolutePath());
+			}
+		}
 	}
 
 	public Cluster mergeAllCluster(){
