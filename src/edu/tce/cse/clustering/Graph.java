@@ -29,6 +29,7 @@ public class Graph<E extends Node> {
 		adjList = new HashMap<E, List<Edge>>();
 		V.addAll(nodes);
 	}
+        
 
 	//to add an edge from a->b and b->a 
 	public void addEdge(E a, E b, float weight){
@@ -43,8 +44,8 @@ public class Graph<E extends Node> {
 	}
 
 	//to form a complete graph 
-	public void addEdges(){
-		adjList.put(V.get(0), new ArrayList<Edge>());
+	public void addEdges(float sparsifyE){
+		/*adjList.put(V.get(0), new ArrayList<Edge>());
 		for(int j=1; j<V.size(); j++){
 			adjList.put(V.get(j), new ArrayList<Edge>());
 			float weight = findEdgeWeight(V.get(0), V.get(j));
@@ -52,21 +53,35 @@ public class Graph<E extends Node> {
 			adjList.get(V.get(0)).add(e);
 			e = new Edge(V.get(j), V.get(0), weight);
 			adjList.get(V.get(j)).add(e);
-		}
-		for(int i=1; i<V.size(); i++){
-			for(int j=i+1; j<V.size(); j++){
+		}*/
+		for(int i=0; i<V.size(); i++){
+                        adjList.put(V.get(i), new ArrayList<Edge>());
+			for(int j=0; j<V.size(); j++){
+                            if(j!=i){
 				float weight = findEdgeWeight(V.get(i), V.get(j));
 				Edge e = new Edge(V.get(i), V.get(j), weight);
 				adjList.get(V.get(i)).add(e);
-				e = new Edge(V.get(j), V.get(i), weight);
-				adjList.get(V.get(j)).add(e);
+				//e = new Edge(V.get(j), V.get(i), weight);
+				//adjList.get(V.get(j)).add(e);
+                            }    
 			}
+                    sparsifyForEachNode(i, sparsifyE);    
 		}
 	}
 
 	public float findEdgeWeight(E node1, E node2){			
 		return node1.findDistance(node2);
 	}
+        
+        public void sparsifyForEachNode(int nodeID, float e){
+		int d = V.size();
+		int toRetain = (int)Math.abs(Math.pow(d, e));
+                List<Edge> list=adjList.get(V.get(nodeID));
+		Collections.sort(list, new WeightComparator());
+		list = list.subList(0, toRetain);
+		adjList.put(V.get(nodeID), list);
+			
+        }
 
 	//to sparsify the graph by retaining d^e edges (based on weight) for each node (d=degree of node) 
 	public void sparsify(float e){
@@ -640,4 +655,3 @@ class FormingLeafClustersRunnable<E extends Node> implements Runnable{
 		}
 	}
 }
-
