@@ -195,7 +195,7 @@ public class HierarchicalClustering {
 	}
 	//to return all the representative points
 	public Object[] getRepPoints(List<Cluster> clusters){
-		List<DocNode> repPoints = new ArrayList<DocNode>();
+		List<Long> repPoints = new ArrayList<Long>();
 		for(Cluster c: clusters){
 			if(c==null)
 				break;
@@ -309,7 +309,8 @@ public class HierarchicalClustering {
 				clusterMap.put(c.nodeID, c);
 				index++;
 				System.out.println("\n Node(cluster) "+c.nodeID+" - representative points:");
-				for(DocNode d: c.getRepPoints()){
+				for(Long dId: c.getRepPoints()){
+					DocNode d = DocMemManager.getDocNode(dId);
 					System.out.print(((DocNode)d).fileName+" ");
 				}
 			}

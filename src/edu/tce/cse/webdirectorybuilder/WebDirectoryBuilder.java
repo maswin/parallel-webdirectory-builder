@@ -134,12 +134,12 @@ public class WebDirectoryBuilder {
 		System.out.println("Started Id : "+id+"/"+size);
 		HierarchicalClustering hc = new HierarchicalClustering(inputFolder);
 
-		List<DocNode> nodeList = hc.preprocess();
+		List<Long> nodeList = hc.preprocess();
 		System.out.println("Processor "+MPI.COMM_WORLD.Rank()+" ---Data Received---");
 		//Time Calc
 		long startTimeExec = System.currentTimeMillis();
 
-		DistributedLSH dLSH = new DistributedLSH(nodeList.get(0).tfIdf.length, initK, initL, kRatio, lRatio);
+		DistributedLSH dLSH = new DistributedLSH(DocMemManager.getDocNode(nodeList.get(0)).tfIdf.length, initK, initL, kRatio, lRatio);
 		hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory, repPointPercent);
 
 		int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
@@ -202,7 +202,7 @@ public class WebDirectoryBuilder {
 
 			Cluster root = hc.mergeAllCluster();
 			System.out.println("Number of Files ("+inputFolder+"): "+nodeList.size());
-			System.out.println("Dimension "+root.getRepPoints().get(0).getTfIdf().length);
+			System.out.println("Dimension "+DocMemManager.getDocNode(root.getRepPoints().get(0)).getTfIdf().length);
 			if(gui){
 				//GUI
 				new TreeView(root).setVisible(true);
@@ -275,7 +275,8 @@ public class WebDirectoryBuilder {
 				System.out.println("Processor : "+MPI.COMM_WORLD.Rank());
 				for(Cluster c: clusters){
 					System.out.println("\n Node(cluster) "+c.nodeID+" - representative points:");
-					for(DocNode d: c.getRepPoints()){
+					for(Long dId: c.getRepPoints()){
+						DocNode d = DocMemManager.getDocNode(dId);
 						System.out.print(d.fileName+" ");
 					}
 				}
