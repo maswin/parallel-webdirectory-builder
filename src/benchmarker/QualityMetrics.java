@@ -27,7 +27,7 @@ public class QualityMetrics {
 				ClusterPurity cp = new ClusterPurity();
 				RandIndex ri = new RandIndex();
 				
-				System.out.println("All vs All");
+				/*System.out.println("All vs All");
 				//F-Measure
 				System.out.println("F-Measure :");
 				System.out.println(fm.FMeasure(hActual, hCalculated));
@@ -64,6 +64,12 @@ public class QualityMetrics {
 				
 				//Rand Index
 				System.out.println("Rand Index :");
-				System.out.println("RI = "+ri.findRandIndex(oActual, oCalculated));
+				System.out.println("RI = "+ri.findRandIndex(oActual, oCalculated));*/
+				
+				
+				System.out.println("F-Measure :");
+				System.out.println("F-Measure (F vs A) = "+fm.FMeasure(hActual, oCalculated));
+				System.out.println("Cluster Purity (F vs A) = "+cp.ClusterPurity(hActual, oCalculated));
+				System.out.println("Rand Index (F vs F) = "+ri.findRandIndex(oActual, oCalculated));
 	}
 }

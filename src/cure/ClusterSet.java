@@ -71,7 +71,7 @@ public class ClusterSet {
 		}
 		points = new Point[numberOfPoints];
 		cc = new CompareCluster();
-		heap = new PriorityQueue(1000,cc);
+		heap = new PriorityQueue(1000,cc);	
 		kdtree = new KDTree(tfIdfSize);
 		int pointIndex = 0;
 		
@@ -89,7 +89,9 @@ public class ClusterSet {
 			this.dataPointMap = dataPointMap;
 		}
 		buildKDTree();
+		System.out.println("KD Tree (Main Clustering) Build Over");
 		buildHeapForClusters(clusters);
+		System.out.println("Heap (Main Clustering) Build Over");
 	}
 	
 	/**
@@ -115,7 +117,9 @@ public class ClusterSet {
 		initializeContainers(dataPoints.size(), numberOfClusters, numberOfRepInCluster, shrinkFactor, tfIdfSize);
 		initializePoints(dataPoints,dataPointMap);
 		buildKDTree();
+		System.out.println("KD Tree Build Over");
 		buildHeap();
+		System.out.println("Heap Build Over");
 		startClustering();
 	}
 	
@@ -143,6 +147,7 @@ public class ClusterSet {
 	public ArrayList mergeClusters() {
 		ArrayList mergedClusters = new ArrayList();
 		startClustering();
+		System.out.println("Heap Size "+heap.size());
 		while(heap.size() != 0) {
 			mergedClusters.add(heap.remove());
 		}
@@ -228,7 +233,11 @@ public class ClusterSet {
 	 * At every step two clusters are merged and the heap is rearranged. The representative points are deleted for old clusters and
 	 * the representative points are added for new cluster to the KD Tree.
 	 */
+	//Watch-Out
+	//Too Many Iterations
 	public void startClustering() {
+		System.out.println("Started Clustering");
+		System.out.println("Reducing from "+heap.size()+" to "+clustersToBeFound);
 		while(heap.size() > clustersToBeFound) {
 			Cluster minCluster = (Cluster)heap.remove();
 			Cluster closestCluster = minCluster.closestCluster;

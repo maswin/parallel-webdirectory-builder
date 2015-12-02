@@ -65,6 +65,8 @@ public class Cure {
 		long startTimeExec = System.currentTimeMillis();
 
 		int sampleSize = calculateSampleSize();
+		System.out.println("Total Doc Count"+this.totalNumberOfPoints);
+		System.out.println("Sample Size "+sampleSize);
 		ArrayList randomPointSet = selectRandomPoints(sampleSize);
 		System.out.println("Random Points selected");
 		ArrayList[] partitionedPointSet = partitionPointSet(randomPointSet);
@@ -234,10 +236,13 @@ public class Cure {
 	 * @return
 	 * ArrayList Clusters formed
 	 */
+	//Watch out
+	//Converting 2 partition of 165 into 135
 	private ArrayList clusterSubPartitions(ArrayList partitionedSet[]) {
 		ArrayList clusters = new ArrayList();
 		int numberOfClusterInEachPartition = totalNumberOfPoints / (numberOfPartitions * reducingFactorForEachPartition);
 		for(int i=0 ; i<partitionedSet.length; i++) {
+			System.out.println("Iteration "+i);
 			ClusterSet clusterSet = new ClusterSet(partitionedSet[i],numberOfClusterInEachPartition, minRepresentativeCount, shrinkFactor, dataPointsMap);
 			Cluster[] subClusters = clusterSet.getAllClusters();
 			for(int j=0; j<subClusters.length; j++) {

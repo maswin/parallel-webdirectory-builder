@@ -6,6 +6,7 @@ import java.io.InputStream;
 import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 
 import benchmarker.QualityMetrics;
@@ -26,14 +27,14 @@ import mpi.MPI;
 public class WebDirectoryBuilder {
 	public static String inputFolder = "TestDocuments"; // -i
 	public static String outputFile = "output.txt"; // -o
-	
+
 	public static int numOfCluster = 5; //-n
 	public static double repPointPercent = 50.0; //-r
 	public static double initK = 5; //-k
 	public static double initL = 10; //-l
 	public static double kRatio = 0.0; //-kr
 	public static double lRatio = 0.0; //-lr
-	
+
 	public static boolean gui = true;
 
 	public static void errorReport(boolean help){
@@ -59,43 +60,39 @@ public class WebDirectoryBuilder {
 			//Starts with -
 			String pattern = "^-[a-zA-Z]*$";
 
-			System.out.print("Args ");
-			for(String word : args){
-				System.out.print(word+" ");
-			}
-			System.out.println();
+			System.out.println("Args "+"<"+MPI.COMM_WORLD.Rank()+"> "+Arrays.deepToString(args));
 			for(int i=0;i<args.length;i++){
 				String word = args[i];
 				if(word.matches(pattern)){
 					switch(word){
 					case "-i": inputFolder = args[i+1];
-							break;
+					break;
 					case "-o": outputFile = args[i+1];
-							break;
+					break;
 					case "-n": int nVal = Integer.parseInt(args[i+1]);
-							numOfCluster = nVal;
-							break;
+					numOfCluster = nVal;
+					break;
 					case "-r": double rVal = Double.parseDouble(args[i+1]);
-							repPointPercent = rVal;
-							break;
+					repPointPercent = rVal;
+					break;
 					case "-k": int kVal = Integer.parseInt(args[i+1]);
-							initK = kVal;
-							break;
+					initK = kVal;
+					break;
 					case "-l": int lVal = Integer.parseInt(args[i+1]);
-							initL = lVal;
-							break;
+					initL = lVal;
+					break;
 					case "-kr": double krVal = Double.parseDouble(args[i+1]);
-							kRatio = krVal;
-							break;
+					kRatio = krVal;
+					break;
 					case "-lr": double lrVal = Double.parseDouble(args[i+1]);
-							lRatio = lrVal;
-							break;
+					lRatio = lrVal;
+					break;
 					case "-h": errorReport(true);
-							return false;
+					return false;
 					case "--help": errorReport(true);
-							return false;
+					return false;
 					default: errorReport(false);
-							return false;
+					return false;
 					}
 				}else if(word.equals("nogui")){
 					gui = false;
@@ -113,17 +110,19 @@ public class WebDirectoryBuilder {
 		int id = MPI.COMM_WORLD.Rank();
 		int size = MPI.COMM_WORLD.Size();
 
-
 		if(!validateInput(args)){
+			System.out.println("Exiting <"+MPI.COMM_WORLD.Rank()+">");
 			return;
 		} 
-		System.out.println("Parameters");
-		System.out.println("Number of Clusters : "+numOfCluster);
-		System.out.println("Percentage of Representative Points : "+repPointPercent);
-		System.out.println("Signatue Length : "+initK);
-		System.out.println("Number of hash functions : "+initL);
-		System.out.println("Signature length increasing ratio : "+kRatio);
-		System.out.println("Number of hash functions decreasing ratio : "+lRatio);
+		if(MPI.COMM_WORLD.Rank() == 0){
+			System.out.println("Parameters");
+			System.out.println("Number of Clusters : "+numOfCluster);
+			System.out.println("Percentage of Representative Points : "+repPointPercent);
+			System.out.println("Signatue Length : "+initK);
+			System.out.println("Number of hash functions : "+initL);
+			System.out.println("Signature length increasing ratio : "+kRatio);
+			System.out.println("Number of hash functions decreasing ratio : "+lRatio);
+		}
 		//Time Calc
 		long startTimeData = System.currentTimeMillis();
 
@@ -197,8 +196,9 @@ public class WebDirectoryBuilder {
 			long endTime = System.currentTimeMillis();
 			System.out.println("Data Processing + Execution Time: "+(endTime-startTimeData));
 			System.out.println("Execution Time: "+(endTime-startTimeExec));
-			
+
 			Cluster root = hc.mergeAllCluster();
+			System.out.println("Number of Files ("+inputFolder+"): "+nodeList.size());
 			System.out.println("Dimension "+root.getRepPoints().get(0).getTfIdf().length);
 			if(gui){
 				//GUI
@@ -212,7 +212,7 @@ public class WebDirectoryBuilder {
 			QualityMetrics.qualityMeasure(inputFolder,outputFile);
 		}
 		MPI.Finalize();
-							
+
 	}
 
 	//Generate Output File
