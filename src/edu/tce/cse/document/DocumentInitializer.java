@@ -21,12 +21,14 @@ public class DocumentInitializer {
 	private final int numberOfProcessors;
 	private final int startIndex;
 	private final int endIndex;
-	private List<DocNode> docNodeList;
+	private List<Long> docNodeList;
+	
 	public DocumentInitializer(String documentDirectory){
 		this.documentDirectory = documentDirectory;
 		List<File> files = new ArrayList<>();
 		parseDirectory(documentDirectory, files);
 		this.N = files.size();
+		System.out.println("Size "+this.N);
 		//Sort Files
 		Collections.sort(files, new Comparator<File>() {
 			public int compare(File f1, File f2){
@@ -60,7 +62,7 @@ public class DocumentInitializer {
 	private void InitializeDocuments(List<File> files) throws IOException{
 		File inputDirectory = new File(documentDirectory);
 
-		List<Document> documentList = new ArrayList<>(endIndex - startIndex + 1);;
+		List<Long> documentList = new ArrayList<>(endIndex - startIndex + 1);;
 
 		Map<String, Integer>[] localDocumentFrequency = new LinkedHashMap[1];
 		localDocumentFrequency[0] = new LinkedHashMap();
@@ -70,7 +72,8 @@ public class DocumentInitializer {
 		for (int i = startIndex; i <= endIndex; i++) {
             Document document = new Document(i, files.get(i).getAbsolutePath(), files.get(i).getName().trim());
             document.parseDocument(localDocumentFrequency[0]);
-            documentList.add(document);
+            DocMemManager.writeDocument(document);
+            documentList.add(document.docID);
         }
 		
 		//Parallel Code 
@@ -108,7 +111,8 @@ public class DocumentInitializer {
 		//System.out.println(this.processorID+" "+globalDocumentFrequency[0].keySet().size());
 
 		//Sequential Code
-		for(Document doc : documentList){
+		for(Long docID : documentList){
+			Document doc = DocMemManager.getDocument(docID);
 			doc.calculateTfIdf(this.N, globalDocumentFrequency[0]);
 		}
 		
@@ -166,7 +170,8 @@ public class DocumentInitializer {
 		localTfIdf[0] = new ArrayList<double[]>(docNodeList.size());
 
 
-		for( DocNode doc : docNodeList){
+		for( Long dId : docNodeList){
+			DocNode doc = DocMemManager.getDocNode(dId);
 			localTfIdf[0].add(doc.getTfIdf());
 		}
 
@@ -220,25 +225,28 @@ public class DocumentInitializer {
 			MPI.COMM_WORLD.Recv(tfIdfMatrix, 0, count, MPI.OBJECT, 0, this.processorID);
 		}
 		index = 0;
-		for(DocNode doc : docNodeList){
+		for(Long dId  : docNodeList){
 			//System.out.println(this.processorID+" "+tfIdfMatrix[index].length);
+			DocNode doc = DocMemManager.getDocNode(dId);
 			doc.setTfIdf(tfIdfMatrix[index]);
 			index++;
 		}
 	}
 
-	public List<DocNode> getDocNodeList() {
+	public List<Long> getDocNodeList() {
 		return docNodeList;
 	}
 
-	public void generateDocNodeList(List<Document> documentList){
+	public void generateDocNodeList(List<Long> documentList){
 		DocNode node;
-		for(Document document : documentList){
+		for(Long dId : documentList){
+			Document document = DocMemManager.getDocument(dId);
 			node = new DocNode(document.getDocID(),document.getFileName(), document.getTfIdf());
-			this.docNodeList.add(node);
+			DocMemManager.writeDocNode(node);
+			this.docNodeList.add(node.nodeID);
 		}
 		//reduceTfIDF();
-		reduceTfIDF(this.docNodeList);
+		//reduceTfIDF(this.docNodeList);
 	}
 
 }

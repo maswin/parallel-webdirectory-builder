@@ -10,6 +10,7 @@ import java.util.Map;
 import java.util.Set;
 
 import mpi.MPI;
+import edu.tce.cse.document.DocMemManager;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.document.DocumentInitializer;
@@ -70,7 +71,7 @@ public class DocumentTester {
 		long startTimeData = System.currentTimeMillis();
 		
 		DocumentInitializer DI = new DocumentInitializer("TestDocuments");
-		List<DocNode> docList=new ArrayList<>();
+		List<Long> docList=new ArrayList<>();
 
 		
 		docList = DI.getDocNodeList();
@@ -86,12 +87,12 @@ public class DocumentTester {
 			System.out.println();
 		}*/
 		//Testing
-		//printMatrix(docList);
+		printMatrix(docList);
 
 		MPI.Finalize();
 
 	}
-	private static void printMatrix(List<DocNode> docList){
+	private static void printMatrix(List<Long> docList){
 		double sim = 0.0;
 		int id = MPI.COMM_WORLD.Rank();
 		int size = MPI.COMM_WORLD.Size();
@@ -103,15 +104,25 @@ public class DocumentTester {
 
 				for(int j = -1;j<docList.size();j++){
 						for(int k = -1;k<docList.size();k++){
+							
 							if(j==-1 && k==-1){
 								System.out.printf("%12s","");
 							}else if(k==-1){
-					             System.out.printf("%12s ", (docList.get(j).fileName.length() > 12) ? docList.get(j).fileName.substring(0, 12) : docList.get(j).fileName);
+								DocNode iNode = DocMemManager.getDocNode(docList.get(i));
+								//DocNode kNode = DocMemManager.getDocNode(docList.get(k));
+								DocNode jNode = DocMemManager.getDocNode(docList.get(j));
+					             System.out.printf("%12s ", (jNode.fileName.length() > 12) ? jNode.fileName.substring(0, 12) : jNode.fileName);
 							}else if(j==-1){
-					             System.out.printf("%12s ", (docList.get(k).fileName.length() > 12) ? docList.get(k).fileName.substring(0, 12) : docList.get(k).fileName);
+								DocNode iNode = DocMemManager.getDocNode(docList.get(i));
+								DocNode kNode = DocMemManager.getDocNode(docList.get(k));
+								//DocNode jNode = DocMemManager.getDocNode(docList.get(j));
+					             System.out.printf("%12s ", (kNode.fileName.length() > 12) ? kNode.fileName.substring(0, 12) : kNode.fileName);
 
 							}else{
-								sim = docList.get(j).findCosSimilarity(docList.get(k));
+								//DocNode iNode = DocMemManager.getDocNode(docList.get(i));
+								DocNode kNode = DocMemManager.getDocNode(docList.get(k));
+								DocNode jNode = DocMemManager.getDocNode(docList.get(j));
+								sim = jNode.findCosSimilarity(kNode);
 								System.out.printf("%.10f ",sim);
 							}
 						}

@@ -8,6 +8,7 @@
 /data
 /Input
 /Output
+/var
 output.txt
 CureOutput.txt
 outliers

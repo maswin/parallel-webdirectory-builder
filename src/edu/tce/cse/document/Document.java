@@ -9,6 +9,7 @@ import java.io.FileReader;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
+import java.io.Serializable;
 import java.io.StringReader;
 import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
@@ -35,8 +36,8 @@ import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
 import edu.tce.cse.util.SuperBit;
 
 
-public class Document {
-	private long docID;
+public class Document implements Serializable{
+	public long docID;
 	private String filePath;
 	private String fileName;
 
