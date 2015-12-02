@@ -15,6 +15,7 @@ import edu.tce.cse.clustering.Cluster;
 import edu.tce.cse.clustering.Graph;
 import edu.tce.cse.clustering.HierarchicalClustering;
 import edu.tce.cse.clustering.Node;
+import edu.tce.cse.document.DocMemManager;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.document.DocumentInitializer;
@@ -87,6 +88,8 @@ public class WebDirectoryBuilder {
 					case "-lr": double lrVal = Double.parseDouble(args[i+1]);
 					lRatio = lrVal;
 					break;
+					case "-buff": int buffVal = Integer.parseInt(args[i+1]);
+					DocMemManager.maxSize = buffVal;
 					case "-h": errorReport(true);
 					return false;
 					case "--help": errorReport(true);
