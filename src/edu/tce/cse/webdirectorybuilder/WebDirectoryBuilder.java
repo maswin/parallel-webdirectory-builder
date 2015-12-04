@@ -167,6 +167,10 @@ public class WebDirectoryBuilder {
 
 			if(MPI.COMM_WORLD.Rank()==0){
 				List<Data> data = dLSH.getPairPoints();
+                                if(data.isEmpty()){
+                                    hc.flagToStop[0]=true;
+                                }
+                                else{
 				hc.mergeClusters(data, startID);
 				startID+=hc.clustersAtThisLevel.size();
 				System.out.println("--Merging of clusters--");
@@ -188,6 +192,7 @@ public class WebDirectoryBuilder {
 				if(hc.clustersAtThisLevel.size()<=numOfCluster || hc.clustersAtThisLevel.size()==clustersInPreviousLevel){
 					hc.flagToStop[0]=true;
 				}
+                            }    
 			}
 			MPI.COMM_WORLD.Bcast(hc.flagToStop, 0, 1, MPI.BOOLEAN, 0);
 			if(hc.flagToStop[0])
@@ -200,7 +205,7 @@ public class WebDirectoryBuilder {
 			System.out.println("Data Processing + Execution Time: "+(endTime-startTimeData));
 			System.out.println("Execution Time: "+(endTime-startTimeExec));
 
-			Cluster root = hc.mergeAllCluster();
+			/*Cluster root = hc.mergeAllCluster();
 			System.out.println("Number of Files ("+inputFolder+"): "+nodeList.size());
 			System.out.println("Dimension "+DocMemManager.getDocNode(root.getRepPoints().get(0)).getTfIdf().length);
 			if(gui){
@@ -213,13 +218,15 @@ public class WebDirectoryBuilder {
 			generateOutputFile(out, root, 0);
 			out.close();
 			QualityMetrics.qualityMeasure(inputFolder,outputFile);
+                        */
 		}
 		MPI.Finalize();
 
 	}
 
 	//Generate Output File
-	public static void generateOutputFile(PrintWriter out, Cluster root, int indent){
+	/*
+        public static void generateOutputFile(PrintWriter out, Cluster root, int indent){
 		for(int i=0;i<indent;i++){
 			out.print(" ");
 		}
@@ -244,7 +251,8 @@ public class WebDirectoryBuilder {
 			out.print("Cluster "+ root.nodeID+" ");
 			out.println(root.files.toString());
 		}*/
-	}
+	//}
+         
 	//Testing Purpose Prints
 	public static void printComponent(List<List<DocNode>> components){
 		MPI.COMM_WORLD.Barrier();

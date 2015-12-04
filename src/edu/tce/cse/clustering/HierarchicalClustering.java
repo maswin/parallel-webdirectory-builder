@@ -27,6 +27,7 @@ import edu.tce.cse.model.Directory;
 import edu.tce.cse.model.EdgeData;
 import edu.tce.cse.util.Statistics;
 import gui.TreeView;
+import java.util.Arrays;
 
 public class HierarchicalClustering {
 	public List<Long> clustersAtThisLevel;
@@ -276,12 +277,13 @@ public class HierarchicalClustering {
 		}
 		MPI.COMM_WORLD.Barrier();
 		gatherRepPoints(getRepPoints(clusters));
-		return distributeInitialClusters(clusters.toArray());
+		return distributeInitialClusters(clusters);
 
 	}
 
 	//to gather initial clusters from all processors in the main processor
-	public List<Long> distributeInitialClusters(Object[] localClusterIDs){
+	public List<Long> distributeInitialClusters(List<Long> localClusterIDsList){
+                Object[] localClusterIDs = localClusterIDsList.toArray();
 		List<Long> clusterMap = new ArrayList<>();
 		int numOfClusters[]=new int[MPI.COMM_WORLD.Size()];
 		int displs[]=new int[MPI.COMM_WORLD.Size()];
@@ -293,10 +295,11 @@ public class HierarchicalClustering {
 			displs[i]=totalNumOfClusters;
 			totalNumOfClusters+=numOfClusters[i];
 		}
-		long index = 0;
+		long index = localClusterIDs.length;
 		Cluster[] clusters; //= new Cluster[totalNumOfClusters];
 		if(MPI.COMM_WORLD.Rank()==0){
-			for(int i=1; i<MPI.COMM_WORLD.Size(); i++){
+			clusterMap.addAll(localClusterIDsList);
+                        for(int i=1; i<MPI.COMM_WORLD.Size(); i++){
 				clusters = new Cluster[numOfClusters[i]];
 				MPI.COMM_WORLD.Recv(clusters, 0, numOfClusters[i], MPI.OBJECT, i, 0);
 				for(Object o: clusters){
