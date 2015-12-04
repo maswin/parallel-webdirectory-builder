@@ -5,7 +5,7 @@ import java.util.Map;
 
 import edu.tce.cse.document.DocNode;
 public class Directory {
-	public Map<Integer, List<DocNode>> directoryMap;
+	public Map<Integer, List<Long>> directoryMap;
 	public Directory(){
 		directoryMap = new HashMap();
 	}

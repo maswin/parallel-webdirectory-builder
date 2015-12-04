@@ -12,9 +12,9 @@ public class PartialBetweenness implements Serializable{
 	public float delta;
 	public float priority;
 	public int level;
-	public HashMap<Integer, List<Edge<DocNode>>> pred;
+	public HashMap<Integer, List<Edge>> pred;
 	public PartialBetweenness(){
 		priority = Float.MAX_VALUE;
-		pred = new HashMap<Integer, List<Edge<DocNode>>>();
+		pred = new HashMap<Integer, List<Edge>>();
 	}
 }

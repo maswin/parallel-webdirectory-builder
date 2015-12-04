@@ -142,7 +142,7 @@ public class WebDirectoryBuilder {
 		DistributedLSH dLSH = new DistributedLSH(DocMemManager.getDocNode(nodeList.get(0)).tfIdf.length, initK, initL, kRatio, lRatio);
 		hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory, repPointPercent);
 
-		int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
+		/*int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
 		int startID = hc.clustersAtThisLevel.size();
 		int iteration = 1;
 
@@ -150,7 +150,10 @@ public class WebDirectoryBuilder {
 			MPI.COMM_WORLD.Barrier();
 			clustersInPreviousLevel = hc.clustersAtThisLevel.size();
 			List<Cluster> temp = new ArrayList<Cluster>();
-			temp.addAll(hc.clustersAtThisLevel.values());
+			for(Long l: hc.clustersAtThisLevel){
+				temp.add(DocMemManager.getCluster(l));
+			}
+			//temp.addAll(hc.clustersAtThisLevel.values());
 
 			hc.distributeCentroids(temp);
 			temp.clear();
@@ -169,17 +172,18 @@ public class WebDirectoryBuilder {
 				System.out.println("--Merging of clusters--");
 
 				System.out.println("\n \n");
-				for(Cluster c: hc.clustersAtThisLevel.values()){
+				for(Long l: hc.clustersAtThisLevel){
+					Cluster c = DocMemManager.getCluster(l);
 					System.out.println("\n Cluster "+c.nodeID+" - Files:");
 					/*for(DocNode d: c.getRepPoints()){
 								d.setClusterID(c.nodeID);
 								System.out.print(((DocNode)d).fileName+" ");
-							}*/
+							}
 					System.out.println(c.files);
 					if(c.getChildren().size()>1){
 						System.out.println("\n Children:");
-						for(Node n: c.getChildren()){
-							System.out.print(n.nodeID+" ");
+						for(Long n: c.getChildren()){
+							System.out.print(n+" ");
 						}
 					}
 				}
@@ -193,14 +197,14 @@ public class WebDirectoryBuilder {
 			if(hc.flagToStop[0])
 				break;
 			iteration++;
-		}
+		}*/
 
 		if(MPI.COMM_WORLD.Rank()==0){
 			long endTime = System.currentTimeMillis();
 			System.out.println("Data Processing + Execution Time: "+(endTime-startTimeData));
 			System.out.println("Execution Time: "+(endTime-startTimeExec));
 
-			Cluster root = hc.mergeAllCluster();
+			/*Cluster root = hc.mergeAllCluster();
 			System.out.println("Number of Files ("+inputFolder+"): "+nodeList.size());
 			System.out.println("Dimension "+DocMemManager.getDocNode(root.getRepPoints().get(0)).getTfIdf().length);
 			if(gui){
@@ -212,14 +216,14 @@ public class WebDirectoryBuilder {
 			PrintWriter out = new PrintWriter(new File(outputFile));
 			generateOutputFile(out, root, 0);
 			out.close();
-			QualityMetrics.qualityMeasure(inputFolder,outputFile);
+			QualityMetrics.qualityMeasure(inputFolder,outputFile);*/
 		}
 		MPI.Finalize();
 
 	}
 
 	//Generate Output File
-	public static void generateOutputFile(PrintWriter out, Cluster root, int indent){
+	/*public static void generateOutputFile(PrintWriter out, Cluster root, int indent){
 		for(int i=0;i<indent;i++){
 			out.print(" ");
 		}
@@ -244,7 +248,7 @@ public class WebDirectoryBuilder {
 			out.print("Cluster "+ root.nodeID+" ");
 			out.println(root.files.toString());
 		}*/
-	}
+	//}
 	//Testing Purpose Prints
 	public static void printComponent(List<List<DocNode>> components){
 		MPI.COMM_WORLD.Barrier();
