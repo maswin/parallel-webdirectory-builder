@@ -129,9 +129,9 @@ public class HierarchicalClustering {
 	//to return edge weights of MST 
 	public float[] getMSTEdgeWeights(Graph mst){
 		float[] values = new float[mst.V.size()-1]; int count = 0;
-		Set<Cluster> used = new HashSet();
+		Set<Long> used = new HashSet();
 		for(int i=0; i<mst.V.size(); i++){
-			Cluster c = DocMemManager.getCluster(mst.V.get(i));
+			Long c = mst.V.get(i);
 			List<Edge> edges = (List<Edge>) mst.adjList.get(c);
 			float sum = 0f;
 			if(edges!=null){
@@ -143,7 +143,7 @@ public class HierarchicalClustering {
 					//System.out.print(e.getSrc().nodeID+","+e.getDst().nodeID+"("+e.getWeight()+") ");
 				}
 			}
-			c.setDegreeInMST(sum);
+			//c.setDegreeInMST(sum);
 			used.add(c);
 		}
 		return values;
@@ -374,13 +374,13 @@ public class HierarchicalClustering {
 
 	}
 
-	/*public Cluster mergeAllCluster(){
-		List<Cluster> clusterList = new ArrayList(this.clustersAtThisLevel.values());
+	public Cluster mergeAllCluster(){
+		List<Long> clusterList = new ArrayList(this.clustersAtThisLevel);
 		/*for(Map.Entry<Long, Cluster> entry : this.clustersAtThisLevel.entrySet()){
 			clusterList.add(entry.getValue());
 		}*/
-		//return new Cluster(0,(List<? extends Node>) clusterList, 100.0);
-	//}		
+		return new Cluster(0, clusterList, 100.0, false);
+	}		
 
 }
 //combo 1: 0.3f-sparsification Math.min mean+stdDev

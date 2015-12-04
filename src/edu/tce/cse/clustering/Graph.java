@@ -201,6 +201,7 @@ public class Graph {
 			src.container.level=0;
 			src.container.priority=0;
 			src.container.sig=1;
+                        DocMemManager.writeDocNode(src);
 			HashMap<Integer, List<Edge>> edgesMap = new HashMap<Integer, List<Edge>>();	
 
 			//perform one iteration of Dijkstra's algo 
@@ -266,13 +267,14 @@ public class Graph {
 			//queues of all threads are empty now
 			//combine pred of all nodes to form edgesMap (key = level, value = edges explored at that level)
 			for(int i=0; i<V.size(); i++){
-				Set<Integer> iterator = DocMemManager.getDocNode(V.get(i)).container.pred.keySet();
+                                DocNode temp = DocMemManager.getDocNode(V.get(i));
+				Set<Integer> iterator = temp.container.pred.keySet();
 				for(int j: iterator){
 					if(!edgesMap.containsKey(j)){
-						edgesMap.put(j, DocMemManager.getDocNode(V.get(i)).container.pred.get(j));
+						edgesMap.put(j, temp.container.pred.get(j));
 					}
 					else
-						edgesMap.get(j).addAll(DocMemManager.getDocNode(V.get(i)).container.pred.get(j));
+						edgesMap.get(j).addAll(temp.container.pred.get(j));
 				}
 			}
 			Set<Integer> keyset = edgesMap.keySet();
@@ -318,8 +320,8 @@ public class Graph {
 			for(int i=0; i<graph.V.size(); i++){
 				System.out.println(i+" "+graph.V.get(i).nodeID+" "+graph.V.get(i).centrality);
 			}
-			System.out.println();
-			 */
+			System.out.println();*/
+			 
 		}
 	}
 
@@ -495,14 +497,14 @@ class ForwardPhaseRunnable implements Runnable{
                         long srcID = source.nodeID;
 			for(int i=0; i<graph.adjList.get(srcID).size(); i++){
 				DocNode v = DocMemManager.getDocNode(graph.adjList.get(srcID).get(i).getDst());
-				if(V.contains(v)){
+				if(V.contains(v.nodeID)){
 					float alt = graph.adjList.get(srcID).get(i).getWeight() + source.container.priority;
 					if(v.container.priority==Float.MAX_VALUE){
 						queue.add(v.nodeID);
 					}
 					if(alt < v.container.priority){
 						//queue.decreasePriority(v, alt);
-						queue.remove(v);
+						queue.remove(v.nodeID);
 						v.container.priority=alt;
 						queue.add(v.nodeID);
 						v.container.pred.clear();
