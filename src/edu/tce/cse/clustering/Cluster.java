@@ -14,6 +14,7 @@ import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix2D;
 import edu.tce.cse.document.DocMemManager;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.model.Centroid;
+import edu.tce.cse.model.RepPointData;
 
 public class Cluster extends Node implements Serializable{
 	
@@ -22,7 +23,7 @@ public class Cluster extends Node implements Serializable{
 	Centroid centroid;
 	float weightedDegreeInMST;
 	public StringBuilder files;
-	public double percent = 50.0;
+	public double percent = 10.0;
 	
 	public Cluster(long id, List<Long> nodes, double percent, boolean isDocNode){
 		super(id);
@@ -49,13 +50,14 @@ public class Cluster extends Node implements Serializable{
 				this.children.addAll(nodes);
 				//find rep points for cluster
 				//findRepPointsBasedOnMSTDegree();
-				addAllRepresentativePoints();
+				addRepPoints(this.percent);
 				findCentroid();
 				addFiles();
 			}
 		}
 		catch(Exception e){
 			System.out.println("couldn't form cluster");
+			e.printStackTrace();
 		}
 	}
 	
@@ -111,7 +113,8 @@ public class Cluster extends Node implements Serializable{
 	}
 	public Centroid getCentroid(){
 		if(centroid == null){
-			System.out.println("Centroid Not Found");
+			System.out.println("Centroid Found");
+			return this.findCentroid();
 		}
 		return this.centroid;
 	}
@@ -167,8 +170,47 @@ public class Cluster extends Node implements Serializable{
 		}
 		
 	}*/
+	
+	void addRepPoints(double percent){
+		//percent change
+		percent = 50d;
+		Cluster c;
+		RepPointData r;
+		float dist;
+		List<RepPointData> repPointsList = new ArrayList<RepPointData>();
+		for(int i=0; i<children.size(); i++){
+			c = DocMemManager.getCluster(children.get(i));
+			for(int j=0;j<c.repPoints.size();j++){
+				DocNode d = DocMemManager.getDocNode(c.repPoints.get(j));
+				d.setClusterID(nodeID);
+				//Special change
+				DocMemManager.writeDocNode(d);
+				dist = d.findCosDistance(this.getCentroid());
+				r = new RepPointData(c.repPoints.get(j), dist);
+				repPointsList.add(r);
+			}
+		}
+		Collections.sort(repPointsList,  new Comparator<RepPointData>(){
+			@Override
+			public int compare(RepPointData o1, RepPointData o2) {
+				// TODO Auto-generated method stub
+				if(o1.d > o2.d){
+					return -1;
+				}else if(o1.d == o2.d){
+					return 0;
+				}
+				return 1;
+			}			
+		});
+		int size = repPointsList.size();
+		int numOfRepPoints = (int)Math.ceil(size*(percent/100.0));
+		repPointsList = repPointsList.subList(0, numOfRepPoints);
+		for(RepPointData t : repPointsList){
+			this.repPoints.add(t.d);
+		}
+	}
 
-	void addAllRepresentativePoints(){
+	/*void addAllRepresentativePoints(){
 		Cluster c;
 		for(int i=0; i<children.size(); i++){
 			c = DocMemManager.getCluster(children.get(i));
@@ -180,7 +222,7 @@ public class Cluster extends Node implements Serializable{
 				repPoints.add(c.repPoints.get(j));
 			}
 		}
-	}
+	}*/
 	
 	/*void checkCentralityHeuristic(List<DocNode> nodes){
 		if(nodes.size()==1)

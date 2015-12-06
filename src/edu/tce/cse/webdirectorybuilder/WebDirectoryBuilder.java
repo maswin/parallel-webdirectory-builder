@@ -30,7 +30,7 @@ public class WebDirectoryBuilder {
 	public static String outputFile = "output.txt"; // -o
 
 	public static int numOfCluster = 5; //-n
-	public static double repPointPercent = 50.0; //-r
+	public static double repPointPercent = 10.0; //-r
 	public static double initK = 5; //-k
 	public static double initL = 10; //-l
 	public static double kRatio = 0.0; //-kr
@@ -203,9 +203,10 @@ public class WebDirectoryBuilder {
 		if(MPI.COMM_WORLD.Rank()==0){
 			long endTime = System.currentTimeMillis();
 			System.out.println("Data Processing + Execution Time: "+(endTime-startTimeData));
-			System.out.println("Execution Time: "+(endTime-startTimeExec));
-
-			/*Cluster root = hc.mergeAllCluster();
+			System.out.println("Data Access Time:"+DocMemManager.accessTime);
+			System.out.println("Execution Time: (with secondry mem access) "+(endTime-startTimeExec));
+			System.out.println("Execution Time: "+((endTime-startTimeExec)-DocMemManager.accessTime));
+			Cluster root = hc.mergeAllCluster();
 			System.out.println("Number of Files ("+inputFolder+"): "+nodeList.size());
 			System.out.println("Dimension "+DocMemManager.getDocNode(root.getRepPoints().get(0)).getTfIdf().length);
 			if(gui){
@@ -218,21 +219,22 @@ public class WebDirectoryBuilder {
 			generateOutputFile(out, root, 0);
 			out.close();
 			QualityMetrics.qualityMeasure(inputFolder,outputFile);
-                        */
+                        
 		}
 		MPI.Finalize();
 
 	}
 
 	//Generate Output File
-	/*
+	
         public static void generateOutputFile(PrintWriter out, Cluster root, int indent){
 		for(int i=0;i<indent;i++){
 			out.print(" ");
 		}
 		out.println(root.files.toString());
 		if(root.getChildren() != null && root.getChildren().size()>0){
-			for(Node child : root.getChildren()){
+			for(Long cId : root.getChildren()){
+				Node child = DocMemManager.getCluster(cId);
 				generateOutputFile(out, (Cluster) child, indent+1);
 			}
 		}
@@ -251,7 +253,7 @@ public class WebDirectoryBuilder {
 			out.print("Cluster "+ root.nodeID+" ");
 			out.println(root.files.toString());
 		}*/
-	//}
+	}
          
 	//Testing Purpose Prints
 	public static void printComponent(List<List<DocNode>> components){

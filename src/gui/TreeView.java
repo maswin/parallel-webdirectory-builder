@@ -20,6 +20,7 @@ import javax.swing.JScrollPane;
 
 import edu.tce.cse.clustering.Cluster;
 import edu.tce.cse.clustering.Node;
+import edu.tce.cse.document.DocMemManager;
 //new TreeView(root).setVisible(true);
 public class TreeView extends JFrame {
 
@@ -54,7 +55,8 @@ public class TreeView extends JFrame {
 		DefaultMutableTreeNode root = new DefaultMutableTreeNode(
 				"Cluster "+topicTreeRoot.nodeID);
 		if(topicTreeRoot.getChildren() != null && topicTreeRoot.getChildren().size()>0){				
-			for(Node child : topicTreeRoot.getChildren()){
+			for(Long cId : topicTreeRoot.getChildren()){
+				Node child = DocMemManager.getCluster(cId);
 				root.add(generateTree((Cluster) child));
 			}
 		}else{

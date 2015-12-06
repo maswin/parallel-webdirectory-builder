@@ -106,6 +106,7 @@ public class Document implements Serializable{
 
 	public void setTfIdf(double[] tfIdf) {
 		this.tfIdf = tfIdf;
+		DocMemManager.writeDocument(this);
 	}
 	
 	public void parseDocument(Map<String, Integer> documentFrequency) throws IOException{

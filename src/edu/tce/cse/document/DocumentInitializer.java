@@ -75,7 +75,7 @@ public class DocumentInitializer {
             DocMemManager.writeDocument(document);
             documentList.add(document.docID);
         }
-		
+		System.out.println("Initial Document Processing over");
 		//Parallel Code 
 		//Set Static Variables for DocumentParser Runnable
 		/*int numOfCores = Runtime.getRuntime().availableProcessors();
@@ -114,6 +114,7 @@ public class DocumentInitializer {
 		for(Long docID : documentList){
 			Document doc = DocMemManager.getDocument(docID);
 			doc.calculateTfIdf(this.N, globalDocumentFrequency[0]);
+			DocMemManager.writeDocument(doc);
 		}
 		
 		//Parallel Code

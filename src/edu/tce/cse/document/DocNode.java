@@ -10,6 +10,7 @@ import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
 import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Node;
+import edu.tce.cse.model.Centroid;
 import edu.tce.cse.model.PartialBetweenness;
 
 
@@ -76,6 +77,24 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 		return (1-findCosSimilarity(d));
 	}
 	
+	
+	public float findCosSimilarity(Centroid d){
+
+		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
+        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.tfIdf);
+
+        DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
+
+        float sim = (float) (vector1.zDotProduct(vector2) / 
+                (algebra.norm2(vector1)*algebra.norm2(vector2)));
+        if(Float.isNaN(sim)){
+        	return 0f;
+        }
+        return sim;
+	}
+	public float findCosDistance(Centroid d){
+		return (1-findCosSimilarity(d));
+	}
 	//Distance using reduced Tf-Idf
 	public float findReducedCosSimilarity(DocNode d){
 

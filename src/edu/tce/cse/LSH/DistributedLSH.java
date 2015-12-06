@@ -58,6 +58,7 @@ public class DistributedLSH {
 		this.l -= (this.l*lRatio/100.0);
 	}
 	public void hash(Centroid[] nodeList){
+		System.out.println("Num of centroids "+nodeList.length);
 		lsh = new LSH(dimensions, (int)Math.ceil(this.l), (int)Math.floor(this.k));
 		if(MPI.COMM_WORLD.Rank()==0){
 			printLSHParams();

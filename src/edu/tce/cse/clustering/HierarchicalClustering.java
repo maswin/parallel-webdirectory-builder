@@ -30,6 +30,7 @@ import gui.TreeView;
 import java.util.Arrays;
 
 public class HierarchicalClustering {
+	public float sparsificationRatio = 0.01f;
 	public List<Long> clustersAtThisLevel;
 	public DocNode[] localRepPoints;
 	public Centroid[] centroids;
@@ -236,7 +237,7 @@ public class HierarchicalClustering {
 
 		//form graph where each node is a DocNode
 		Graph graph = new Graph(docs);
-		graph.addEdges(0.3f);
+		graph.addEdges(sparsificationRatio);
 		//FIX SPARSIFICATION EXPONENT HERE
 		//graph.sparsify(0.3f);
 
