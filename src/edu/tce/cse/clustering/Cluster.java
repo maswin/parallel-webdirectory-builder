@@ -20,6 +20,7 @@ public class Cluster extends Node implements Serializable{
 	
     List<Long> children;
 	List<Long> repPoints;
+	List<Long> candidateRepPoints;
 	Centroid centroid;
 	float weightedDegreeInMST;
 	public StringBuilder files;
@@ -29,6 +30,7 @@ public class Cluster extends Node implements Serializable{
 		super(id);
 		children = new ArrayList<>();
 		repPoints = new ArrayList<Long>();
+		candidateRepPoints = new ArrayList<Long>();
 		centroid = null;
 		files = new StringBuilder();
 		if(percent != 0.0)
@@ -50,10 +52,12 @@ public class Cluster extends Node implements Serializable{
 				this.children.addAll(nodes);
 				//find rep points for cluster
 				//findRepPointsBasedOnMSTDegree();
-				addRepPoints(this.percent);
+				addRepPoints();
+				//addAllRepresentativePoints();
 				findCentroid();
 				addFiles();
 			}
+			System.out.println("Rep Point Size : "+this.candidateRepPoints.size()+" to "+this.repPoints.size());
 		}
 		catch(Exception e){
 			System.out.println("couldn't form cluster");
@@ -140,6 +144,8 @@ public class Cluster extends Node implements Serializable{
 			}
 			//repPoints.addAll(nodes.subList(0, numOfLowCentrality));
 		}
+		//Only for First Iteration
+		this.candidateRepPoints = this.repPoints;
 	}
 	
 	//to find representative points when clusters are grouped to form next level cluster
@@ -171,26 +177,34 @@ public class Cluster extends Node implements Serializable{
 		
 	}*/
 	
-	void addRepPoints(double percent){
-		//percent change
-		percent = 50d;
+	void addRepPoints(){
+		double mean = 0d;
+		double stdDev = 0d;
+		double totalDistance = 0d;
+		double totalSqDistance = 0d;
+		int count = 0;
 		Cluster c;
 		RepPointData r;
 		float dist;
 		List<RepPointData> repPointsList = new ArrayList<RepPointData>();
 		for(int i=0; i<children.size(); i++){
 			c = DocMemManager.getCluster(children.get(i));
-			for(int j=0;j<c.repPoints.size();j++){
-				DocNode d = DocMemManager.getDocNode(c.repPoints.get(j));
+			for(int j=0;j<c.candidateRepPoints.size();j++){
+				DocNode d = DocMemManager.getDocNode(c.candidateRepPoints.get(j));
 				d.setClusterID(nodeID);
 				//Special change
 				DocMemManager.writeDocNode(d);
 				dist = d.findCosDistance(this.getCentroid());
-				r = new RepPointData(c.repPoints.get(j), dist);
+				//For mean and StdDev
+				totalDistance += dist;
+				totalSqDistance += (dist*dist);
+				count++;
+				r = new RepPointData(c.candidateRepPoints.get(j), dist);
 				repPointsList.add(r);
+				this.candidateRepPoints.add(c.candidateRepPoints.get(j));
 			}
 		}
-		Collections.sort(repPointsList,  new Comparator<RepPointData>(){
+		/*Collections.sort(repPointsList,  new Comparator<RepPointData>(){
 			@Override
 			public int compare(RepPointData o1, RepPointData o2) {
 				// TODO Auto-generated method stub
@@ -201,16 +215,17 @@ public class Cluster extends Node implements Serializable{
 				}
 				return 1;
 			}			
-		});
-		int size = repPointsList.size();
-		int numOfRepPoints = (int)Math.ceil(size*(percent/100.0));
-		repPointsList = repPointsList.subList(0, numOfRepPoints);
+		});*/
+		mean = (totalDistance/(count*1.0));
+		stdDev = Math.sqrt((totalSqDistance/(count*1.0))-Math.pow(mean, 2));
 		for(RepPointData t : repPointsList){
-			this.repPoints.add(t.d);
+			if(t.distanceFromCentroid >= (mean-stdDev))
+				this.repPoints.add(t.d);
 		}
+		//System.out.println(mean+" "+stdDev);
 	}
 
-	/*void addAllRepresentativePoints(){
+	void addAllRepresentativePoints(){
 		Cluster c;
 		for(int i=0; i<children.size(); i++){
 			c = DocMemManager.getCluster(children.get(i));
@@ -222,7 +237,7 @@ public class Cluster extends Node implements Serializable{
 				repPoints.add(c.repPoints.get(j));
 			}
 		}
-	}*/
+	}
 	
 	/*void checkCentralityHeuristic(List<DocNode> nodes){
 		if(nodes.size()==1)
