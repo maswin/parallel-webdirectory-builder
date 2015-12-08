@@ -10,6 +10,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import cern.colt.matrix.impl.SparseDoubleMatrix1D;
 import edu.tce.cse.util.SVDReducer;
 import mpi.MPI;
 import mpi.Op;
@@ -147,7 +148,7 @@ public class DocumentInitializer {
 		double[][] tfIdfMatrix = new double[documentList.size()][];		
 
 		for(int i=0; i<documentList.size(); i++){
-			tfIdfMatrix[i] = documentList.get(i).getTfIdf();
+			tfIdfMatrix[i] = documentList.get(i).getTfIdf().toArray();
 		}
 
 
@@ -173,7 +174,7 @@ public class DocumentInitializer {
 
 		for( Long dId : docNodeList){
 			DocNode doc = DocMemManager.getDocNode(dId);
-			localTfIdf[0].add(doc.getTfIdf());
+			localTfIdf[0].add(doc.getTfIdf().toArray());
 		}
 
 		//MPI.COMM_WORLD.Reduce(localTfIdf, 0, 
@@ -229,7 +230,7 @@ public class DocumentInitializer {
 		for(Long dId  : docNodeList){
 			//System.out.println(this.processorID+" "+tfIdfMatrix[index].length);
 			DocNode doc = DocMemManager.getDocNode(dId);
-			doc.setTfIdf(tfIdfMatrix[index]);
+			doc.setTfIdf(new SparseDoubleMatrix1D(tfIdfMatrix[index]));
 			index++;
 		}
 	}
@@ -242,7 +243,7 @@ public class DocumentInitializer {
 		DocNode node;
 		for(Long dId : documentList){
 			Document document = DocMemManager.getDocument(dId);
-			node = new DocNode(document.getDocID(),document.getFileName(), document.getTfIdf());
+			node = new DocNode(document.getDocID(),document.getFileName(), new SparseDoubleMatrix1D(document.getTfIdf()));
 			DocMemManager.writeDocNode(node);
 			this.docNodeList.add(node.nodeID);
 		}

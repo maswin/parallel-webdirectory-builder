@@ -51,7 +51,7 @@ public class Cure {
 		
 		//Init
 		this.totalNumberOfPoints = s.getSampleDocNodes().size();
-		this.tfIdfSize = s.getSampleDocNodes().get(0).tfIdf.length;
+		this.tfIdfSize = s.getSampleDocNodes().get(0).tfIdf.toArray().length;
 		this.dataPoints = new Point[totalNumberOfPoints];
 		this.dataPointsMap = new HashMap();
 		this.currentRepAdditionCount = totalNumberOfPoints;
@@ -163,7 +163,7 @@ public class Cure {
 		try {
 			List<DocNode> docNodes = s.getSampleDocNodes();
 			for(DocNode d : docNodes){
-				dataPoints[pointIndex] = new Point(d.tfIdf,pointIndex,d.fileName);
+				dataPoints[pointIndex] = new Point(d.tfIdf.toArray(),pointIndex,d.fileName);
 				dataPointsMap.put(pointIndex, dataPoints[pointIndex]);
 				pointIndex++;
 			}

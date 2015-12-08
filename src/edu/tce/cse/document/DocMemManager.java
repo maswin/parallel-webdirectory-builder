@@ -18,7 +18,7 @@ public class DocMemManager {
 	public static int maxSize = 1500;
 	public static int totalSize = 1000;
 
-	private static LinkedHashMap<Long, Document> documentMap = new <Long, Document>LinkedHashMap(maxSize + 1, .75F, false) {
+	/*private static LinkedHashMap<Long, Document> documentMap = new <Long, Document>LinkedHashMap(maxSize + 1, .75F, false) {
 		protected boolean removeEldestEntry(Map.Entry eldest) {
 			return size() > maxSize;
 		}
@@ -37,8 +37,12 @@ public class DocMemManager {
 		protected boolean removeEldestEntry(Map.Entry eldest) {
 			return size() > maxSize;
 		}
-	};
+	};*/
 
+	private static Map<Long, Document> documentMap = new <Long, Document>HashMap();
+	private static Map<Long, DocNode> docNodeMap = new <Long, DocNode>HashMap();
+	private static Map<Long, Cluster> clusterMap = new <Long, Cluster>HashMap();
+	private static Map<Long, Centroid> centroidMap = new <Long, Centroid>HashMap();
 	//Read & Write Document
 	public static void writeDocument(Document doc) {
 		long startTime = System.currentTimeMillis();
@@ -215,11 +219,17 @@ public class DocMemManager {
 		long maxMemory = runtime.maxMemory();
 		long allocatedMemory = runtime.totalMemory();
 		long freeMemory = runtime.freeMemory();
-		if((freeMemory + (maxMemory - allocatedMemory))<=500000000){
+		//Less thn 2 GB
+		if((freeMemory + (maxMemory - allocatedMemory))<=2000000000){
+			System.out.println("Memory : "+(freeMemory + (maxMemory - allocatedMemory)) );
+			int size = documentMap.size()+docNodeMap.size()+clusterMap.size()+centroidMap.size();
+			System.out.println("Size in Use : "+size);
+			System.out.println("Docuent Use : "+documentMap.size());
+			System.out.println("Doc Node Use : "+docNodeMap.size());
+			System.out.println("Cluster Use : "+clusterMap.size());
 			flushMemory();
 		}
-		/*int size = documentMap.size()+docNodeMap.size()+clusterMap.size()+centroidMap.size();
-		if(size>totalSize){
+		/*if(size>totalSize){
 			flushMemory();
 		}*/
 	}

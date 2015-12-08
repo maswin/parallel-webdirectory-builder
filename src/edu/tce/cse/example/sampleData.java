@@ -9,6 +9,7 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import cern.colt.matrix.impl.SparseDoubleMatrix1D;
 import mpi.MPI;
 import mpi.Op;
 import edu.tce.cse.document.DocNode;
@@ -72,7 +73,7 @@ public class sampleData {
 		boolean[] signature;
 		DocNode node;
 		for(Document docs : inputDocuments){
-			node = new DocNode(docs.getDocID(), docs.getFileName(), docs.getTfIdf());
+			node = new DocNode(docs.getDocID(), docs.getFileName(), new SparseDoubleMatrix1D(docs.getTfIdf()));
 			docNodes.add(node);
 		}
 		return docNodes;
@@ -83,7 +84,7 @@ public class sampleData {
 		boolean[] signature;
 		DocNode node;
 		for(Document docs : inputDocuments){
-			node = new DocNode(docs.getDocID(), docs.getFileName(), docs.getTfIdf());
+			node = new DocNode(docs.getDocID(), docs.getFileName(), new SparseDoubleMatrix1D(docs.getTfIdf()));
 			docNodes.add(node);
 		}
 		return docNodes;

@@ -5,6 +5,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cern.colt.matrix.impl.SparseDoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
@@ -17,13 +18,13 @@ import edu.tce.cse.model.PartialBetweenness;
 public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public String fileName;
-	public double[] tfIdf;
+	public SparseDoubleMatrix1D tfIdf;
 	private transient double[] reducedTfIdf;//Only used within the processor
 	public float centrality;
 	public transient PartialBetweenness container;
 	public long clusterID;
 	
-	public DocNode(long id, String fileName, double[] tfIdf){
+	public DocNode(long id, String fileName, SparseDoubleMatrix1D tfIdf){
 		super(id);
 		this.tfIdf = tfIdf;
 		this.reducedTfIdf = null;
@@ -39,13 +40,13 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 		this.clusterID = clusterID;
 	}
 	
-	public double[] getTfIdf() {
+	public SparseDoubleMatrix1D getTfIdf() {
 		return tfIdf;
 	}
-	public void setTfIdf(double[] tfIdf) {
+	public void setTfIdf(SparseDoubleMatrix1D tfIdf) {
 		this.tfIdf = tfIdf;
 	}
-	public double[] getReducedTfIdf() {
+	public SparseDoubleMatrix1D getReducedTfIdf() {
 		return tfIdf;
 		//return reducedTfIdf;
 	}
@@ -61,8 +62,8 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public float findCosSimilarity(DocNode d){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf());
+		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf().toArray());
+        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf().toArray());
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
 
@@ -80,7 +81,7 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public float findCosSimilarity(Centroid d){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
+		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf().toArray());
         DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.tfIdf);
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
@@ -98,8 +99,8 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	//Distance using reduced Tf-Idf
 	public float findReducedCosSimilarity(DocNode d){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getReducedTfIdf());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getReducedTfIdf());
+		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getReducedTfIdf().toArray());
+        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getReducedTfIdf().toArray());
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
         
@@ -112,8 +113,8 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public float findEuclideanSimilarity(DocNode d){
 		float E = 0.0f;
-		for(int i=0; i<tfIdf.length; i++){
-			E += Math.pow((tfIdf[i]-d.tfIdf[i]), 2);
+		for(int i=0; i<tfIdf.toArray().length; i++){
+			E += Math.pow((tfIdf.toArray()[i]-d.tfIdf.toArray()[i]), 2);
 		}
 		return (float)(Math.abs(Math.sqrt(E)));
 	}

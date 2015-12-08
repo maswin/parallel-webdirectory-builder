@@ -139,7 +139,7 @@ public class WebDirectoryBuilder {
 		//Time Calc
 		long startTimeExec = System.currentTimeMillis();
 
-		DistributedLSH dLSH = new DistributedLSH(DocMemManager.getDocNode(nodeList.get(0)).tfIdf.length, initK, initL, kRatio, lRatio);
+		DistributedLSH dLSH = new DistributedLSH(DocMemManager.getDocNode(nodeList.get(0)).tfIdf.size(), initK, initL, kRatio, lRatio);
 		hc.clustersAtThisLevel = hc.initialClustering(nodeList, directory, repPointPercent);
 
 		int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
@@ -208,7 +208,7 @@ public class WebDirectoryBuilder {
 			System.out.println("Execution Time: "+((endTime-startTimeExec)-DocMemManager.accessTime));
 			Cluster root = hc.mergeAllCluster();
 			System.out.println("Number of Files ("+inputFolder+"): "+nodeList.size());
-			System.out.println("Dimension "+DocMemManager.getDocNode(root.getRepPoints().get(0)).getTfIdf().length);
+			System.out.println("Dimension "+DocMemManager.getDocNode(root.getRepPoints().get(0)).getTfIdf().size());
 			if(gui){
 				//GUI
 				new TreeView(root).setVisible(true);

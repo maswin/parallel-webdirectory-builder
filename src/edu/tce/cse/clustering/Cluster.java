@@ -287,7 +287,7 @@ public class Cluster extends Node implements Serializable{
 		double[][] vector = new double[this.repPoints.size()][];
         for (int i = 0; i < this.repPoints.size(); i++) {
         	DocNode iNode = DocMemManager.getDocNode(this.repPoints.get(i));
-            vector[i] = iNode.getTfIdf();
+            vector[i] = iNode.getTfIdf().toArray();
         }
 
         DoubleMatrix2D matrix = new DenseDoubleMatrix2D(vector);
