@@ -5,10 +5,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
+import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.SparseDoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
-import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
+import cern.colt.matrix.linalg.Algebra;
 import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Node;
 import edu.tce.cse.model.Centroid;
@@ -62,13 +61,13 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public float findCosSimilarity(DocNode d){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf().toArray());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf().toArray());
+		DoubleMatrix1D vector1 = this.getTfIdf();
+		DoubleMatrix1D vector2 = d.getTfIdf();
 
-        DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
+        Algebra algebra = new Algebra();
 
         float sim = (float) (vector1.zDotProduct(vector2) / 
-                (algebra.norm2(vector1)*algebra.norm2(vector2)));
+                (Math.sqrt(algebra.norm2(vector1))*Math.sqrt(algebra.norm2(vector2))));
         if(Float.isNaN(sim)){
         	return 0f;
         }
@@ -81,13 +80,13 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public float findCosSimilarity(Centroid d){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf().toArray());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.tfIdf);
+		DoubleMatrix1D vector1 = this.getTfIdf();
+		DoubleMatrix1D vector2 = new SparseDoubleMatrix1D(d.tfIdf);
 
-        DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
+        Algebra algebra = new Algebra();
 
         float sim = (float) (vector1.zDotProduct(vector2) / 
-                (algebra.norm2(vector1)*algebra.norm2(vector2)));
+                (Math.sqrt(algebra.norm2(vector1))*Math.sqrt(algebra.norm2(vector2))));;
         if(Float.isNaN(sim)){
         	return 0f;
         }
@@ -99,13 +98,17 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	//Distance using reduced Tf-Idf
 	public float findReducedCosSimilarity(DocNode d){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getReducedTfIdf().toArray());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getReducedTfIdf().toArray());
+		DoubleMatrix1D vector1 = this.getReducedTfIdf();
+		DoubleMatrix1D vector2 = d.getReducedTfIdf();
 
-        DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
-        
-        return (float) (vector1.zDotProduct(vector2) / 
-                (algebra.norm2(vector1)*algebra.norm2(vector2)));
+        Algebra algebra = new Algebra();
+
+        float sim = (float) (vector1.zDotProduct(vector2) / 
+                (Math.sqrt(algebra.norm2(vector1))*Math.sqrt(algebra.norm2(vector2))));
+        if(Float.isNaN(sim)){
+        	return 0f;
+        }
+        return sim;
 	}
 	public float findReducedCosDistance(DocNode d){
 		return (1-findReducedCosSimilarity(d));

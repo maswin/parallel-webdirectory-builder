@@ -1,9 +1,9 @@
 package cure;
 import java.util.StringTokenizer;
 
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
-import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
+import cern.colt.matrix.DoubleMatrix1D;
+import cern.colt.matrix.impl.DenseDoubleMatrix1D;
+import cern.colt.matrix.linalg.Algebra;
 import edu.tce.cse.document.DocNode;
 
 /**
@@ -57,7 +57,7 @@ public class Point {
 		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.tfIdf);
         DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(t.tfIdf);
 
-        DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
+        Algebra algebra = new Algebra();
         
         float sim = (float) (vector1.zDotProduct(vector2) / 
                 (algebra.norm2(vector1)*algebra.norm2(vector2)));

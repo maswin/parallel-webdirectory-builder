@@ -30,10 +30,9 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.tartarus.snowball.ext.PorterStemmer;
 
+import cern.colt.matrix.DoubleMatrix1D;
 import cern.colt.matrix.impl.SparseDoubleMatrix1D;
-import cern.colt.matrix.tdouble.DoubleMatrix1D;
-import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
-import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
+import cern.colt.matrix.linalg.Algebra;
 import edu.tce.cse.util.SuperBit;
 
 
@@ -193,12 +192,13 @@ public class Document implements Serializable{
 	}
 	
 	public float findCosSimilarity(Document d){
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf().toArray());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf().toArray());
+		DoubleMatrix1D vector1 = this.getTfIdf();
+		DoubleMatrix1D vector2 = d.getTfIdf();
 
-        DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
+        Algebra algebra = new Algebra();
+
         float sim = (float) (vector1.zDotProduct(vector2) / 
-                (algebra.norm2(vector1)*algebra.norm2(vector2)));
+                (Math.sqrt(algebra.norm2(vector1))*Math.sqrt(algebra.norm2(vector2))));
         if(Float.isNaN(sim)){
         	return 0f;
         }
@@ -209,7 +209,7 @@ public class Document implements Serializable{
 	}
 	public float findEuclideanSimilarity(Document d){
 		float E = 0.0f;
-		for(int i=0; i<tfIdf.toArray().length; i++){
+		for(int i=0; i<tfIdf.size(); i++){
 			E += Math.pow((tfIdf.toArray()[i]-d.tfIdf.toArray()[i]), 2);
 		}
 		return (float)(Math.abs(Math.sqrt(E)));
