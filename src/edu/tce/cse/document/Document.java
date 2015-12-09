@@ -30,6 +30,7 @@ import org.apache.lucene.analysis.tokenattributes.CharTermAttribute;
 import org.apache.lucene.analysis.util.CharArraySet;
 import org.tartarus.snowball.ext.PorterStemmer;
 
+import cern.colt.matrix.impl.SparseDoubleMatrix1D;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
@@ -47,7 +48,7 @@ public class Document implements Serializable{
 
 
 	//Computed during Initialization
-	private double[] tfIdf;
+	private SparseDoubleMatrix1D tfIdf;
 
 
 	/*
@@ -97,14 +98,14 @@ public class Document implements Serializable{
 		return totalTokens;
 	}
 
-	public double[] getTfIdf() {
+	public SparseDoubleMatrix1D getTfIdf() {
 		if(tfIdf == null){
 			System.out.println("Error : tfIdf Not Generated");
 		}
 		return tfIdf;
 	}
 
-	public void setTfIdf(double[] tfIdf) {
+	public void setTfIdf(SparseDoubleMatrix1D tfIdf) {
 		this.tfIdf = tfIdf;
 		DocMemManager.writeDocument(this);
 	}
@@ -174,7 +175,7 @@ public class Document implements Serializable{
 		double tfidf;
 		int index = 0;
 		
-		this.tfIdf = new double[documentFrequency.size()];
+		double[] dTfIdf = new double[documentFrequency.size()];
 		for(String word : documentFrequency.keySet()){
 			tf = 0;
 			if(termFrequency.containsKey(word)){
@@ -185,14 +186,15 @@ public class Document implements Serializable{
 			idf = Math.log10((double)totalDocuments/(1.0 * df));
 
 			tfidf = tf*idf;
-			tfIdf[index++] = tfidf;
+			dTfIdf[index++] = tfidf;
 		}
+		this.tfIdf = new SparseDoubleMatrix1D(dTfIdf);
 
 	}
 	
 	public float findCosSimilarity(Document d){
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf());
+		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf().toArray());
+        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf().toArray());
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
         float sim = (float) (vector1.zDotProduct(vector2) / 
@@ -207,8 +209,8 @@ public class Document implements Serializable{
 	}
 	public float findEuclideanSimilarity(Document d){
 		float E = 0.0f;
-		for(int i=0; i<tfIdf.length; i++){
-			E += Math.pow((tfIdf[i]-d.tfIdf[i]), 2);
+		for(int i=0; i<tfIdf.toArray().length; i++){
+			E += Math.pow((tfIdf.toArray()[i]-d.tfIdf.toArray()[i]), 2);
 		}
 		return (float)(Math.abs(Math.sqrt(E)));
 	}

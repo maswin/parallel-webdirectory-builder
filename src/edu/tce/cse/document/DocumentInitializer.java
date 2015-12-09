@@ -243,7 +243,7 @@ public class DocumentInitializer {
 		DocNode node;
 		for(Long dId : documentList){
 			Document document = DocMemManager.getDocument(dId);
-			node = new DocNode(document.getDocID(),document.getFileName(), new SparseDoubleMatrix1D(document.getTfIdf()));
+			node = new DocNode(document.getDocID(),document.getFileName(), document.getTfIdf());
 			DocMemManager.writeDocNode(node);
 			this.docNodeList.add(node.nodeID);
 		}

@@ -73,7 +73,7 @@ public class sampleData {
 		boolean[] signature;
 		DocNode node;
 		for(Document docs : inputDocuments){
-			node = new DocNode(docs.getDocID(), docs.getFileName(), new SparseDoubleMatrix1D(docs.getTfIdf()));
+			node = new DocNode(docs.getDocID(), docs.getFileName(), docs.getTfIdf());
 			docNodes.add(node);
 		}
 		return docNodes;
@@ -84,7 +84,7 @@ public class sampleData {
 		boolean[] signature;
 		DocNode node;
 		for(Document docs : inputDocuments){
-			node = new DocNode(docs.getDocID(), docs.getFileName(), new SparseDoubleMatrix1D(docs.getTfIdf()));
+			node = new DocNode(docs.getDocID(), docs.getFileName(), docs.getTfIdf());
 			docNodes.add(node);
 		}
 		return docNodes;
