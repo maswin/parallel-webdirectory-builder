@@ -261,6 +261,7 @@ public class HierarchicalClustering {
 		int count = 1;
 		List<List<Long>> components = graph.findConnectedComponents();
 		List<Long> clusters= graph.formLeafClusters(components, 0, directory, percentOfRepPoints);
+		System.out.println("leaf clusters formed");
 		for(int i=0; i<MPI.COMM_WORLD.Size(); i++){
 			MPI.COMM_WORLD.Barrier();
 			if(i==MPI.COMM_WORLD.Rank()){
