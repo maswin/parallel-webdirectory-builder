@@ -68,6 +68,7 @@ public class Graph {
 			}
 			sparsifyForEachNode(i, sparsifyE);    
 		}
+		System.out.println("Neighbours identified for each node after sparsification");
 	}
 
 	public float findEdgeWeight(long node1, long node2){			
@@ -201,7 +202,7 @@ public class Graph {
 			src.container.level=0;
 			src.container.priority=0;
 			src.container.sig=1;
-                        DocMemManager.writeDocNode(src);
+            DocMemManager.writeDocNode(src);
 			HashMap<Integer, List<Edge>> edgesMap = new HashMap<Integer, List<Edge>>();	
 
 			//perform one iteration of Dijkstra's algo 
@@ -267,7 +268,7 @@ public class Graph {
 			//queues of all threads are empty now
 			//combine pred of all nodes to form edgesMap (key = level, value = edges explored at that level)
 			for(int i=0; i<V.size(); i++){
-                                DocNode temp = DocMemManager.getDocNode(V.get(i));
+                DocNode temp = DocMemManager.getDocNode(V.get(i));
 				Set<Integer> iterator = temp.container.pred.keySet();
 				for(int j: iterator){
 					if(!edgesMap.containsKey(j)){
@@ -315,6 +316,9 @@ public class Graph {
 				d.container.priority=Float.MAX_VALUE;
 				d.container.pred.clear();
 				DocMemManager.writeDocNode(d);
+			}
+			if(source%(V.size()/20)==0){
+				System.out.println("centrality computed for "+source+" vertices");
 			}
 			/*System.out.println("Centrality values: Using "+source+" as source vertex in this iteration -");
 			for(int i=0; i<graph.V.size(); i++){
