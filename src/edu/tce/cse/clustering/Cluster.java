@@ -57,7 +57,7 @@ public class Cluster extends Node implements Serializable{
 				findCentroid();
 				addFiles();
 			}
-			System.out.println("Rep Point Size : "+this.candidateRepPoints.size()+" to "+this.repPoints.size());
+			//System.out.println("Rep Point Size : "+this.candidateRepPoints.size()+" to "+this.repPoints.size());
 		}
 		catch(Exception e){
 			System.out.println("couldn't form cluster");

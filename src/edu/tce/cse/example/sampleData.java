@@ -8,6 +8,7 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import cern.colt.matrix.impl.SparseDoubleMatrix1D;
 import mpi.MPI;
@@ -18,6 +19,8 @@ import edu.tce.cse.util.SVDReducer;
 
 public class sampleData {
 	public static String documentDirectory = "TestDocuments";
+	//TO - DO: Initialize dictionary
+	public Set<String> dictionary;
 	private List<Document> documentList;
 	public sampleData(String directory){
 		documentDirectory = directory;
@@ -51,7 +54,7 @@ public class sampleData {
         for (int i = 0; i < files.size(); i++) {
         	f = files.get(i);
             Document document = new Document(i, f.getAbsolutePath(), f.getName());
-            document.parseDocument(documentFrequency);
+            document.parseDocument(documentFrequency, this.dictionary);
             documentList.add(document);
         }
         

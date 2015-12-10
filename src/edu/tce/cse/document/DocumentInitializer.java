@@ -1,14 +1,19 @@
 package edu.tce.cse.document;
 
+import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
+import java.util.HashSet;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
@@ -25,8 +30,27 @@ public class DocumentInitializer {
 	private final int startIndex;
 	private final int endIndex;
 	private List<Long> docNodeList;
-	
+	public static Set<String> dictionary;
+
+	private void initializeDictionary() {
+		try {
+			this.dictionary = new HashSet();
+			String word;
+
+			BufferedReader br = new BufferedReader(new FileReader("stemmed-dictionary.txt"));
+
+			while ((word = br.readLine()) != null) {
+				//System.out.println(word);
+				this.dictionary.add(word.trim());
+			}
+		} catch (Exception e){
+			e.printStackTrace();
+		}
+	}
 	public DocumentInitializer(String documentDirectory){
+
+		initializeDictionary();
+
 		this.documentDirectory = documentDirectory;
 		List<File> files = new ArrayList<>();
 		parseDirectory(documentDirectory, files);
@@ -73,11 +97,11 @@ public class DocumentInitializer {
 
 		//Sequential Code
 		for (int i = startIndex; i <= endIndex; i++) {
-            Document document = new Document(i, files.get(i).getAbsolutePath(), files.get(i).getName().trim());
-            document.parseDocument(localDocumentFrequency[0]);
-            DocMemManager.writeDocument(document);
-            documentList.add(document.docID);
-        }
+			Document document = new Document(i, files.get(i).getAbsolutePath(), files.get(i).getName().trim());
+			document.parseDocument(localDocumentFrequency[0],this.dictionary);
+			DocMemManager.writeDocument(document);
+			documentList.add(document.docID);
+		}
 		System.out.println("Initial Document Processing over");
 		//Parallel Code 
 		//Set Static Variables for DocumentParser Runnable
@@ -88,7 +112,7 @@ public class DocumentInitializer {
 		DocumentParser.localDocumentFrequency = localDocumentFrequency[0];
 		DocumentParser.numOfCores = numOfCores;
 		DocumentParser.files = (File[]) files.toArray(new File[files.size()]);
-		
+
 		Object docLock = new Object();
 		Object reduceLock = new Object();
 		Thread[] threads = new Thread[numOfCores];
@@ -105,7 +129,7 @@ public class DocumentInitializer {
 				ee.printStackTrace();
 			}
 		}*/
-		
+
 		//Collect Document Frequency from all Processors
 		Map<String, Integer>[] globalDocumentFrequency = new HashMap[1];
 		MPI.COMM_WORLD.Allreduce(localDocumentFrequency, 0,
@@ -122,7 +146,7 @@ public class DocumentInitializer {
 			doc.calculateTfIdf(this.N, globalDocumentFrequency[0]);
 			DocMemManager.writeDocument(doc);
 		}
-		
+
 		//Parallel Code
 		//Set static variables for TfIdfCalc
 		/*TfIdfCalc.documentList = documentList;
@@ -131,12 +155,12 @@ public class DocumentInitializer {
 		TfIdfCalc.numOfCores = numOfCores;
 		TfIdfCalc.numOfDoc = this.N;
 		TfIdfCalc.docFrequencyMap = globalDocumentFrequency[0];
-		
+
 		for (int i = 0; i < numOfCores; i++) {
 			threads[i] = new Thread(new TfIdfCalc(i));
 			threads[i].start();
 		}
-		
+
 		for (Thread thread : threads) {
 			try {
 				//A Wait for Joining all threads merging in a single Iteration
@@ -145,11 +169,14 @@ public class DocumentInitializer {
 				ee.printStackTrace();
 			}
 		}*/
-		
+
 		generateDocNodeList(documentList);
 		System.out.println("Reduction Started");
+		long svdStartTime = System.currentTimeMillis();
 		reduceTfIDF();
+		long svdEndTime = System.currentTimeMillis();
 		System.out.println("Reduction Ended");
+		System.out.println("SVD Time : "+(svdEndTime-svdStartTime));
 	}
 
 	private void reduceTfIDF(){
@@ -177,9 +204,9 @@ public class DocumentInitializer {
 
 		//Reduce TfIdf
 		SVDReducer svd = new SVDReducer(size);
-		System.out.println(fullVector.viewRow(0).size());
+		//System.out.println(fullVector.viewRow(0).size());
 		fullVector = svd.reduceTfIdf(fullVector);
-		System.out.println(fullVector.viewRow(0).size());
+		//System.out.println(fullVector.viewRow(0).size());
 		index = 0;
 		for(Long dId : this.docNodeList){
 			//double[] tfIdf = new double[tfIdfSize];
@@ -293,7 +320,7 @@ class DocumentParser implements Runnable{
 	public Object docLock;
 	public Object reduceLock;
 	public Map<String, Integer> tmpLocalDocumentFrequency;
-	
+
 	DocumentParser(int id, Object docLock, Object reduceLock){
 
 		int N = endIndex - startIndex + 1;
@@ -312,7 +339,7 @@ class DocumentParser implements Runnable{
 		try{
 			for(int i=thisStartIndex; i<=thisEndIndex;i++){
 				Document document = new Document(i, files[i].getAbsolutePath(), files[i].getName().trim());
-				document.parseDocument(tmpLocalDocumentFrequency);
+				document.parseDocument(tmpLocalDocumentFrequency, DocumentInitializer.dictionary);
 				tmpDocumentList.add(document);
 			}
 			synchronized(docLock){
@@ -328,12 +355,12 @@ class DocumentParser implements Runnable{
 	}
 	private void reduceMap(){
 		for (String word : tmpLocalDocumentFrequency.keySet()) {
-            int frequency = tmpLocalDocumentFrequency.get(word);
-            if (DocumentParser.localDocumentFrequency.containsKey(word)) {
-                frequency += DocumentParser.localDocumentFrequency.get(word);
-            }
-            DocumentParser.localDocumentFrequency.put(word, frequency);
-        }
+			int frequency = tmpLocalDocumentFrequency.get(word);
+			if (DocumentParser.localDocumentFrequency.containsKey(word)) {
+				frequency += DocumentParser.localDocumentFrequency.get(word);
+			}
+			DocumentParser.localDocumentFrequency.put(word, frequency);
+		}
 	}
 
 }
@@ -345,10 +372,10 @@ class TfIdfCalc implements Runnable{
 	public static List<Document> documentList;
 	public static int numOfDoc;
 	public static Map<String, Integer> docFrequencyMap;
-	
+
 	public int thisStartIndex;
 	public int thisEndIndex;
-	
+
 	TfIdfCalc(int id){
 		int N = endIndex - startIndex + 1;
 		this.thisStartIndex = ((N / numOfCores) * id) + startIndex;
@@ -356,14 +383,14 @@ class TfIdfCalc implements Runnable{
 				? (N / numOfCores) * (id + 1) - 1
 						: N - 1) + startIndex;
 	}
-	
+
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
 		for(int i=thisStartIndex; i<=thisEndIndex;i++){
 			documentList.get(i).calculateTfIdf(numOfDoc, docFrequencyMap);
 		}
-		
+
 	}
-	
+
 }

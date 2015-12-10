@@ -18,37 +18,64 @@ public class SVDReducer {
 	public int k = 25;
 
 	public SVDReducer(){
-		
+
 	}
 	public SVDReducer(int k){
 		this.k = k;
 	}
 	public DoubleMatrix2D reduceTfIdf(DoubleMatrix2D tfIdfMatrix){
-		tfIdfMatrix = tfIdfMatrix.viewDice();
-		SingularValueDecomposition svd = new SingularValueDecomposition(tfIdfMatrix);
-		
-		DoubleMatrix2D leftSingularVector = svd.getU();
-		DoubleMatrix2D singularValues = svd.getS();
-		DoubleMatrix2D rightSingularVector = svd.getV();
-		
-		//System.out.println(leftSingularVector.rows()+" "+leftSingularVector.columns());
-		//System.out.println(singularValues.rows()+" "+singularValues.columns());
-		//System.out.println(rightSingularVector.rows()+" "+rightSingularVector.columns());
-		DoubleMatrix2D dCrossKSpace = reduceMatrix(k, singularValues, rightSingularVector);
-		//System.out.println(dCrossKSpace.rows()+" "+dCrossKSpace.columns());
-		//System.out.println(svd.rank());
-		return dCrossKSpace;
+		if(tfIdfMatrix.rows()<tfIdfMatrix.columns()) {
+			tfIdfMatrix = tfIdfMatrix.viewDice();
+			SingularValueDecomposition svd = new SingularValueDecomposition(tfIdfMatrix);
+
+			DoubleMatrix2D leftSingularVector = svd.getU();
+			DoubleMatrix2D singularValues = svd.getS();
+			DoubleMatrix2D rightSingularVector = svd.getV();
+
+			//System.out.println(leftSingularVector.rows()+" "+leftSingularVector.columns());
+			//System.out.println(singularValues.rows()+" "+singularValues.columns());
+			//System.out.println(rightSingularVector.rows()+" "+rightSingularVector.columns());
+			DoubleMatrix2D dCrossKSpace = reduceMatrixRight(k, singularValues, rightSingularVector);
+			//System.out.println(dCrossKSpace.rows()+" "+dCrossKSpace.columns());
+			//System.out.println(svd.rank());
+			return dCrossKSpace;
+		} else {
+			SingularValueDecomposition svd = new SingularValueDecomposition(tfIdfMatrix);
+
+			DoubleMatrix2D leftSingularVector = svd.getU();
+			DoubleMatrix2D singularValues = svd.getS();
+			DoubleMatrix2D rightSingularVector = svd.getV();
+
+			//System.out.println(leftSingularVector.rows()+" "+leftSingularVector.columns());
+			//System.out.println(singularValues.rows()+" "+singularValues.columns());
+			//System.out.println(rightSingularVector.rows()+" "+rightSingularVector.columns());
+			DoubleMatrix2D dCrossKSpace = reduceMatrixLeft(k, singularValues, leftSingularVector);
+			//System.out.println(dCrossKSpace.rows()+" "+dCrossKSpace.columns());
+			//System.out.println(svd.rank());
+			return dCrossKSpace;
+		}
 	}
-	public DoubleMatrix2D reduceMatrix(int k, DoubleMatrix2D singularValues, DoubleMatrix2D rightSingularVector){
-		
+	public DoubleMatrix2D reduceMatrixLeft(int k, DoubleMatrix2D singularValues, DoubleMatrix2D leftSingularVector){
+
+		DoubleMatrix2D singularValuesK = singularValues.viewPart(0,0,k,k);
+		DoubleMatrix2D leftSingularVectorK = leftSingularVector.viewPart(0,0,leftSingularVector.rows(),k);
+
+		DoubleMatrix2D dCrossKSpace = new DenseDoubleMatrix2D(leftSingularVectorK.rows(),k);
+		leftSingularVectorK.zMult(singularValuesK,dCrossKSpace);
+
+		return dCrossKSpace;
+
+	}
+	public DoubleMatrix2D reduceMatrixRight(int k, DoubleMatrix2D singularValues, DoubleMatrix2D rightSingularVector){
+
 		DoubleMatrix2D singularValuesK = singularValues.viewPart(0,0,k,k);
 		DoubleMatrix2D rightSingularVectorK = rightSingularVector.viewPart(0,0,rightSingularVector.rows(),k);
-				
+
 		DoubleMatrix2D dCrossKSpace = new DenseDoubleMatrix2D(rightSingularVectorK.rows(),k);
 		rightSingularVectorK.zMult(singularValuesK,dCrossKSpace);
-		
+
 		return dCrossKSpace;
-		
+
 	}
 	public void reduceDocTfIdf(List<Long> list){
 		int tfIdfSize = DocMemManager.getDocument(0).getTfIdf().size();
@@ -75,8 +102,8 @@ public class SVDReducer {
 			doc.setTfIdf(new SparseDoubleMatrix1D(tfIdf));
 			index++;
 		}
-		
+
 	}
-	
+
 
 }

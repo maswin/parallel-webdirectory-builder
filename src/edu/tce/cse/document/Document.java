@@ -19,6 +19,7 @@ import java.util.HashMap;
 import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.StringTokenizer;
 
 import org.apache.lucene.analysis.Tokenizer;
@@ -65,17 +66,17 @@ public class Document implements Serializable{
 		this.docID = docId;
 		this.filePath = location;
 		this.fileName = fileName;
-		
+
 		//Initialize termfrequency
 		termFrequency = new HashMap<String, Integer>();
 		totalTokens = 0;
 		totalNumOfWords = 0;
-		
+
 		//Generate tfIdfVector - - To be done after initializing all Documents
 		tfIdf = null;
 	}
 
-	
+
 	//Getters & Setters
 	public long getDocID() {
 		return docID;
@@ -84,7 +85,7 @@ public class Document implements Serializable{
 	public String getFilePath() {
 		return filePath;
 	}
-	
+
 	public String getFileName() {
 		return fileName;
 	}
@@ -108,18 +109,20 @@ public class Document implements Serializable{
 		this.tfIdf = tfIdf;
 		DocMemManager.writeDocument(this);
 	}
-	
-	public void parseDocument(Map<String, Integer> documentFrequency) throws IOException{
+
+	public void parseDocument(Map<String, Integer> documentFrequency, Set<String> dictionary) throws IOException{
 		List<String> words = extractWords(this.filePath);
 		int count = 0;
 		for(String term : words){
-			if(termFrequency.containsKey(term)){
-				count = termFrequency.get(term)+1;
-				termFrequency.put(term, count);
-			}else{
-				termFrequency.put(term, 1);
+			if(dictionary.contains(term)){
+				if(termFrequency.containsKey(term)){
+					count = termFrequency.get(term)+1;
+					termFrequency.put(term, count);
+				}else{
+					termFrequency.put(term, 1);
+				}
+				totalNumOfWords++;
 			}
-			totalNumOfWords++;
 		}
 
 		if(documentFrequency == null){
@@ -127,28 +130,30 @@ public class Document implements Serializable{
 		}
 
 		for(String word : termFrequency.keySet()){
-			if(documentFrequency.containsKey(word)){
-				count = documentFrequency.get(word)+1;
-				documentFrequency.put(word, count);
-			}else{
-				documentFrequency.put(word, 1);
+			if(dictionary.contains(word)){
+				if(documentFrequency.containsKey(word)){
+					count = documentFrequency.get(word)+1;
+					documentFrequency.put(word, count);
+				}else{
+					documentFrequency.put(word, 1);
+				}
+				totalTokens++;
 			}
-			totalTokens++;
 		}
 
 	}
 	private List<String> extractWords(String fileName) throws IOException {
 		List<String> words = new LinkedList<String>();
-		
+
 		//Read the File and store the content in a single String
 		String fileContent = new String(Files.readAllBytes(Paths.get(fileName)), StandardCharsets.UTF_8);
-		
+
 		//Tokenize The content
 		Tokenizer tokenizer = new StandardTokenizer();
 		tokenizer.setReader(new StringReader(fileContent.toLowerCase()));
 
 		StandardFilter standardFilter = new StandardFilter(tokenizer);
-		
+
 		CharArraySet stopSet = CharArraySet.copy(StopAnalyzer.ENGLISH_STOP_WORDS_SET);
 		StopFilter stopFilter = new StopFilter(standardFilter,
 				stopSet);
@@ -173,14 +178,14 @@ public class Document implements Serializable{
 		double idf;
 		double tfidf;
 		int index = 0;
-		
+
 		double[] dTfIdf = new double[documentFrequency.size()];
 		for(String word : documentFrequency.keySet()){
 			tf = 0;
 			if(termFrequency.containsKey(word)){
 				tf = termFrequency.get(word);
 			}
-			
+
 			df = documentFrequency.get(word);
 			idf = Math.log10((double)totalDocuments/(1.0 * df));
 
@@ -190,19 +195,19 @@ public class Document implements Serializable{
 		this.tfIdf = new SparseDoubleMatrix1D(dTfIdf);
 
 	}
-	
+
 	public float findCosSimilarity(Document d){
 		DoubleMatrix1D vector1 = this.getTfIdf();
 		DoubleMatrix1D vector2 = d.getTfIdf();
 
-        Algebra algebra = new Algebra();
+		Algebra algebra = new Algebra();
 
-        float sim = (float) (vector1.zDotProduct(vector2) / 
-                (Math.sqrt(algebra.norm2(vector1))*Math.sqrt(algebra.norm2(vector2))));
-        if(Float.isNaN(sim)){
-        	return 0f;
-        }
-        return sim;
+		float sim = (float) (vector1.zDotProduct(vector2) / 
+				(Math.sqrt(algebra.norm2(vector1))*Math.sqrt(algebra.norm2(vector2))));
+		if(Float.isNaN(sim)){
+			return 0f;
+		}
+		return sim;
 	}
 	public float findCosDistance(Document d){
 		return (1-findCosSimilarity(d));

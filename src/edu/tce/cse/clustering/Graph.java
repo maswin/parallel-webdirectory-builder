@@ -82,14 +82,12 @@ public class Graph {
 	}
 
 	public void sparsifyForEachNode(int nodeID, float e){
-		System.out.println("Sparsification Started");
 		int d = V.size();
 		int toRetain = (int)Math.abs(Math.pow(d, e));
 		List<Edge> list=adjList.get(V.get(nodeID));
 		Collections.sort(list, new WeightComparator());
 		list = list.subList(0, toRetain);
 		adjList.put(V.get(nodeID), list);
-		System.out.println("Sparsification Ended");
 
 	}
 
