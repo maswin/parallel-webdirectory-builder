@@ -123,7 +123,10 @@ public class DocumentTester {
 								DocNode kNode = DocMemManager.getDocNode(docList.get(k));
 								DocNode jNode = DocMemManager.getDocNode(docList.get(j));
 								sim = jNode.findCosSimilarity(kNode);
-								System.out.printf("%.10f ",sim);
+								System.out.printf("%.5f ",sim);
+								System.out.print(" ");
+								sim = jNode.findReducedCosSimilarity(kNode);
+								System.out.printf("%.5f ",sim);
 							}
 						}
 					System.out.println("");

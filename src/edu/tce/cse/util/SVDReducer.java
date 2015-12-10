@@ -9,6 +9,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.impl.SparseDoubleMatrix1D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
+import edu.tce.cse.document.DocMemManager;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.example.sampleData;
 
@@ -22,8 +23,7 @@ public class SVDReducer {
 	public SVDReducer(int k){
 		this.k = k;
 	}
-	public double[][] reduceTfIdf(double[][] tfIdf){
-		DoubleMatrix2D tfIdfMatrix = new DenseDoubleMatrix2D(tfIdf);
+	public DoubleMatrix2D reduceTfIdf(DoubleMatrix2D tfIdfMatrix){
 		tfIdfMatrix = tfIdfMatrix.viewDice();
 		SingularValueDecomposition svd = new SingularValueDecomposition(tfIdfMatrix);
 		
@@ -37,7 +37,7 @@ public class SVDReducer {
 		DoubleMatrix2D dCrossKSpace = reduceMatrix(k, singularValues, rightSingularVector);
 		//System.out.println(dCrossKSpace.rows()+" "+dCrossKSpace.columns());
 		//System.out.println(svd.rank());
-		return dCrossKSpace.toArray();
+		return dCrossKSpace;
 	}
 	public DoubleMatrix2D reduceMatrix(int k, DoubleMatrix2D singularValues, DoubleMatrix2D rightSingularVector){
 		
@@ -50,17 +50,29 @@ public class SVDReducer {
 		return dCrossKSpace;
 		
 	}
-	public void reduceDocTfIdf(List<Document> list){
-		double[][] fullVector = new double[list.size()][];
+	public void reduceDocTfIdf(List<Long> list){
+		int tfIdfSize = DocMemManager.getDocument(0).getTfIdf().size();
+		DoubleMatrix2D fullVector = new DenseDoubleMatrix2D(list.size(), tfIdfSize);
+		//double[][] fullVector = new double[list.size()][];
 		int index = 0;
-		for(Document doc : list){
-			fullVector[index] = doc.getTfIdf().toArray();
+		for(Long dId : list){
+			Document doc = DocMemManager.getDocument(dId);
+			double[] tfIdf = doc.getTfIdf().toArray();
+			for(int i=0;i<tfIdf.length;i++){
+				fullVector.setQuick(index, i, tfIdf[i]);
+			}
+			fullVector.trimToSize();
 			index++;
 		}
 		fullVector = reduceTfIdf(fullVector);	
 		index = 0;
-		for(Document doc : list){
-			doc.setTfIdf(new SparseDoubleMatrix1D(fullVector[index]));
+		for(Long dId : list){
+			double[] tfIdf = new double[tfIdfSize];
+			Document doc = DocMemManager.getDocument(dId);
+			for(int i=0;i<tfIdfSize;i++){
+				tfIdf[i] = fullVector.getQuick(index, i);
+			}
+			doc.setTfIdf(new SparseDoubleMatrix1D(tfIdf));
 			index++;
 		}
 		

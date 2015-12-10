@@ -18,7 +18,7 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public String fileName;
 	public SparseDoubleMatrix1D tfIdf;
-	private transient double[] reducedTfIdf;//Only used within the processor
+	private transient SparseDoubleMatrix1D reducedTfIdf;//Only used within the processor
 	public float centrality;
 	public transient PartialBetweenness container;
 	public long clusterID;
@@ -46,10 +46,10 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 		this.tfIdf = tfIdf;
 	}
 	public SparseDoubleMatrix1D getReducedTfIdf() {
-		return tfIdf;
-		//return reducedTfIdf;
+		//return tfIdf;
+		return reducedTfIdf;
 	}
-	public void setReducedTfIdf(double[] tfIdf) {
+	public void setReducedTfIdf(SparseDoubleMatrix1D tfIdf) {
 		this.reducedTfIdf = tfIdf;
 	}
 	public float getCentrality(){

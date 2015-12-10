@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import cern.colt.matrix.DoubleMatrix2D;
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.impl.SparseDoubleMatrix1D;
 import edu.tce.cse.util.SVDReducer;
 import mpi.MPI;
@@ -112,6 +114,9 @@ public class DocumentInitializer {
 		//System.out.println(this.processorID+" "+globalDocumentFrequency[0].keySet().size());
 
 		//Sequential Code
+		if(MPI.COMM_WORLD.Rank()==0){
+			System.out.println("Dimesnions : "+globalDocumentFrequency[0].size());
+		}
 		for(Long docID : documentList){
 			Document doc = DocMemManager.getDocument(docID);
 			doc.calculateTfIdf(this.N, globalDocumentFrequency[0]);
@@ -142,32 +147,53 @@ public class DocumentInitializer {
 		}*/
 		
 		generateDocNodeList(documentList);
+		System.out.println("Reduction Started");
+		reduceTfIDF();
+		System.out.println("Reduction Ended");
 	}
 
-	private void reduceTfIDF(List<DocNode> documentList){
-		double[][] tfIdfMatrix = new double[documentList.size()][];		
+	private void reduceTfIDF(){
+		int tfIdfSize = DocMemManager.sampleNode.getTfIdf().size();
+		//System.out.println(tfIdfSize);
+		DoubleMatrix2D fullVector = new DenseDoubleMatrix2D(this.docNodeList.size(), tfIdfSize);		
 
-		for(int i=0; i<documentList.size(); i++){
-			tfIdfMatrix[i] = documentList.get(i).getTfIdf().toArray();
+		int index = 0;
+		for(Long dId : this.docNodeList){
+			DocNode doc = DocMemManager.getDocNode(dId);
+			double[] tfIdf = doc.getTfIdf().toArray();
+			for(int i=0;i<tfIdfSize;i++){
+				fullVector.setQuick(index, i, tfIdf[i]);
+			}
+			fullVector.trimToSize();
+			index++;
 		}
 
 
 		//Set reduced size
 		//Default size
-		int size = documentList.size();
-		if(documentList.size() >= 30)
+		int size = this.docNodeList.size();
+		if(size >= 30)
 			size = 30;
 
 		//Reduce TfIdf
 		SVDReducer svd = new SVDReducer(size);
-		//tfIdfMatrix = svd.reduceTfIdf(tfIdfMatrix);
-
-		for(int i=0; i<documentList.size(); i++){
-			documentList.get(i).setReducedTfIdf(tfIdfMatrix[i]);
+		System.out.println(fullVector.viewRow(0).size());
+		fullVector = svd.reduceTfIdf(fullVector);
+		System.out.println(fullVector.viewRow(0).size());
+		index = 0;
+		for(Long dId : this.docNodeList){
+			//double[] tfIdf = new double[tfIdfSize];
+			DocNode doc = DocMemManager.getDocNode(dId);
+			/*for(int i=0;i<size;i++){
+				tfIdf[i] = fullVector.getQuick(index, i);
+			}*/
+			doc.setReducedTfIdf(new SparseDoubleMatrix1D(fullVector.viewRow(index).toArray()));
+			DocMemManager.writeDocNode(doc);
+			index++;
 		}
 	}
 
-	private void reduceTfIDF(){
+	private void parallelReduceTfIDF(){
 		List<double[]>[] localTfIdf = new ArrayList[1];
 		localTfIdf[0] = new ArrayList<double[]>(docNodeList.size());
 
@@ -205,7 +231,7 @@ public class DocumentInitializer {
 
 			//Reduce TfIdf
 			SVDReducer svd = new SVDReducer(30);
-			tfIdfMatrix = svd.reduceTfIdf(tfIdfMatrix);
+			//tfIdfMatrix = svd.reduceTfIdf(tfIdfMatrix);
 
 			//Send Reduced TfIdf
 			for(int i=1;i<MPI.COMM_WORLD.Size();i++){

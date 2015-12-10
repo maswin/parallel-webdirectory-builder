@@ -43,12 +43,16 @@ public class DocMemManager {
 	private static Map<Long, DocNode> docNodeMap = new <Long, DocNode>HashMap();
 	private static Map<Long, Cluster> clusterMap = new <Long, Cluster>HashMap();
 	private static Map<Long, Centroid> centroidMap = new <Long, Centroid>HashMap();
+	
+	public static DocNode sampleNode;
+	public static Document sampleDocument;
 	//Read & Write Document
 	public static void writeDocument(Document doc) {
 		long startTime = System.currentTimeMillis();
 		try {
 			FileOutputStream fout = new FileOutputStream("var/"+doc.docID+"Doc.ser");
 			ObjectOutputStream oos = new ObjectOutputStream(fout);
+			sampleDocument = doc;
 			oos.writeObject(doc);
 			checkSafety();
 			documentMap.put(doc.docID, doc);
@@ -92,6 +96,7 @@ public class DocMemManager {
 		try {
 			FileOutputStream fout = new FileOutputStream("var/"+doc.nodeID+"Node.ser");
 			ObjectOutputStream oos = new ObjectOutputStream(fout);
+			sampleNode = doc;
 			oos.writeObject(doc);
 			checkSafety();
 			docNodeMap.put(doc.nodeID, doc);

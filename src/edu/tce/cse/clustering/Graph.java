@@ -66,7 +66,10 @@ public class Graph {
 					//adjList.get(V.get(j)).add(e);
 				}    
 			}
-			sparsifyForEachNode(i, sparsifyE);    
+			sparsifyForEachNode(i, sparsifyE);  
+			if(i%(V.size()/20)==0){
+				System.out.println("Sparsified "+i+" vertices");
+			}
 		}
 		System.out.println("Neighbours identified for each node after sparsification");
 	}
@@ -74,16 +77,19 @@ public class Graph {
 	public float findEdgeWeight(long node1, long node2){			
 		DocNode d1 = DocMemManager.getDocNode(node1);
 		DocNode d2 = DocMemManager.getDocNode(node2);
-		return d1.findDistance(d2);
+		return d1.findReducedCosDistance(d2);
+		//return d1.findDistance(d2);
 	}
 
 	public void sparsifyForEachNode(int nodeID, float e){
+		System.out.println("Sparsification Started");
 		int d = V.size();
 		int toRetain = (int)Math.abs(Math.pow(d, e));
 		List<Edge> list=adjList.get(V.get(nodeID));
 		Collections.sort(list, new WeightComparator());
 		list = list.subList(0, toRetain);
 		adjList.put(V.get(nodeID), list);
+		System.out.println("Sparsification Ended");
 
 	}
 
