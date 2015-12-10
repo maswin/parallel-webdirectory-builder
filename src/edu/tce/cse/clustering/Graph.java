@@ -55,6 +55,7 @@ public class Graph {
 			e = new Edge(V.get(j), V.get(0), weight);
 			adjList.get(V.get(j)).add(e);
 		}*/
+                long startTimeSparsify = System.currentTimeMillis();
 		for(int i=0; i<V.size(); i++){
 			adjList.put(V.get(i), new ArrayList<Edge>());
 			for(int j=0; j<V.size(); j++){
@@ -72,6 +73,8 @@ public class Graph {
 			}
 		}
 		System.out.println("Neighbours identified for each node after sparsification");
+                long endTimeSparsify = System.currentTimeMillis();
+                System.out.println("Graph formation and sparsification time: "+(endTimeSparsify-startTimeSparsify));
 	}
 
 	public float findEdgeWeight(long node1, long node2){			
@@ -194,7 +197,7 @@ public class Graph {
 
 	//to run Brandes' algorithm to find centrality scores for each vertex
 	public void findCentrality(){
-
+                long startTimeCentrality = System.currentTimeMillis();
 		Thread[] threads = new Thread[NTHREAD];
 		int share=(int)Math.ceil(V.size()/NTHREAD);
 		List<Long> myList;
@@ -333,6 +336,8 @@ public class Graph {
 			System.out.println();*/
 			 
 		}
+                long endTimeCentrality = System.currentTimeMillis();
+                System.out.println("Centrality computation time: "+(endTimeCentrality-startTimeCentrality));
 	}
 
 	//to remove inter-cluster edges based on 'threshold' value
