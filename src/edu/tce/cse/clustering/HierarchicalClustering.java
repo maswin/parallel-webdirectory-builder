@@ -248,6 +248,9 @@ public class HierarchicalClustering {
 			values[i] = DocMemManager.getDocNode(graph.V.get(i)).getCentrality();
 			//graph.V.get(i).container = null;
 		}
+                
+                long startTimeFormLeafClusters = System.currentTimeMillis();
+                
 		Statistics stats = new Statistics(values);
 		float mean = stats.getMean();
 		float stdDev= stats.getStdDev();
@@ -261,7 +264,11 @@ public class HierarchicalClustering {
 		int count = 1;
 		List<List<Long>> components = graph.findConnectedComponents();
 		List<Long> clusters= graph.formLeafClusters(components, 0, directory, percentOfRepPoints);
+                
+                long endTimeFormLeafClusters = System.currentTimeMillis();
+                
 		System.out.println("leaf clusters formed");
+                System.out.println("Initial cluster formation time: "+(endTimeFormLeafClusters - startTimeFormLeafClusters));
 		for(int i=0; i<MPI.COMM_WORLD.Size(); i++){
 			MPI.COMM_WORLD.Barrier();
 			if(i==MPI.COMM_WORLD.Rank()){
@@ -278,9 +285,12 @@ public class HierarchicalClustering {
 			}
 		}
 		MPI.COMM_WORLD.Barrier();
+                long startTimeComm = System.currentTimeMillis();
 		gatherRepPoints(getRepPoints(clusters));
-		return distributeInitialClusters(clusters);
-
+		List<Long> clusterIDs = distributeInitialClusters(clusters);
+                long endTimeComm = System.currentTimeMillis();
+                System.out.println("Rep points and clusters comm to main processor time "+(endTimeComm-startTimeComm));
+                return clusterIDs;
 	}
 
 	//to gather initial clusters from all processors in the main processor

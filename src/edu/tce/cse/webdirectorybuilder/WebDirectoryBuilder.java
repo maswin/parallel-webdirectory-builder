@@ -147,6 +147,7 @@ public class WebDirectoryBuilder {
 		int iteration = 1;
 
 		while(true){
+                        long startTimeThisLevel = System.currentTimeMillis();
 			MPI.COMM_WORLD.Barrier();
 			clustersInPreviousLevel = hc.clustersAtThisLevel.size();
 			List<Cluster> temp = new ArrayList<Cluster>();
@@ -194,10 +195,13 @@ public class WebDirectoryBuilder {
 				}
                             }    
 			}
+                        long endTimeThisLevel = System.currentTimeMillis();
+                        System.out.println("Level "+iteration+" of hierarchical clustering time: "+(endTimeThisLevel - startTimeThisLevel));
 			MPI.COMM_WORLD.Bcast(hc.flagToStop, 0, 1, MPI.BOOLEAN, 0);
 			if(hc.flagToStop[0])
 				break;
 			iteration++;
+                        
 		}
 
 		if(MPI.COMM_WORLD.Rank()==0){
