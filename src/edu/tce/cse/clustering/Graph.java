@@ -55,7 +55,7 @@ public class Graph {
 			e = new Edge(V.get(j), V.get(0), weight);
 			adjList.get(V.get(j)).add(e);
 		}*/
-                long startTimeSparsify = System.currentTimeMillis();
+		long startTimeSparsify = System.currentTimeMillis();
 		for(int i=0; i<V.size(); i++){
 			adjList.put(V.get(i), new ArrayList<Edge>());
 			for(int j=0; j<V.size(); j++){
@@ -73,8 +73,8 @@ public class Graph {
 			}
 		}
 		System.out.println("Neighbours identified for each node after sparsification");
-                long endTimeSparsify = System.currentTimeMillis();
-                System.out.println("Graph formation and sparsification time: "+(endTimeSparsify-startTimeSparsify));
+		long endTimeSparsify = System.currentTimeMillis();
+		System.out.println("Graph formation and sparsification time: "+(endTimeSparsify-startTimeSparsify));
 	}
 
 	public float findEdgeWeight(long node1, long node2){			
@@ -195,7 +195,7 @@ public class Graph {
 
 	//to run Brandes' algorithm to find centrality scores for each vertex
 	public void findCentrality(){
-                long startTimeCentrality = System.currentTimeMillis();
+		long startTimeCentrality = System.currentTimeMillis();
 		Thread[] threads = new Thread[NTHREAD];
 		int share=(int)Math.ceil(V.size()/NTHREAD);
 		List<Long> myList;
@@ -209,7 +209,7 @@ public class Graph {
 			src.container.level=0;
 			src.container.priority=0;
 			src.container.sig=1;
-            DocMemManager.writeDocNode(src);
+			DocMemManager.writeDocNode(src);
 			HashMap<Integer, List<Edge>> edgesMap = new HashMap<Integer, List<Edge>>();	
 
 			//perform one iteration of Dijkstra's algo 
@@ -275,7 +275,7 @@ public class Graph {
 			//queues of all threads are empty now
 			//combine pred of all nodes to form edgesMap (key = level, value = edges explored at that level)
 			for(int i=0; i<V.size(); i++){
-                DocNode temp = DocMemManager.getDocNode(V.get(i));
+				DocNode temp = DocMemManager.getDocNode(V.get(i));
 				Set<Integer> iterator = temp.container.pred.keySet();
 				for(int j: iterator){
 					if(!edgesMap.containsKey(j)){
@@ -332,10 +332,10 @@ public class Graph {
 				System.out.println(i+" "+graph.V.get(i).nodeID+" "+graph.V.get(i).centrality);
 			}
 			System.out.println();*/
-			 
+
 		}
-                long endTimeCentrality = System.currentTimeMillis();
-                System.out.println("Centrality computation time: "+(endTimeCentrality-startTimeCentrality));
+		long endTimeCentrality = System.currentTimeMillis();
+		System.out.println("Centrality computation time: "+(endTimeCentrality-startTimeCentrality));
 	}
 
 	//to remove inter-cluster edges based on 'threshold' value
@@ -507,10 +507,12 @@ class ForwardPhaseRunnable implements Runnable{
 	public void run(){
 		//Dijstra's algorithm
 		if(queue!=null){
-                        long srcID = source.nodeID;
+			long srcID = source.nodeID;
 			for(int i=0; i<graph.adjList.get(srcID).size(); i++){
-				DocNode v = DocMemManager.getDocNode(graph.adjList.get(srcID).get(i).getDst());
-				if(V.contains(v.nodeID)){
+				long dstId = graph.adjList.get(srcID).get(i).getDst();
+
+				if(V.contains(dstId)){
+					DocNode v = DocMemManager.getDocNode(dstId);
 					float alt = graph.adjList.get(srcID).get(i).getWeight() + source.container.priority;
 					if(v.container.priority==Float.MAX_VALUE){
 						queue.add(v.nodeID);
@@ -533,8 +535,9 @@ class ForwardPhaseRunnable implements Runnable{
 						}
 						v.container.pred.get(v.container.level).add((Edge)(graph.adjList.get(srcID).get(i)));
 					}
+					DocMemManager.writeDocNode(v);
 				}
-				DocMemManager.writeDocNode(v);
+
 			}
 
 			queues[id]=queue;
@@ -587,8 +590,8 @@ class EdgeRemoverRunnable implements Runnable{
 		boolean isDocNode = false;
 		//if(myNodes.size()>0){
 		//	isDocNode = myNodes.get(0) instanceof DocNode;
-			
-			
+
+
 		for(int i=0; i<myNodes.size(); i++){
 			List<Edge> list=adjList.get(myNodes.get(i));
 			if(list==null)

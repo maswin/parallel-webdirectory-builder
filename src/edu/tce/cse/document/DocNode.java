@@ -18,9 +18,9 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public String fileName;
 	public SparseDoubleMatrix1D tfIdf;
-	private transient SparseDoubleMatrix1D reducedTfIdf;//Only used within the processor
+	private SparseDoubleMatrix1D reducedTfIdf;//Only used within the processor
 	public float centrality;
-	public transient PartialBetweenness container;
+	public PartialBetweenness container;
 	public long clusterID;
 	
 	public DocNode(long id, String fileName, SparseDoubleMatrix1D tfIdf){
@@ -97,7 +97,7 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	}
 	//Distance using reduced Tf-Idf
 	public float findReducedCosSimilarity(DocNode d){
-
+		//return findCosSimilarity(d);
 		DoubleMatrix1D vector1 = this.getReducedTfIdf();
 		DoubleMatrix1D vector2 = d.getReducedTfIdf();
 

@@ -202,11 +202,13 @@ public class DocumentInitializer {
 		if(size >= 30)
 			size = 30;
 
+		System.out.println("Actual SVD Started");
 		//Reduce TfIdf
 		SVDReducer svd = new SVDReducer(size);
-		//System.out.println(fullVector.viewRow(0).size());
-		fullVector = svd.reduceTfIdf(fullVector);
-		//System.out.println(fullVector.viewRow(0).size());
+		System.out.println(fullVector.viewRow(0).size());
+		//fullVector = svd.reduceTfIdf(fullVector);
+		System.out.println(fullVector.viewRow(0).size());
+		System.out.println("Actual SVD Eneded");
 		index = 0;
 		for(Long dId : this.docNodeList){
 			//double[] tfIdf = new double[tfIdfSize];

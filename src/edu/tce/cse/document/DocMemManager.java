@@ -225,7 +225,7 @@ public class DocMemManager {
 		long allocatedMemory = runtime.totalMemory();
 		long freeMemory = runtime.freeMemory();
 		//Less thn 2 GB
-		if((freeMemory + (maxMemory - allocatedMemory))<=1500000000){
+		if((freeMemory + (maxMemory - allocatedMemory))<=1000000000l){
 			System.out.println("Memory : "+(freeMemory + (maxMemory - allocatedMemory)) );
 			int size = documentMap.size()+docNodeMap.size()+clusterMap.size()+centroidMap.size();
 			System.out.println("Size in Use : "+size);

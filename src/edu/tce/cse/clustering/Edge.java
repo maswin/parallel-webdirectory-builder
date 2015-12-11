@@ -1,6 +1,8 @@
 package edu.tce.cse.clustering;
 
-public class Edge{
+import java.io.Serializable;
+
+public class Edge implements Serializable{
 	private long src;
 	private long dst;
 	private float weight;
