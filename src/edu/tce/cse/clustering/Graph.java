@@ -46,6 +46,7 @@ public class Graph {
 
 	//to form a complete graph 
 	public void addEdges(float sparsifyE){
+		
 		/*adjList.put(V.get(0), new ArrayList<Edge>());
 		for(int j=1; j<V.size(); j++){
 			adjList.put(V.get(j), new ArrayList<Edge>());
@@ -56,21 +57,30 @@ public class Graph {
 			adjList.get(V.get(j)).add(e);
 		}*/
 		long startTimeSparsify = System.currentTimeMillis();
+		PriorityQueue<Edge> edgeList = new PriorityQueue<Edge>(new WeightComparator());
 		for(int i=0; i<V.size(); i++){
+			long startTime = System.currentTimeMillis();
+			System.out.println("Sparsification Started "+i);
+			edgeList = new PriorityQueue<Edge>(new WeightComparator());
 			adjList.put(V.get(i), new ArrayList<Edge>());
 			for(int j=0; j<V.size(); j++){
 				if(j!=i){
 					float weight = findEdgeWeight(V.get(i), V.get(j));
-					Edge e = new Edge(V.get(i), V.get(j), weight);
-					adjList.get(V.get(i)).add(e);
+					if(weight < 0.6){
+						Edge e = new Edge(V.get(i), V.get(j), weight);
+						edgeList.add(e);
+						//adjList.get(V.get(i)).add(e);
+					}
 					//e = new Edge(V.get(j), V.get(i), weight);
 					//adjList.get(V.get(j)).add(e);
 				}    
 			}
-			sparsifyForEachNode(i, sparsifyE);  
-			if(i%(V.size()/20)==0){
+			sparsifyForEachNode(i, sparsifyE, edgeList); 
+			long endTime = System.currentTimeMillis();
+			System.out.println("Sparsification Ended "+(endTime-startTime));
+			/*if(i%(V.size()/20)==0){
 				System.out.println("Sparsified "+i+" vertices");
-			}
+			}*/
 		}
 		System.out.println("Neighbours identified for each node after sparsification");
 		long endTimeSparsify = System.currentTimeMillis();
@@ -80,18 +90,26 @@ public class Graph {
 	public float findEdgeWeight(long node1, long node2){			
 		DocNode d1 = DocMemManager.getDocNode(node1);
 		DocNode d2 = DocMemManager.getDocNode(node2);
-		return d1.findReducedCosDistance(d2);
+		return d1.findApproxCosDistance(d2);
+		//return d1.findReducedCosDistance(d2);
 		//return d1.findDistance(d2);
 	}
 
-	public void sparsifyForEachNode(int nodeID, float e){
-		int d = V.size();
+	public void sparsifyForEachNode(int nodeID, float e, PriorityQueue<Edge> edgeList){
+		int d = edgeList.size();
 		int toRetain = (int)Math.abs(Math.pow(d, e));
 		List<Edge> list=adjList.get(V.get(nodeID));
-		Collections.sort(list, new WeightComparator());
-		list = list.subList(0, toRetain);
+		//Collections.sort(list, new WeightComparator());
+		//list = list.subList(0, toRetain);
+		int count = 0;
+		for(int i=0;i<toRetain;i++){
+			if(!edgeList.isEmpty()){
+				list.add(edgeList.remove());
+				count++;
+			}
+		}
 		adjList.put(V.get(nodeID), list);
-
+		System.gc();
 	}
 
 	//to sparsify the graph by retaining d^e edges (based on weight) for each node (d=degree of node) 
@@ -433,10 +451,10 @@ public class Graph {
 class WeightComparator implements Comparator{
 	public int compare(Object i, Object j){
 		if(((Edge)i).getWeight()>((Edge)j).getWeight())
-			return -1;
+			return 1;
 		else if(((Edge)i).getWeight()==((Edge)j).getWeight())
 			return 0;
-		return 1;
+		return -1;
 	}
 }
 /*

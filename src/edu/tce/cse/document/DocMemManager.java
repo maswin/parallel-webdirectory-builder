@@ -15,10 +15,10 @@ import edu.tce.cse.model.Centroid;
 public class DocMemManager {
 
 	public static long accessTime = 0;
-	public static int maxSize = 1500;
+	public static int maxSize = 4000;
 	public static int totalSize = 1000;
 
-	/*private static LinkedHashMap<Long, Document> documentMap = new <Long, Document>LinkedHashMap(maxSize + 1, .75F, false) {
+	private static LinkedHashMap<Long, Document> documentMap = new <Long, Document>LinkedHashMap(maxSize + 1, .75F, false) {
 		protected boolean removeEldestEntry(Map.Entry eldest) {
 			return size() > maxSize;
 		}
@@ -37,12 +37,12 @@ public class DocMemManager {
 		protected boolean removeEldestEntry(Map.Entry eldest) {
 			return size() > maxSize;
 		}
-	};*/
+	};
 
-	private static Map<Long, Document> documentMap = new <Long, Document>HashMap();
-	private static Map<Long, DocNode> docNodeMap = new <Long, DocNode>HashMap();
-	private static Map<Long, Cluster> clusterMap = new <Long, Cluster>HashMap();
-	private static Map<Long, Centroid> centroidMap = new <Long, Centroid>HashMap();
+	//private static Map<Long, Document> documentMap = new <Long, Document>HashMap();
+	//private static Map<Long, DocNode> docNodeMap = new <Long, DocNode>HashMap();
+	//private static Map<Long, Cluster> clusterMap = new <Long, Cluster>HashMap();
+	//private static Map<Long, Centroid> centroidMap = new <Long, Centroid>HashMap();
 	
 	public static DocNode sampleNode;
 	public static Document sampleDocument;
@@ -225,7 +225,7 @@ public class DocMemManager {
 		long allocatedMemory = runtime.totalMemory();
 		long freeMemory = runtime.freeMemory();
 		//Less thn 2 GB
-		if((freeMemory + (maxMemory - allocatedMemory))<=1000000000l){
+		if((freeMemory + (maxMemory - allocatedMemory))<=0l){
 			System.out.println("Memory : "+(freeMemory + (maxMemory - allocatedMemory)) );
 			int size = documentMap.size()+docNodeMap.size()+clusterMap.size()+centroidMap.size();
 			System.out.println("Size in Use : "+size);
@@ -248,7 +248,7 @@ public class DocMemManager {
 		System.out.println("Memory Flushed");
 	}
 
-	private static void flushDocument(){
+	public static void flushDocument(){
 		DocMemManager.documentMap.clear();	
 	}
 

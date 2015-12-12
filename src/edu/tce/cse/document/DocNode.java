@@ -1,6 +1,7 @@
 package edu.tce.cse.document;
 import java.io.Serializable;
 import java.util.Arrays;
+import java.util.BitSet;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -12,6 +13,7 @@ import edu.tce.cse.clustering.Edge;
 import edu.tce.cse.clustering.Node;
 import edu.tce.cse.model.Centroid;
 import edu.tce.cse.model.PartialBetweenness;
+import edu.tce.cse.util.SuperBit;
 
 
 public class DocNode extends Node implements Comparable<DocNode>, Serializable{
@@ -19,6 +21,9 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	public String fileName;
 	public SparseDoubleMatrix1D tfIdf;
 	private SparseDoubleMatrix1D reducedTfIdf;//Only used within the processor
+	
+	private BitSet signtature;
+	
 	public float centrality;
 	public PartialBetweenness container;
 	public long clusterID;
@@ -28,9 +33,17 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 		this.tfIdf = tfIdf;
 		this.reducedTfIdf = null;
 		this.fileName = fileName;
-		this.container = new PartialBetweenness();
+		this.container = new PartialBetweenness();	
 	}
 	
+	public BitSet getSigntature() {
+		return signtature;
+	}
+
+	public void setSigntature(BitSet signtature) {
+		this.signtature = signtature;
+	}
+
 	//Getter & Setter
 	public long getClusterID() {
 		return clusterID;
@@ -96,7 +109,7 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 		return (1-findCosSimilarity(d));
 	}
 	//Distance using reduced Tf-Idf
-	public float findReducedCosSimilarity(DocNode d){
+	/*public float findReducedCosSimilarity(DocNode d){
 		//return findCosSimilarity(d);
 		DoubleMatrix1D vector1 = this.getReducedTfIdf();
 		DoubleMatrix1D vector2 = d.getReducedTfIdf();
@@ -112,6 +125,11 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	}
 	public float findReducedCosDistance(DocNode d){
 		return (1-findReducedCosSimilarity(d));
+	}*/
+	public float findApproxCosDistance(DocNode d){
+		BitSet temp = (BitSet) this.signtature.clone();
+		temp.xor(d.signtature);
+		return ((float)temp.cardinality()/temp.size());
 	}
 	
 	public float findEuclideanSimilarity(DocNode d){

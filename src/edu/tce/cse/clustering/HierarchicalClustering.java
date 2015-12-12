@@ -30,7 +30,7 @@ import gui.TreeView;
 import java.util.Arrays;
 
 public class HierarchicalClustering {
-	public float sparsificationRatio = 0.3f;
+	public float sparsificationRatio = 0.1f;
 	public List<Long> clustersAtThisLevel;
 	public DocNode[] localRepPoints;
 	public Centroid[] centroids;

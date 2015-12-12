@@ -33,8 +33,8 @@ public class WebDirectoryBuilder {
 	public static double repPointPercent = 10.0; //-r
 	public static double initK = 5; //-k
 	public static double initL = 10; //-l
-	public static double kRatio = 0.0; //-kr
-	public static double lRatio = 0.0; //-lr
+	public static double kRatio = 0.2; //-kr
+	public static double lRatio = 0.2; //-lr
 
 	public static boolean gui = true;
 

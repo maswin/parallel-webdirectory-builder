@@ -114,7 +114,7 @@ public class Document implements Serializable{
 		List<String> words = extractWords(this.filePath);
 		int count = 0;
 		for(String term : words){
-			//if(dictionary.contains(term)){
+			if(dictionary.contains(term)){
 				if(termFrequency.containsKey(term)){
 					count = termFrequency.get(term)+1;
 					termFrequency.put(term, count);
@@ -122,7 +122,7 @@ public class Document implements Serializable{
 					termFrequency.put(term, 1);
 				}
 				totalNumOfWords++;
-			//}
+			}
 		}
 
 		if(documentFrequency == null){
@@ -130,7 +130,7 @@ public class Document implements Serializable{
 		}
 
 		for(String word : termFrequency.keySet()){
-			//if(dictionary.contains(word)){
+			if(dictionary.contains(word)){
 				if(documentFrequency.containsKey(word)){
 					count = documentFrequency.get(word)+1;
 					documentFrequency.put(word, count);
@@ -138,7 +138,7 @@ public class Document implements Serializable{
 					documentFrequency.put(word, 1);
 				}
 				totalTokens++;
-			//}
+			}
 		}
 
 	}

@@ -122,10 +122,10 @@ public class DocumentTester {
 								//DocNode iNode = DocMemManager.getDocNode(docList.get(i));
 								DocNode kNode = DocMemManager.getDocNode(docList.get(k));
 								DocNode jNode = DocMemManager.getDocNode(docList.get(j));
-								sim = jNode.findCosSimilarity(kNode);
+								sim = jNode.findCosDistance(kNode);
 								System.out.printf("%.5f ",sim);
 								System.out.print(" ");
-								sim = jNode.findReducedCosSimilarity(kNode);
+								sim = jNode.findApproxCosDistance(kNode);
 								System.out.printf("%.5f ",sim);
 							}
 						}

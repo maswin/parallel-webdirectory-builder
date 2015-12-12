@@ -2,10 +2,15 @@ package edu.tce.cse.document;
 
 import java.io.BufferedReader;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
 import java.io.FileReader;
 import java.io.IOException;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutputStream;
 import java.util.ArrayList;
+import java.util.BitSet;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -19,6 +24,7 @@ import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.impl.SparseDoubleMatrix1D;
 import edu.tce.cse.util.SVDReducer;
+import edu.tce.cse.util.SuperBit;
 import mpi.MPI;
 import mpi.Op;
 
@@ -31,6 +37,50 @@ public class DocumentInitializer {
 	private final int endIndex;
 	private List<Long> docNodeList;
 	public static Set<String> dictionary;
+	
+	public static SuperBit sb = null;
+	public static int numOfDimension = 30;
+	
+	public static void readSuperBit(int size){
+		/*sb = new SuperBit(size, numOfDimension, 1);
+		FileOutputStream fout;
+		try {
+			fout = new FileOutputStream("SuperBit.ser");
+			ObjectOutputStream oos = new ObjectOutputStream(fout);
+			oos.writeObject(sb);
+			oos.close();
+			fout.close();
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}*/
+		try{
+			FileInputStream fin = new FileInputStream("SuperBit.ser");
+			ObjectInputStream ois = new ObjectInputStream(fin);
+			sb = (SuperBit) ois.readObject();
+			ois.close();
+			fin.close();
+		} catch(Exception e){
+			e.printStackTrace();
+		}
+		
+	}
+	public static void generateSigntature(DocNode d){
+		if(sb == null){
+			readSuperBit(d.getReducedTfIdf().size());
+		}
+		boolean[] signature = sb.signature(d.getReducedTfIdf().toArray());
+		//boolean[] signature = sb.signature(d.tfIdf.toArray());
+		BitSet b = new BitSet(numOfDimension);
+		int i=0;
+		for(boolean val : signature){
+			if(val){
+				b.set(i);
+			}
+			i++;
+		}
+		d.setSigntature(b);
+	}
 
 	private void initializeDictionary() {
 		try {
@@ -171,12 +221,19 @@ public class DocumentInitializer {
 		}*/
 
 		generateDocNodeList(documentList);
+		DocMemManager.flushDocument();
 		System.out.println("Reduction Started");
 		long svdStartTime = System.currentTimeMillis();
 		reduceTfIDF();
 		long svdEndTime = System.currentTimeMillis();
 		System.out.println("Reduction Ended");
 		System.out.println("SVD Time : "+(svdEndTime-svdStartTime));
+		System.gc();
+		for(Long dId : this.docNodeList){
+			DocNode doc = DocMemManager.getDocNode(dId);
+			generateSigntature(doc);
+			DocMemManager.writeDocNode(doc);
+		}
 	}
 
 	private void reduceTfIDF(){
@@ -199,14 +256,14 @@ public class DocumentInitializer {
 		//Set reduced size
 		//Default size
 		int size = this.docNodeList.size();
-		if(size >= 30)
-			size = 30;
+		if(size >= 50)
+			size = 50;
 
 		System.out.println("Actual SVD Started");
 		//Reduce TfIdf
 		SVDReducer svd = new SVDReducer(size);
 		System.out.println(fullVector.viewRow(0).size());
-		//fullVector = svd.reduceTfIdf(fullVector);
+		fullVector = svd.reduceTfIdf(fullVector);
 		System.out.println(fullVector.viewRow(0).size());
 		System.out.println("Actual SVD Eneded");
 		index = 0;
