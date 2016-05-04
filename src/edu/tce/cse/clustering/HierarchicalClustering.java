@@ -34,9 +34,11 @@ public class HierarchicalClustering {
 	int shareDetails[]=new int[2];
 	public double R;
 	public String inputFolder;
+	
 	public HierarchicalClustering(String fName){
 		inputFolder = fName;
 	}
+	
 	//to merge clusters to form the next level clusters, when given the results of LSH as input 
 	public void mergeClusters(List<Data> list, int startID){
 		List<Cluster> temp = new ArrayList<Cluster>();
@@ -231,7 +233,8 @@ public class HierarchicalClustering {
 	}
 
 	//to form initial clusters in each processor
-	public Map<Long, Cluster> initialClustering(List<DocNode> docs, Directory directory, double percentOfRepPoints){
+	public Map<Long, Cluster> initialClustering(List<DocNode> docs, double percentOfRepPoints){
+		Directory directory = new Directory();
 		//form graph where each node is a DocNode
 		Graph<DocNode> graph = new Graph(docs);
 		graph.addEdges();
