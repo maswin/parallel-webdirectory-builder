@@ -32,7 +32,7 @@ public class DistributedLSHTester {
 		
 		for(DocNode d : docList){
 			//System.out.println(d.nodeID+" "+d.fileName);
-			Centroid c = new Centroid(d.nodeID,d.tfIdf);
+			Centroid c = new Centroid(d.nodeID,d.getTfIdf().toArray());
 			nameMap.put(d.nodeID, d.fileName);
 			cList.add(c);
 		}

@@ -32,6 +32,7 @@ import org.tartarus.snowball.ext.PorterStemmer;
 import cern.colt.matrix.tdouble.DoubleMatrix1D;
 import cern.colt.matrix.tdouble.algo.DenseDoubleAlgebra;
 import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
+import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
 import edu.tce.cse.util.SuperBit;
 
 
@@ -46,8 +47,8 @@ public class Document {
 
 
 	//Computed during Initialization
-	private double[] tfIdf;
-
+	//private double[] tfIdf;
+	private DoubleMatrix1D tfIdf = null;
 
 	/*
 	 * Call ParseDocument & generateTfIdfVector to complete Initialization
@@ -96,14 +97,14 @@ public class Document {
 		return totalTokens;
 	}
 
-	public double[] getTfIdf() {
+	public DoubleMatrix1D getTfIdf() {
 		if(tfIdf == null){
 			System.out.println("Error : tfIdf Not Generated");
 		}
 		return tfIdf;
 	}
 
-	public void setTfIdf(double[] tfIdf) {
+	public void setTfIdf(DoubleMatrix1D tfIdf) {
 		this.tfIdf = tfIdf;
 	}
 	
@@ -135,6 +136,7 @@ public class Document {
 		}
 
 	}
+	
 	private List<String> extractWords(String fileName) throws IOException {
 		List<String> words = new LinkedList<String>();
 		
@@ -165,14 +167,14 @@ public class Document {
 		}
 		return words;
 	}
+	
 	public void calculateTfIdf(int totalDocuments, Map<String, Integer> documentFrequency){		
 		int tf;
 		int df;
 		double idf;
-		double tfidf;
 		int index = 0;
 		
-		this.tfIdf = new double[documentFrequency.size()];
+		this.tfIdf = new SparseDoubleMatrix1D(documentFrequency.size());
 		for(String word : documentFrequency.keySet()){
 			tf = 0;
 			if(termFrequency.containsKey(word)){
@@ -182,15 +184,14 @@ public class Document {
 			df = documentFrequency.get(word);
 			idf = Math.log10((double)totalDocuments/(1.0 * df));
 
-			tfidf = tf*idf;
-			tfIdf[index++] = tfidf;
+			tfIdf.set(index++, tf*idf);
 		}
 
 	}
 	
 	public float findCosSimilarity(Document d){
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf());
+		DoubleMatrix1D vector1 = this.getTfIdf();
+        DoubleMatrix1D vector2 = d.getTfIdf();
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
         float sim = (float) (vector1.zDotProduct(vector2) / 
@@ -200,13 +201,15 @@ public class Document {
         }
         return sim;
 	}
+	
 	public float findCosDistance(Document d){
 		return (1-findCosSimilarity(d));
 	}
+	
 	public float findEuclideanSimilarity(Document d){
 		float E = 0.0f;
-		for(int i=0; i<tfIdf.length; i++){
-			E += Math.pow((tfIdf[i]-d.tfIdf[i]), 2);
+		for(int i=0; i<tfIdf.size(); i++){
+			E += Math.pow((tfIdf.get(i)-d.tfIdf.get(i)), 2);
 		}
 		return (float)(Math.abs(Math.sqrt(E)));
 	}

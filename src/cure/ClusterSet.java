@@ -3,6 +3,7 @@ package cure;
 import java.io.*;
 import java.util.*;
 
+import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
 import edu.wlu.cs.levy.CG.KDTree;
 
 
@@ -113,7 +114,7 @@ public class ClusterSet {
 	 * @param dataPointMap The HashMap to store the data points
 	 */
 	public ClusterSet(ArrayList dataPoints, int numberOfClusters, int numberOfRepInCluster, double shrinkFactor, HashMap dataPointMap) {
-		int tfIdfSize = ((Point)dataPoints.get(0)).tfIdf.length;
+		int tfIdfSize = (int)((Point)dataPoints.get(0)).tfIdf.size();
 		initializeContainers(dataPoints.size(), numberOfClusters, numberOfRepInCluster, shrinkFactor, tfIdfSize);
 		initializePoints(dataPoints,dataPointMap);
 		buildKDTree();
@@ -326,21 +327,21 @@ public class ClusterSet {
 	public Point computeMeanOfCluster(Cluster cluster) {
 		Point point = new Point();
 		//Find size
-		int tfIdfSize = ((Point)cluster.pointsInCluster.get(0)).tfIdf.length;
+		int tfIdfSize = (int)((Point)cluster.pointsInCluster.get(0)).tfIdf.size();
 		//Initialize to zero
-		point.tfIdf = new double[tfIdfSize];
+		point.tfIdf = new SparseDoubleMatrix1D(tfIdfSize);
 		for(int j=0;j<tfIdfSize;j++){
-			point.tfIdf[j] += 0;
+			point.tfIdf.set(j, 0);
 		}
 		//Add all tfIdf
 		for(int i=0; i<cluster.pointsInCluster.size(); i++) {
 			for(int j=0;j<tfIdfSize;j++){
-				point.tfIdf[j] += ((Point)cluster.pointsInCluster.get(i)).tfIdf[j];
+				point.tfIdf.set(j, point.tfIdf.get(j) + ((Point)cluster.pointsInCluster.get(i)).tfIdf.get(j));
 			}
 		}
 		//Average it out
 		for(int j=0;j<tfIdfSize;j++){
-			point.tfIdf[j] /= cluster.pointsInCluster.size();
+			point.tfIdf.set(j, point.tfIdf.get(j) / cluster.pointsInCluster.size());
 		}
 		return point;
 	}
@@ -385,10 +386,10 @@ public class ClusterSet {
 		for(int i=0; i<tempset.size(); i++) {
 			Point p = (Point) tempset.get(i);
 			Point rep = new Point();
-			int tfIdfSize = p.tfIdf.length;
-			rep.tfIdf = new double[tfIdfSize];
+			int tfIdfSize = (int)p.tfIdf.size();
+			rep.tfIdf = new SparseDoubleMatrix1D(tfIdfSize);
 			for(int j=0;j<tfIdfSize;j++){
-				rep.tfIdf[j] = p.tfIdf[j] + shrinkFactor*(mean.tfIdf[j] - p.tfIdf[j]);
+				rep.tfIdf.set(j, p.tfIdf.get(j) + shrinkFactor*(mean.tfIdf.get(j) - p.tfIdf.get(j)));
 			}
 			//rep.index = newPointCount++;
 			rep.index = Cure.getCurrentRepCount();

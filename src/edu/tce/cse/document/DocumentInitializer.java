@@ -10,6 +10,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix1D;
+import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
 import edu.tce.cse.util.SVDReducer;
 import mpi.MPI;
 import mpi.Op;
@@ -22,6 +24,7 @@ public class DocumentInitializer {
 	private final int startIndex;
 	private final int endIndex;
 	private List<DocNode> docNodeList;
+	
 	public DocumentInitializer(String documentDirectory){
 		this.documentDirectory = documentDirectory;
 		List<File> files = new ArrayList<>();
@@ -46,6 +49,7 @@ public class DocumentInitializer {
 					e.printStackTrace();
 				}
 	}
+	
 	public void parseDirectory(String documentDirectory, List files){
 		File inputDirectory = new File(documentDirectory);
 		File[] tmpFiles = inputDirectory.listFiles();
@@ -142,7 +146,7 @@ public class DocumentInitializer {
 		double[][] tfIdfMatrix = new double[documentList.size()][];		
 
 		for(int i=0; i<documentList.size(); i++){
-			tfIdfMatrix[i] = documentList.get(i).getTfIdf();
+			tfIdfMatrix[i] = documentList.get(i).getTfIdf().toArray();
 		}
 
 
@@ -157,7 +161,7 @@ public class DocumentInitializer {
 		//tfIdfMatrix = svd.reduceTfIdf(tfIdfMatrix);
 
 		for(int i=0; i<documentList.size(); i++){
-			documentList.get(i).setReducedTfIdf(tfIdfMatrix[i]);
+			documentList.get(i).setReducedTfIdf(new DenseDoubleMatrix1D(tfIdfMatrix[i]));
 		}
 	}
 
@@ -167,7 +171,7 @@ public class DocumentInitializer {
 
 
 		for( DocNode doc : docNodeList){
-			localTfIdf[0].add(doc.getTfIdf());
+			localTfIdf[0].add(doc.getTfIdf().toArray());
 		}
 
 		//MPI.COMM_WORLD.Reduce(localTfIdf, 0, 
@@ -222,7 +226,7 @@ public class DocumentInitializer {
 		index = 0;
 		for(DocNode doc : docNodeList){
 			//System.out.println(this.processorID+" "+tfIdfMatrix[index].length);
-			doc.setTfIdf(tfIdfMatrix[index]);
+			doc.setTfIdf(new SparseDoubleMatrix1D(tfIdfMatrix[index]));
 			index++;
 		}
 	}

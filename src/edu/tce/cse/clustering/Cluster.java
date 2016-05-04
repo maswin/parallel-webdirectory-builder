@@ -205,7 +205,7 @@ public class Cluster extends Node implements Serializable{
 	public Centroid findInitialCentroid(){
 		double[][] vector = new double[this.repPoints.size()][];
         for (int i = 0; i < this.repPoints.size(); i++) {
-            vector[i] = this.repPoints.get(i).getTfIdf();
+            vector[i] = this.repPoints.get(i).getTfIdf().toArray();
         }
 
         DoubleMatrix2D matrix = new DenseDoubleMatrix2D(vector);

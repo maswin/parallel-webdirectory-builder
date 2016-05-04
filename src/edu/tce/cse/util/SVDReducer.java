@@ -8,6 +8,7 @@ import java.util.List;
 import cern.colt.matrix.DoubleMatrix2D;
 import cern.colt.matrix.impl.DenseDoubleMatrix2D;
 import cern.colt.matrix.linalg.SingularValueDecomposition;
+import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
 import edu.tce.cse.document.Document;
 import edu.tce.cse.example.sampleData;
 
@@ -53,13 +54,13 @@ public class SVDReducer {
 		double[][] fullVector = new double[list.size()][];
 		int index = 0;
 		for(Document doc : list){
-			fullVector[index] = doc.getTfIdf();
+			fullVector[index] = doc.getTfIdf().toArray();
 			index++;
 		}
 		fullVector = reduceTfIdf(fullVector);	
 		index = 0;
 		for(Document doc : list){
-			doc.setTfIdf(fullVector[index]);
+			doc.setTfIdf(new SparseDoubleMatrix1D(fullVector[index]));
 			index++;
 		}
 		

@@ -16,13 +16,13 @@ import edu.tce.cse.model.PartialBetweenness;
 public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public String fileName;
-	public double[] tfIdf;
-	public transient double[] reducedTfIdf;//Only used within the processor
+	private DoubleMatrix1D tfIdf = null;
+	public transient DoubleMatrix1D reducedTfIdf;//Only used within the processor
 	public float centrality;
 	public transient PartialBetweenness container;
 	public long clusterID;
 	
-	public DocNode(long id, String fileName, double[] tfIdf){
+	public DocNode(long id, String fileName, DoubleMatrix1D tfIdf){
 		super(id);
 		this.tfIdf = tfIdf;
 		this.reducedTfIdf = null;
@@ -38,16 +38,16 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 		this.clusterID = clusterID;
 	}
 	
-	public double[] getTfIdf() {
+	public DoubleMatrix1D getTfIdf() {
 		return tfIdf;
 	}
-	public void setTfIdf(double[] tfIdf) {
+	public void setTfIdf(DoubleMatrix1D tfIdf) {
 		this.tfIdf = tfIdf;
 	}
-	public double[] getReducedTfIdf() {
+	public DoubleMatrix1D getReducedTfIdf() {
 		return reducedTfIdf;
 	}
-	public void setReducedTfIdf(double[] tfIdf) {
+	public void setReducedTfIdf(DoubleMatrix1D tfIdf) {
 		this.reducedTfIdf = tfIdf;
 	}
 	public float getCentrality(){
@@ -59,8 +59,8 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public float findCosSimilarity(DocNode d){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getTfIdf());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getTfIdf());
+		DoubleMatrix1D vector1 = this.getTfIdf();
+        DoubleMatrix1D vector2 = d.getTfIdf();
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
 
@@ -78,8 +78,8 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	//Distance using reduced Tf-Idf
 	public float findReducedCosSimilarity(DocNode d){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.getReducedTfIdf());
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(d.getReducedTfIdf());
+		DoubleMatrix1D vector1 = this.getReducedTfIdf();
+        DoubleMatrix1D vector2 = d.getReducedTfIdf();
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
         
@@ -92,8 +92,8 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	
 	public float findEuclideanSimilarity(DocNode d){
 		float E = 0.0f;
-		for(int i=0; i<tfIdf.length; i++){
-			E += Math.pow((tfIdf[i]-d.tfIdf[i]), 2);
+		for(int i=0; i<tfIdf.size(); i++){
+			E += Math.pow((tfIdf.get(i)-d.tfIdf.get(i)), 2);
 		}
 		return (float)(Math.abs(Math.sqrt(E)));
 	}

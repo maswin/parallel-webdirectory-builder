@@ -12,7 +12,7 @@ import edu.tce.cse.document.DocNode;
  * @author jmishra
  */
 public class Point {
-	public double[] tfIdf;
+	public DoubleMatrix1D tfIdf;
 	public int index;
 	public String fileName;
 	
@@ -20,7 +20,7 @@ public class Point {
 		this.fileName = "Temp File";	
 	}
 	
-	public Point(double[] tfIdf, int index, String fileName) {
+	public Point(DoubleMatrix1D tfIdf, int index, String fileName) {
 		this.tfIdf = tfIdf;
 		this.index = index;
 		this.fileName = fileName;
@@ -43,7 +43,7 @@ public class Point {
 	}
 	
 	public double[] toDouble() {
-		return this.tfIdf; 
+		return this.tfIdf.toArray(); 
 	}
 	
 	public static Point parseString(String str) {
@@ -54,8 +54,8 @@ public class Point {
 	
 	public float findCosSimilarity(Point t){
 
-		DoubleMatrix1D vector1 = new DenseDoubleMatrix1D(this.tfIdf);
-        DoubleMatrix1D vector2 = new DenseDoubleMatrix1D(t.tfIdf);
+		DoubleMatrix1D vector1 = this.tfIdf;
+        DoubleMatrix1D vector2 = t.tfIdf;
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
         
@@ -81,12 +81,7 @@ public class Point {
 		return fileName;
 	}
 	
-	public boolean equals(Point t) {		
-		for(int i=0;i<this.tfIdf.length;i++){
-			if(this.tfIdf[i]!=t.tfIdf[i]){
-				return false;
-			}
-		}
-		return true;
+	public boolean equals(Point t) {	
+		return this.tfIdf.equals(t.tfIdf);
 	}
 }
