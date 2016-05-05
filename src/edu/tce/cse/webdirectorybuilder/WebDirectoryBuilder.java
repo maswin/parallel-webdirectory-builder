@@ -67,13 +67,13 @@ public class WebDirectoryBuilder {
 		DistributedLSH dLSH = new DistributedLSH((int)nodeList.get(0).getTfIdf().size(), initK, initL, kRatio, lRatio);
 		hc.clustersAtThisLevel = hc.initialClustering(nodeList, repPointPercent);
 
-		int clustersInPreviousLevel = hc.clustersAtThisLevel.size();
+		int numberOfClustersInPreviousLevel = hc.clustersAtThisLevel.size();
 		int startID = hc.clustersAtThisLevel.size();
 		int iteration = 1;
 
 		while(true){
 			MPI.COMM_WORLD.Barrier();
-			clustersInPreviousLevel = hc.clustersAtThisLevel.size();
+			numberOfClustersInPreviousLevel = hc.clustersAtThisLevel.size();
 			List<Cluster> temp = new ArrayList<Cluster>();
 			temp.addAll(hc.clustersAtThisLevel.values());
 
@@ -110,7 +110,7 @@ public class WebDirectoryBuilder {
 				}
 				System.out.println("Number of clusters formed : "+hc.clustersAtThisLevel.size());
 				//or check if clusters don't change between two levels?
-				if(hc.clustersAtThisLevel.size()<=numOfCluster || hc.clustersAtThisLevel.size()==clustersInPreviousLevel){
+				if(hc.clustersAtThisLevel.size()<=numOfCluster || hc.clustersAtThisLevel.size()==numberOfClustersInPreviousLevel){
 					hc.flagToStop[0]=true;
 				}
 			}

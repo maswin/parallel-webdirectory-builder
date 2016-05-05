@@ -32,7 +32,7 @@ public class DistributedLSHTester {
 		
 		for(DocNode d : docList){
 			//System.out.println(d.nodeID+" "+d.fileName);
-			Centroid c = new Centroid(d.nodeID,d.getTfIdf().toArray());
+			Centroid c = new Centroid(d.nodeID,d.getTfIdf());
 			nameMap.put(d.nodeID, d.fileName);
 			cList.add(c);
 		}
@@ -40,7 +40,7 @@ public class DistributedLSHTester {
 		System.out.println("No. of Data points : "+docList.size());
 		System.out.println("Actual number of comparisions : "+(docList.size()*docList.size()));
 		System.out.println("Performing Hashing...");
-		DistributedLSH dLSH = new DistributedLSH(cList.get(0).tfIdf.length);
+		DistributedLSH dLSH = new DistributedLSH((int)cList.get(0).tfIdf.size());
 		dLSH.hash(cList);
 		System.out.println("Comparision Points : ");
 		for(Data d : dLSH.getPairPoints()){

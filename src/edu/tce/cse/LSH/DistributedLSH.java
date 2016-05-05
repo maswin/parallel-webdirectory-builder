@@ -74,7 +74,7 @@ public class DistributedLSH {
 		for(int i=0;i<lsh.l;i++){
 			localBuckets[0] = new HashMap<String, Set<Centroid>>();
 			for(Centroid node : nodeList){
-				String hash = lsh.hash(i, node.tfIdf);
+				String hash = lsh.hash(i, node.tfIdf.toArray());
 				if(localBuckets[0].containsKey(hash)){
 					localBuckets[0].get(hash).add(node);
 				}else{

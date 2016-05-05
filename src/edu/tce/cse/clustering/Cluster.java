@@ -9,24 +9,28 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
-import cern.colt.matrix.tdouble.DoubleMatrix2D;
-import cern.colt.matrix.tdouble.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.DoubleMatrix2D;
+import cern.colt.matrix.impl.DenseDoubleMatrix2D;
+import cern.colt.matrix.tdouble.impl.SparseDoubleMatrix1D;
 import edu.tce.cse.document.DocNode;
 import edu.tce.cse.model.Centroid;
+import edu.tce.cse.model.RepPointData;
 
 public class Cluster extends Node implements Serializable{
 	
-    List<Node> children;
+	List<Node> children;
 	List<DocNode> repPoints;
+	List<DocNode> candidateRepPoints;
 	Centroid centroid;
 	float weightedDegreeInMST;
 	public StringBuilder files;
-	public double percent = 50.0;
+	public double percent = 10.0;
 	
 	public Cluster(long id, List<? extends Node> nodes, double percent){
 		super(id);
-		children = new ArrayList<Node>();
-		repPoints = new ArrayList<DocNode>();
+		children = new ArrayList<>();
+		repPoints = new ArrayList<>();
+		candidateRepPoints = new ArrayList<DocNode>();
 		centroid = null;
 		files = new StringBuilder();
 		if(percent != 0.0)
@@ -35,7 +39,8 @@ public class Cluster extends Node implements Serializable{
 		try{
 			//merging DocNode objects to form an initial cluster
 			if(nodes.get(0) instanceof DocNode){
-				List<DocNode> list = (List<DocNode>)nodes;
+			//if(isDocNode){
+				List<DocNode> list = (List<DocNode>) nodes;
 				//checkCentralityHeuristic(list);
 				findRepPointsBasedOnCentrality(list, this.percent);
 				findInitialCentroid();
@@ -43,16 +48,20 @@ public class Cluster extends Node implements Serializable{
 			}
 			//merging clusters to form a merged cluster
 			else if(nodes.get(0) instanceof Cluster || nodes.get(0) instanceof LeafCluster){
+			//else{
 				this.children.addAll(nodes);
 				//find rep points for cluster
 				//findRepPointsBasedOnMSTDegree();
-				addAllRepresentativePoints();
+				addRepPoints();
+				//addAllRepresentativePoints();
 				findCentroid();
 				addFiles();
 			}
+			//System.out.println("Rep Point Size : "+this.candidateRepPoints.size()+" to "+this.repPoints.size());
 		}
 		catch(Exception e){
 			System.out.println("couldn't form cluster");
+			e.printStackTrace();
 		}
 	}
 	
@@ -60,13 +69,14 @@ public class Cluster extends Node implements Serializable{
 	void addFiles(){
 		Cluster c;
 		for(int i=0; i<children.size(); i++){
-			c = ((Cluster)(children.get(i)));
+			c = (Cluster) children.get(i);
 			this.files.append(";");
 			this.files.append(c.files);
 		}
 	}
 	void addFiles(List<DocNode> nodes){
-		for(DocNode node : nodes){
+		for(DocNode n : nodes){
+			DocNode node = n;
 			this.files.append(";");
 			this.files.append(node.fileName);
 		}
@@ -79,7 +89,6 @@ public class Cluster extends Node implements Serializable{
 		for(DocNode r: repPoints){
 			r.setClusterID(id);
 		}
-
 	}
 	public List<DocNode> getRepPoints() {
 		return repPoints;
@@ -104,7 +113,8 @@ public class Cluster extends Node implements Serializable{
 	}
 	public Centroid getCentroid(){
 		if(centroid == null){
-			System.out.println("Centroid Not Found");
+			System.out.println("Centroid Found");
+			return this.findCentroid();
 		}
 		return this.centroid;
 	}
@@ -112,20 +122,30 @@ public class Cluster extends Node implements Serializable{
 	//fix number of repPoints & ratio of high centrality and low centrality points mix
 		
 	void findRepPointsBasedOnCentrality(List<DocNode> nodes, double percent){
-	Collections.sort(nodes, new CentralityComparator());
+		Collections.sort(nodes, new CentralityComparator());
 		//nodes.sort(new CentralityComparator());
 		int size = nodes.size();
 		
 		int numOfRepPoints = (int)Math.ceil(size*(percent/100.0));
 		int numOfHighCentrality = (int)Math.ceil(1*numOfRepPoints);
 		int numOfLowCentrality= numOfRepPoints - numOfHighCentrality;
-		repPoints.addAll(nodes.subList(size-numOfHighCentrality, size));
-		if(numOfLowCentrality>0)
-			repPoints.addAll(nodes.subList(0, numOfLowCentrality));
+		
+		for(DocNode d : nodes.subList(size-numOfHighCentrality, size)){
+			repPoints.add(d);
+		}
+		//repPoints.addAll();
+		if(numOfLowCentrality>0) {
+			for(DocNode d : nodes.subList(0, numOfLowCentrality)){
+				repPoints.add(d);
+			}
+			//repPoints.addAll(nodes.subList(0, numOfLowCentrality));
+		}
+		//Only for First Iteration
+		this.candidateRepPoints = this.repPoints;
 	}
 	
 	//to find representative points when clusters are grouped to form next level cluster
-	void findRepPointsBasedOnMSTDegree(){
+	/*void findRepPointsBasedOnMSTDegree(){
 		//fix max ration of rep points to be picked
 		float maxRatioOfRepPoints = 0.5f;
 		Collections.sort(children, new DegreeComparator());
@@ -142,25 +162,76 @@ public class Cluster extends Node implements Serializable{
 			numOfRepPoints = (int) Math.abs(Math.ceil(proportion*c.weightedDegreeInMST));
 			numOfRepPoints = Math.min(numOfRepPoints, c.repPoints.size());
 			for(int j=0; j< numOfRepPoints; j++){
-				c.repPoints.get(j).setClusterID(nodeID);
+				DocNode d = DocMemManager.getDocNode(c.repPoints.get(j));
+				d.setClusterID(nodeID);
+				//Special change
+				DocMemManager.writeDocNode(d);
 				repPoints.add(c.repPoints.get(j));			
 			}
 			
 		}
 		
+	}*/
+	
+	void addRepPoints(){
+		double mean = 0d;
+		double stdDev = 0d;
+		double totalDistance = 0d;
+		double totalSqDistance = 0d;
+		int count = 0;
+		Cluster c;
+		RepPointData r;
+		float dist;
+		List<RepPointData> repPointsList = new ArrayList<RepPointData>();
+		for(int i=0; i<children.size(); i++){
+			c = (Cluster) children.get(i);
+			for(int j=0; j<c.candidateRepPoints.size() ; j++) {
+				DocNode d = c.candidateRepPoints.get(j);
+				d.setClusterID(nodeID);
+				dist = d.findCosDistance(this.getCentroid());
+				//For mean and StdDev
+				totalDistance += dist;
+				totalSqDistance += (dist*dist);
+				count++;
+				r = new RepPointData(c.candidateRepPoints.get(j), dist);
+				repPointsList.add(r);
+				this.candidateRepPoints.add(c.candidateRepPoints.get(j));
+			}
+		}
+		/*Collections.sort(repPointsList,  new Comparator<RepPointData>(){
+			@Override
+			public int compare(RepPointData o1, RepPointData o2) {
+				// TODO Auto-generated method stub
+				if(o1.d > o2.d){
+					return -1;
+				}else if(o1.d == o2.d){
+					return 0;
+				}
+				return 1;
+			}			
+		});*/
+		mean = (totalDistance/(count*1.0));
+		stdDev = Math.sqrt((totalSqDistance/(count*1.0))-Math.pow(mean, 2));
+		for(RepPointData t : repPointsList){
+			if(t.distanceFromCentroid >= (mean-stdDev))
+				this.repPoints.add(t.d);
+		}
+		//System.out.println(mean+" "+stdDev);
 	}
 
 	void addAllRepresentativePoints(){
 		Cluster c;
 		for(int i=0; i<children.size(); i++){
-			c = ((Cluster)(children.get(i)));
+			c = (Cluster) children.get(i);
 			for(int j=0;j<c.repPoints.size();j++){
-				c.repPoints.get(j).setClusterID(nodeID);
+				DocNode d = c.repPoints.get(j);
+				d.setClusterID(nodeID);
 				repPoints.add(c.repPoints.get(j));
 			}
 		}
 	}
-	void checkCentralityHeuristic(List<DocNode> nodes){
+	
+	/*void checkCentralityHeuristic(List<DocNode> nodes){
 		if(nodes.size()==1)
 			return ;
 		float max = Float.MIN_VALUE;
@@ -187,7 +258,7 @@ public class Cluster extends Node implements Serializable{
 		}
 		float heuristicMax = nodes.get(minNode).findEuclideanSimilarity(nodes.get(maxNode));
 		System.out.println(heuristicMax+", actual = "+max);
-	}
+	}*/
 
 	//to find similarity/distance between two clusters
 	public float findDistance(Node n){
@@ -195,7 +266,9 @@ public class Cluster extends Node implements Serializable{
 		float avgDistance = 0.0f;
 		for(int i=0; i<repPoints.size(); i++){
 			for(int j=0; j<c.getRepPoints().size(); j++){
-				avgDistance+=(repPoints.get(i).findDistance(c.getRepPoints().get(j)));
+				DocNode iNode = repPoints.get(i);
+				DocNode jNode = c.getRepPoints().get(j);
+				avgDistance+=(iNode.findDistance(jNode));
 			}
 		}
 		avgDistance/=(repPoints.size()*c.getRepPoints().size());
@@ -205,7 +278,8 @@ public class Cluster extends Node implements Serializable{
 	public Centroid findInitialCentroid(){
 		double[][] vector = new double[this.repPoints.size()][];
         for (int i = 0; i < this.repPoints.size(); i++) {
-            vector[i] = this.repPoints.get(i).getTfIdf().toArray();
+        	DocNode iNode = this.repPoints.get(i);
+            vector[i] = iNode.getTfIdf().toArray();
         }
 
         DoubleMatrix2D matrix = new DenseDoubleMatrix2D(vector);
@@ -215,7 +289,7 @@ public class Cluster extends Node implements Serializable{
             centroidTfIdf[col] = matrix.viewColumn(col).zSum();
         }
         
-        Centroid centroid = new Centroid(this.nodeID, centroidTfIdf);
+        Centroid centroid = new Centroid(this.nodeID, new SparseDoubleMatrix1D(centroidTfIdf));
         this.centroid = centroid;
         return this.centroid;
 	}
@@ -225,7 +299,7 @@ public class Cluster extends Node implements Serializable{
 
         for (int i = 0; i < this.children.size(); i++) {
         	Cluster c = (Cluster) this.children.get(i);
-            vector[i] = c.getCentroid().tfIdf;
+            vector[i] = c.getCentroid().tfIdf.toArray();
         }
 
         DoubleMatrix2D matrix = new DenseDoubleMatrix2D(vector);
@@ -234,12 +308,12 @@ public class Cluster extends Node implements Serializable{
         for (int col = 0; col < matrix.columns(); col++) {
             centroidTfIdf[col] = matrix.viewColumn(col).zSum();
         }
-        Centroid centroid = new Centroid(this.nodeID, centroidTfIdf);
+        Centroid centroid = new Centroid(this.nodeID, new SparseDoubleMatrix1D(centroidTfIdf));
         this.centroid = centroid;
         return this.centroid;
 	}
 	//Cluster Utility Functions
-	public static double findMinClusterDiameter(List<Cluster> clusters){
+	/*public static double findMinClusterDiameter(List<Cluster> clusters){
 		double minDist = Double.MAX_VALUE;		
 		for(Cluster c : clusters){
 			Collections.sort(c.children, new CentralityComparator());
@@ -254,9 +328,9 @@ public class Cluster extends Node implements Serializable{
 			}
 		}
 		return minDist;
-	}
+	}*/
 	
-	public static double findMinInterClusterDistance(List<Cluster> clusters){
+	/*public static double findMinInterClusterDistance(List<Cluster> clusters){
 		double minDist = Double.MAX_VALUE;
 		List<DocNode> highCentralityPoints = new ArrayList<>(clusters.size());
 		for(Cluster c : clusters){
@@ -276,21 +350,23 @@ public class Cluster extends Node implements Serializable{
 			}
 		}
 		return minDist;
-	}
+	}*/
 }
 
 //to sort based on ascending order of centrality
 class CentralityComparator implements Comparator{
-	public int compare(Object i, Object j){
-		if(((DocNode)i).centrality<((DocNode)j).centrality)
+	public int compare(Object o1, Object o2){
+		DocNode i = (DocNode) o1;
+		DocNode j = (DocNode) o2;
+		if(i.centrality<j.centrality)
 			return -1;
-		else if(((DocNode)i).centrality==((DocNode)j).centrality)
+		else if(i.centrality==j.centrality)
 			return 0;
 		return 1;
 	}
 }
 //to sort based on ascending order of degree in MST
-class DegreeComparator implements Comparator{
+/*class DegreeComparator implements Comparator{
 	public int compare(Object i, Object j){
 		if(((Cluster)i).weightedDegreeInMST<((Cluster)j).weightedDegreeInMST)
 			return -1;
@@ -298,4 +374,4 @@ class DegreeComparator implements Comparator{
 			return 0;
 		return 1;
 	}
-}
+}*/
