@@ -43,25 +43,62 @@ public class Graph<E extends Node> {
 	}
 
 	//to form a complete graph 
-	public void addEdges(){
-		adjList.put(V.get(0), new ArrayList<Edge>());
-		for(int j=1; j<V.size(); j++){
-			adjList.put(V.get(j), new ArrayList<Edge>());
-			float weight = findEdgeWeight(V.get(0), V.get(j));
-			Edge e = new Edge(V.get(0), V.get(j), weight);
-			adjList.get(V.get(0)).add(e);
-			e = new Edge(V.get(j), V.get(0), weight);
-			adjList.get(V.get(j)).add(e);
-		}
-		for(int i=1; i<V.size(); i++){
-			for(int j=i+1; j<V.size(); j++){
-				float weight = findEdgeWeight(V.get(i), V.get(j));
-				Edge e = new Edge(V.get(i), V.get(j), weight);
-				adjList.get(V.get(i)).add(e);
-				e = new Edge(V.get(j), V.get(i), weight);
+	public void addEdges(float sparsifyE){
+
+		/*adjList.put(V.get(0), new ArrayList<Edge>());
+			for(int j=1; j<V.size(); j++){
+				adjList.put(V.get(j), new ArrayList<Edge>());
+				float weight = findEdgeWeight(V.get(0), V.get(j));
+				Edge e = new Edge(V.get(0), V.get(j), weight);
+				adjList.get(V.get(0)).add(e);
+				e = new Edge(V.get(j), V.get(0), weight);
 				adjList.get(V.get(j)).add(e);
+			}*/
+		long startTimeSparsify = System.currentTimeMillis();
+		PriorityQueue<Edge> edgeList = new PriorityQueue<Edge>(new WeightComparator());
+		for(int i=0; i<V.size(); i++){
+			long startTime = System.currentTimeMillis();
+			System.out.println("Sparsification Started "+i);
+			edgeList = new PriorityQueue<Edge>(new WeightComparator());
+			adjList.put(V.get(i), new ArrayList<Edge>());
+			for(int j=0; j<V.size(); j++){
+				if(j!=i){
+					float weight = findEdgeWeight(V.get(i), V.get(j));
+					if(weight < 0.6){
+						Edge e = new Edge(V.get(i), V.get(j), weight);
+						edgeList.add(e);
+						//adjList.get(V.get(i)).add(e);
+					}
+					//e = new Edge(V.get(j), V.get(i), weight);
+					//adjList.get(V.get(j)).add(e);
+				}    
+			}
+			sparsifyForEachNode(i, sparsifyE, edgeList); 
+			long endTime = System.currentTimeMillis();
+			System.out.println("Sparsification Ended "+(endTime-startTime));
+			/*if(i%(V.size()/20)==0){
+					System.out.println("Sparsified "+i+" vertices");
+				}*/
+		}
+		System.out.println("Neighbours identified for each node after sparsification");
+		long endTimeSparsify = System.currentTimeMillis();
+		System.out.println("Graph formation and sparsification time: "+(endTimeSparsify-startTimeSparsify));
+	}
+
+	public void sparsifyForEachNode(int nodeID, float e, PriorityQueue<Edge> edgeList){
+		int d = edgeList.size();
+		int toRetain = (int)Math.abs(Math.pow(d, e));
+		List<Edge> list=adjList.get(V.get(nodeID));
+		//Collections.sort(list, new WeightComparator());
+		//list = list.subList(0, toRetain);
+		int count = 0;
+		for(int i=0;i<toRetain;i++){
+			if(!edgeList.isEmpty()){
+				list.add(edgeList.remove());
+				count++;
 			}
 		}
+		adjList.put(V.get(nodeID), list);
 	}
 
 	public float findEdgeWeight(E node1, E node2){			

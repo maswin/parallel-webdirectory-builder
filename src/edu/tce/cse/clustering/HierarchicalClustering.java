@@ -1,5 +1,6 @@
 package edu.tce.cse.clustering;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.BitSet;
@@ -25,8 +26,10 @@ import edu.tce.cse.model.Directory;
 import edu.tce.cse.model.EdgeData;
 import edu.tce.cse.util.Statistics;
 import gui.TreeView;
+import java.util.Arrays;
 
 public class HierarchicalClustering {
+	public float sparsificationRatio = 0.01f;
 	public Map<Long, Cluster> clustersAtThisLevel;
 	public DocNode[] localRepPoints;
 	public Centroid[] centroids;
@@ -34,15 +37,13 @@ public class HierarchicalClustering {
 	int shareDetails[]=new int[2];
 	public double R;
 	public String inputFolder;
-	
 	public HierarchicalClustering(String fName){
 		inputFolder = fName;
 	}
-	
 	//to merge clusters to form the next level clusters, when given the results of LSH as input 
 	public void mergeClusters(List<Data> list, int startID){
 		List<Cluster> temp = new ArrayList<Cluster>();
-		HashMap<Cluster, HashMap<Cluster, Float>> adjList=new HashMap(); 
+		Map<Cluster, HashMap<Cluster, Float>> adjList=new HashMap(); 
 		temp.addAll(clustersAtThisLevel.values());
 		//form graph where each node is a cluster
 		Graph graph = new Graph(temp);
@@ -91,11 +92,11 @@ public class HierarchicalClustering {
 			graph.removeInterClusterEdges(graph.V, mean+(1f*stdDev), true);
 		}
 		else{
-			List<List<Node>> components = graph.findConnectedComponents();
+			List<List<Long>> components = graph.findConnectedComponents();
 			int count = 0;
 			mean = 0;
 			stdDev = 0;
-			for(List<Node> component: components){
+			for(List<Long> component: components){
 				if(component.size()>2){				
 					//component.forEach(n -> System.out.print(n.nodeID+" "));
 					Graph mst = graph.findMST(component);
@@ -111,7 +112,7 @@ public class HierarchicalClustering {
 				stdDev = (float) (stdDev/(count*1.0));
 			}
 
-			for(List<Node> component: components){
+			for(List<Long> component: components){
 				if(component.size()>2)
 					graph.removeInterClusterEdges(component, mean+(1f*stdDev), true);
 			}
@@ -119,8 +120,8 @@ public class HierarchicalClustering {
 
 		//change threshold value here
 		//graph.removeInterClusterEdges(mean+(1f*stdDev), true);
-		List<List<DocNode>> components = graph.findConnectedComponents();
-		
+		List<List<Long>> components = graph.findConnectedComponents();
+
 		//Assuming that all representative points are added
 		clustersAtThisLevel = graph.formClusters(components, startID, 100.0);
 
@@ -150,7 +151,7 @@ public class HierarchicalClustering {
 	}
 
 	//to distribute representative points from main processor to other processors
-	public void distributeRepPoints(List<Cluster> clusters){
+	/*public void distributeRepPoints(List<Cluster> clusters){
 		Object[] repPoints = getRepPoints(clusters);
 		MPI.COMM_WORLD.Bcast(shareDetails, 1, 1, MPI.INT, 0);
 		int numOfThreads = MPI.COMM_WORLD.Size();
@@ -171,7 +172,7 @@ public class HierarchicalClustering {
 		}
 		MPI.COMM_WORLD.Scatterv(repPoints, 0, sendcount, displs, MPI.OBJECT, localRepPoints, 0, localRepPoints.length, MPI.OBJECT, 0);
 
-	}
+	}*/
 
 	public void distributeCentroids(List<Cluster> clusters){
 		Object[] centroidPoints = getCentroidPoints(clusters);
@@ -232,21 +233,26 @@ public class HierarchicalClustering {
 		return nodeList;
 	}
 
+
 	//to form initial clusters in each processor
 	public Map<Long, Cluster> initialClustering(List<DocNode> docs, double percentOfRepPoints){
 		Directory directory = new Directory();
 		//form graph where each node is a DocNode
-		Graph<DocNode> graph = new Graph(docs);
-		graph.addEdges();
+		Graph graph = new Graph(docs);
+		graph.addEdges(sparsificationRatio);
 		//FIX SPARSIFICATION EXPONENT HERE
-		graph.sparsify(0.3f);
+		//graph.sparsify(0.3f);
+
 		graph.findCentrality();
 
 		float[] values = new float[graph.V.size()];
 		for(int i=0; i<graph.V.size(); i++){
-			values[i] = graph.V.get(i).getCentrality();
-			graph.V.get(i).container = null;
+			values[i] = ((DocNode) graph.V.get(i)).getCentrality();
+			//graph.V.get(i).container = null;
 		}
+
+		long startTimeFormLeafClusters = System.currentTimeMillis();
+
 		Statistics stats = new Statistics(values);
 		float mean = stats.getMean();
 		float stdDev= stats.getStdDev();
@@ -260,24 +266,31 @@ public class HierarchicalClustering {
 		int count = 1;
 		List<List<Node>> components = graph.findConnectedComponents();
 		List<Cluster> clusters= graph.formLeafClusters(components, 0, directory, percentOfRepPoints);
+
+		long endTimeFormLeafClusters = System.currentTimeMillis();
+
+		System.out.println("leaf clusters formed");
+		System.out.println("Initial cluster formation time: "+(endTimeFormLeafClusters - startTimeFormLeafClusters));
 		for(int i=0; i<MPI.COMM_WORLD.Size(); i++){
 			MPI.COMM_WORLD.Barrier();
-			if(i==MPI.COMM_WORLD.Rank()){
-				System.out.println("Process "+i+":");
-				System.out.println("Mean centrality value = "+mean);
-				for(Integer j: directory.directoryMap.keySet()){
-					List<DocNode> l = directory.directoryMap.get(j);
-					System.out.print("\nDirectory "+j+": ");
-					for(DocNode d: l){
-						System.out.print(d.fileName+" ");
-					}
-					System.out.println(" ");
+			System.out.println("Process "+i+":");
+			System.out.println("Mean centrality value = "+mean);
+			for(Integer j: directory.directoryMap.keySet()){
+				List<DocNode> l = directory.directoryMap.get(j);
+				System.out.print("\nDirectory "+j+": ");
+				for(DocNode d: l){
+					System.out.print(d.fileName+" ");
 				}
+				System.out.println(" ");
 			}
 		}
 		MPI.COMM_WORLD.Barrier();
-
-		return distributeInitialClusters(clusters.toArray());
+		long startTimeComm = System.currentTimeMillis();
+		gatherRepPoints(getRepPoints(clusters));
+		Map<Long, Cluster> clusterIDs = distributeInitialClusters(clusters.toArray());
+		long endTimeComm = System.currentTimeMillis();
+		System.out.println("Rep points and clusters comm to main processor time "+(endTimeComm-startTimeComm));
+		return clusterIDs;
 	}
 
 	//to gather initial clusters from all processors in the main processor
@@ -312,6 +325,45 @@ public class HierarchicalClustering {
 		return clusterMap;
 	}
 
+	public void gatherRepPoints(Object[] localPoints){
+		int numOfPoints[]=new int[MPI.COMM_WORLD.Size()];
+		int displs[]=new int[MPI.COMM_WORLD.Size()];
+		int numOfLocalPoints[]=new int[1];
+		numOfLocalPoints[0]=localPoints.length;
+		MPI.COMM_WORLD.Gather(numOfLocalPoints, 0, 1, MPI.INT, numOfPoints, 0, 1, MPI.INT, 0);
+		int totalNumOfPoints = 0;
+		for(int i=0; i<numOfPoints.length; i++){
+			displs[i]=totalNumOfPoints;
+			totalNumOfPoints+=numOfPoints[i];
+		}
+		Object[] repPoints;//new Object[totalNumOfPoints];
+		/*MPI.COMM_WORLD.Gatherv(localPoints, 0, localPoints.length, MPI.OBJECT, repPoints, 0, numOfPoints, displs, MPI.OBJECT, 0);
+                if(MPI.COMM_WORLD.Rank()==0){
+                    for(Object o: repPoints){
+                        DocNode d = (DocNode)o;
+                        DocMemManager.writeDocNode(d);
+                    }
+                }*/
+		if(MPI.COMM_WORLD.Rank()==0){
+			for(int i=1; i<MPI.COMM_WORLD.Size(); i++){
+				repPoints = new Object[numOfPoints[i]];
+				MPI.COMM_WORLD.Recv(repPoints, 0, numOfPoints[i], MPI.OBJECT, i, 0);
+				for(Object o: repPoints){
+					DocNode d = (DocNode)o;
+				}
+			}		
+		}
+		else{
+			DocNode localRepPoints[] = new DocNode[localPoints.length];
+			for(int i=0; i<localPoints.length; i++){
+				localRepPoints[i]=(DocNode) localPoints[i];
+			}
+			MPI.COMM_WORLD.Send(localRepPoints, 0, localRepPoints.length, MPI.OBJECT, 0, 0);
+		}
+
+
+	}
+
 	public Cluster mergeAllCluster(){
 		List<Cluster> clusterList = new ArrayList(this.clustersAtThisLevel.values());
 		/*for(Map.Entry<Long, Cluster> entry : this.clustersAtThisLevel.entrySet()){
@@ -339,4 +391,3 @@ count++;
 }
 mean/= count;
 stdDev/= count;*/
-
