@@ -262,6 +262,15 @@ public class Cluster extends Node implements Serializable{
 
 	//to find similarity/distance between two clusters
 	public float findDistance(Node n){
+		return findDistanceBetweenCentroid(n);
+	}
+	
+	private float findDistanceBetweenCentroid(Node n) {
+		Cluster c = (Cluster)n;
+		return this.getCentroid().findDistance(c.getCentroid());
+	}
+	
+	private float findAllPairAverageDistance(Node n) {
 		Cluster c = (Cluster)n;
 		float avgDistance = 0.0f;
 		for(int i=0; i<repPoints.size(); i++){
