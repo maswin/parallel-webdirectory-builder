@@ -51,26 +51,27 @@ public class WebDirectoryBuilder {
 		if(MPI.COMM_WORLD.Rank() == 0) {
 			printParameters();
 		}
-		//Time Calc
+		//Start Time Calculation
 		long startTimeData = System.currentTimeMillis();
 
 		//Gather Clusters (initial) from all processors
 		System.out.println("Started Id : "+id+"/"+size);
 		HierarchicalClustering hc = new HierarchicalClustering(inputFolder);
 
-		List<DocNode> nodeList = hc.preprocess();
+		List<DocNode> docNodes = hc.preprocessAndGetDocNodes();
+		System.out.println("Tf-Idf Length : "+docNodes.get(0).getTfIdf().size());
 		System.out.println("Processor "+MPI.COMM_WORLD.Rank()+" ---Data Received---");
 		
-		//Time Calc
+		//Execution Time Calculation
 		long startTimeExec = System.currentTimeMillis();
 
-		DistributedLSH dLSH = new DistributedLSH((int)nodeList.get(0).getTfIdf().size(), initK, initL, kRatio, lRatio);
-		hc.clustersAtThisLevel = hc.initialClustering(nodeList, repPointPercent);
-
+		hc.clustersAtThisLevel = hc.initialClustering(docNodes, repPointPercent);
 		int numberOfClustersInPreviousLevel = hc.clustersAtThisLevel.size();
 		int startID = hc.clustersAtThisLevel.size();
 		int iteration = 1;
 
+		DistributedLSH dLSH = new DistributedLSH((int)docNodes.get(0).getTfIdf().size(), initK, initL, kRatio, lRatio);
+		
 		while(true){
 			MPI.COMM_WORLD.Barrier();
 			numberOfClustersInPreviousLevel = hc.clustersAtThisLevel.size();
@@ -126,7 +127,7 @@ public class WebDirectoryBuilder {
 			System.out.println("Execution Time: "+(endTime-startTimeExec));
 
 			Cluster root = hc.mergeAllCluster();
-			System.out.println("Number of Files ("+inputFolder+"): "+nodeList.size());
+			System.out.println("Number of Files ("+inputFolder+"): "+docNodes.size());
 			System.out.println("Dimension "+root.getRepPoints().get(0).getTfIdf().size());
 			
 			if(gui){

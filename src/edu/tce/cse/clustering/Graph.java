@@ -25,6 +25,8 @@ public class Graph<E extends Node> {
 	public List<E> V;
 	public Map<E, List<Edge>> adjList;
 	public final static int NTHREAD = Runtime.getRuntime().availableProcessors();
+	public final static double thresholdEdgeWeightForSparsification = 0.5d;
+	
 	public Graph(List<E> nodes){
 		V = new ArrayList<E>();
 		adjList = new HashMap<E, List<Edge>>();
@@ -44,92 +46,51 @@ public class Graph<E extends Node> {
 	}
 
 	//to form a complete graph 
-	public void addEdges(float sparsifyE){
-
-		/*adjList.put(V.get(0), new ArrayList<Edge>());
-			for(int j=1; j<V.size(); j++){
-				adjList.put(V.get(j), new ArrayList<Edge>());
-				float weight = findEdgeWeight(V.get(0), V.get(j));
-				Edge e = new Edge(V.get(0), V.get(j), weight);
-				adjList.get(V.get(0)).add(e);
-				e = new Edge(V.get(j), V.get(0), weight);
-				adjList.get(V.get(j)).add(e);
-			}*/
+	public void addEdges(float sparsificationRatio){
 		long startTimeSparsify = System.currentTimeMillis();
-		PriorityQueue<Edge> edgeList = new PriorityQueue<Edge>(new WeightComparator());
+		
+		for(int i=0; i<V.size(); i++) {
+			adjList.put(V.get(i), new ArrayList<Edge>());
+		}
+		
 		for(int i=0; i<V.size(); i++){
 			long startTime = System.currentTimeMillis();
-			System.out.println("Sparsification Started "+i);
-			edgeList = new PriorityQueue<Edge>(new WeightComparator());
-			adjList.put(V.get(i), new ArrayList<Edge>());
-			for(int j=0; j<V.size(); j++){
+			for(int j=i+1; j<V.size(); j++){
 				if(j!=i){
 					float weight = findEdgeWeight(V.get(i), V.get(j));
-					if(weight < 0.6){
+					if(weight < thresholdEdgeWeightForSparsification){
 						Edge e = new Edge(V.get(i), V.get(j), weight);
-						edgeList.add(e);
-						//adjList.get(V.get(i)).add(e);
+						adjList.get(V.get(i)).add(e);
+						adjList.get(V.get(j)).add(e);
 					}
-					//e = new Edge(V.get(j), V.get(i), weight);
-					//adjList.get(V.get(j)).add(e);
 				}    
 			}
-			sparsifyForEachNode(i, sparsifyE, edgeList); 
+			sparsifyForEachNode(i, sparsificationRatio); 
 			long endTime = System.currentTimeMillis();
-			System.out.println("Sparsification Ended "+(endTime-startTime));
-			/*if(i%(V.size()/20)==0){
-					System.out.println("Sparsified "+i+" vertices");
-				}*/
+			if(i%(V.size()/20)==0){
+					System.out.println("Sparsified "+i+" vertices in "+(endTime-startTime));
+			}
 		}
+		
 		System.out.println("Neighbours identified for each node after sparsification");
 		long endTimeSparsify = System.currentTimeMillis();
 		System.out.println("Graph formation and sparsification time: "+(endTimeSparsify-startTimeSparsify));
 	}
 
-	public void sparsifyForEachNode(int nodeID, float e, PriorityQueue<Edge> edgeList){
-		int d = edgeList.size();
-		int toRetain = (int)Math.abs(Math.pow(d, e));
-		List<Edge> list=adjList.get(V.get(nodeID));
-		//Collections.sort(list, new WeightComparator());
-		//list = list.subList(0, toRetain);
-		int count = 0;
-		for(int i=0;i<toRetain;i++){
-			if(!edgeList.isEmpty()){
-				list.add(edgeList.remove());
-				count++;
-			}
-		}
-		adjList.put(V.get(nodeID), list);
+	public void sparsifyForEachNode(int nodeID, float e){
+		List<Edge> edgesOfThisNode = adjList.get(V.get(nodeID));
+		int numberOfEdges = edgesOfThisNode.size();
+		
+		int toRetain = (int)Math.abs(Math.pow(numberOfEdges, e));
+		if(toRetain > numberOfEdges)
+			toRetain = numberOfEdges;
+		
+		Collections.sort(edgesOfThisNode, new WeightComparator());	
+		adjList.put(V.get(nodeID), edgesOfThisNode.subList(0, toRetain));
 	}
 
 	public float findEdgeWeight(E node1, E node2){			
 		return node1.findDistance(node2);
-	}
-
-	//to sparsify the graph by retaining d^e edges (based on weight) for each node (d=degree of node) 
-	public void sparsify(float e){
-		Thread[] threads = new Thread[NTHREAD];
-		List<DocNode> myList;
-		int share = (int)Math.ceil(V.size()/NTHREAD);
-		int d = V.size();
-		int toRetain = (int)Math.abs(Math.pow(d, e));
-		for (int i = 0; i < NTHREAD; i++) {
-			if(i!=NTHREAD-1)
-				myList = (List<DocNode>)V.subList(i*share, (i+1)*share);
-			else
-				myList = (List<DocNode>)V.subList(i*share, V.size());
-			threads[i] = new Thread(new SparsifierRunnable(i, adjList, myList, toRetain));
-			threads[i].start();
-		}
-		for (Thread thread : threads) {
-			try {
-				//A Wait for Joining all threads merging in a single Iteration
-				thread.join();
-
-			} catch (InterruptedException ee) {
-				ee.printStackTrace();
-			}
-		}
 	}
 
 	//to perform depth first search and find connected components of the graph
@@ -147,6 +108,7 @@ public class Graph<E extends Node> {
 		}
 		return clusters;
 	}
+	
 	public void findComponent(BitSet bs, Node v, List<Node> cluster){
 		bs.set(V.indexOf(v));
 		cluster.add(v);

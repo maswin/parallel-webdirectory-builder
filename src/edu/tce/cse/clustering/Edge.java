@@ -1,6 +1,6 @@
 package edu.tce.cse.clustering;
 
-public class Edge<E extends Node>{
+public class Edge<E extends Node> {
 	private E src;
 	private E dst;
 	private float weight;

@@ -93,8 +93,8 @@ public class DistributedLSH {
 		}
 		updateLSHParams();
 	}
+	
 	public void processBucket(Map<String, Set<Centroid>> bucket){
-
 		Centroid A,B;
 		String flagCode;
 		for(Map.Entry<String, Set<Centroid>> entry : bucket.entrySet()){

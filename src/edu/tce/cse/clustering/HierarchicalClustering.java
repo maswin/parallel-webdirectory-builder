@@ -42,7 +42,7 @@ public class HierarchicalClustering {
 		inputFolder = fName;
 	}
 	
-	public List<DocNode> preprocess(){
+	public List<DocNode> preprocessAndGetDocNodes(){
 		DocumentInitializer DI = new DocumentInitializer(inputFolder);
 		return DI.getDocNodeList();
 	}
@@ -232,17 +232,20 @@ public class HierarchicalClustering {
 		return store;
 	}
 
-	//to form initial clusters in each processor
-	public Map<Long, Cluster> initialClustering(List<DocNode> docs, double percentOfRepPoints){
+	//To form initial clusters in each processor
+	public Map<Long, Cluster> initialClustering(List<DocNode> docNodes, double percentOfRepPoints){
 		Directory directory = new Directory();
-		//form graph where each node is a DocNode
-		Graph graph = new Graph(docs);
+		
+		//Form graph where each node is a DocNode
+		Graph graph = new Graph(docNodes);
 		graph.addEdges(sparsificationRatio);
-		//FIX SPARSIFICATION EXPONENT HERE
-		//graph.sparsify(0.3f);
-
+		
+		long startTimeForCentrality = System.currentTimeMillis();
+		System.out.println("Find Centrality Started");
 		graph.findCentrality();
-
+		long endTimeForCentrality = System.currentTimeMillis();
+		System.out.println("Find Centrality Ended in "+(endTimeForCentrality - startTimeForCentrality));
+		
 		float[] values = new float[graph.V.size()];
 		for(int i=0; i<graph.V.size(); i++){
 			values[i] = ((DocNode) graph.V.get(i)).getCentrality();
