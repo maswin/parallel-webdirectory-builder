@@ -17,160 +17,123 @@ import mpi.MPI;
 import mpi.Op;
 
 public class DocumentInitializer {
-	private final int N;
+	private final int totalNumberOfFiles;
 	private final String documentDirectory;
 	private final int processorID;
 	private final int numberOfProcessors;
 	private final int startIndex;
 	private final int endIndex;
 	private List<DocNode> docNodeList;
-	
+
 	public DocumentInitializer(String documentDirectory){
 		this.documentDirectory = documentDirectory;
-		List<File> files = new ArrayList<>();
-		parseDirectory(documentDirectory, files);
-		this.N = files.size();
+		List<File> files = getAllFilesInADirectory(documentDirectory);
+		this.totalNumberOfFiles = files.size();
+
 		//Sort Files
 		Collections.sort(files, new Comparator<File>() {
 			public int compare(File f1, File f2){
 				return f1.getAbsolutePath().compareTo(f2.getAbsolutePath());
 			}
 		});
+
 		this.processorID = MPI.COMM_WORLD.Rank();
 		this.numberOfProcessors = MPI.COMM_WORLD.Size();
-		this.startIndex = (N / numberOfProcessors) * processorID;
-		this.endIndex = (processorID != numberOfProcessors - 1)
-				? (N / numberOfProcessors) * (processorID + 1) - 1
-						: N - 1;
-				this.docNodeList = new ArrayList<>(endIndex - startIndex + 1);
-				try {
-					InitializeDocuments(files);
-				} catch (IOException e) {
-					e.printStackTrace();
-				}
+		this.startIndex = (totalNumberOfFiles / numberOfProcessors) * processorID;
+		this.endIndex = (processorID != numberOfProcessors - 1) ?
+				(totalNumberOfFiles / numberOfProcessors) * (processorID + 1) - 1 : totalNumberOfFiles - 1;
+
+		this.docNodeList = new ArrayList<>(endIndex - startIndex + 1);
+		try {
+			InitializeDocuments(files);
+		} catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
-	
-	public void parseDirectory(String documentDirectory, List files){
+
+	private List<File> getAllFilesInADirectory(String docuemtnDirectory) {
+		List<File> files = new ArrayList<>();
+		getAllFilesInADirectory(documentDirectory, files);
+		return files;
+	}
+
+	private void getAllFilesInADirectory(String documentDirectory, List files){
 		File inputDirectory = new File(documentDirectory);
 		File[] tmpFiles = inputDirectory.listFiles();
 		for(File f : tmpFiles){
 			if(f.isDirectory()){
-				parseDirectory(f.getAbsolutePath(), files);
+				getAllFilesInADirectory(f.getAbsolutePath(), files);
 			}else{
 				files.add(f);
 			}
 		}		
 	}
+
 	private void InitializeDocuments(List<File> files) throws IOException{
 		File inputDirectory = new File(documentDirectory);
 
-		List<Document> documentList = new ArrayList<>(endIndex - startIndex + 1);;
+		List<Document> documents = new ArrayList<>(endIndex - startIndex + 1);;
 
 		Map<String, Integer>[] localDocumentFrequency = new LinkedHashMap[1];
 		localDocumentFrequency[0] = new LinkedHashMap();
 
-
-		//Sequential Code
+		//Sequential Code (Look at git for parallel version)
 		for (int i = startIndex; i <= endIndex; i++) {
-            Document document = new Document(i, files.get(i).getAbsolutePath(), files.get(i).getName().trim());
-            document.parseDocument(localDocumentFrequency[0]);
-            documentList.add(document);
-        }
-		
-		//Parallel Code 
-		//Set Static Variables for DocumentParser Runnable
-		/*int numOfCores = Runtime.getRuntime().availableProcessors();
-		DocumentParser.documentList = documentList;
-		DocumentParser.startIndex = this.startIndex;
-		DocumentParser.endIndex = this.endIndex;
-		DocumentParser.localDocumentFrequency = localDocumentFrequency[0];
-		DocumentParser.numOfCores = numOfCores;
-		DocumentParser.files = (File[]) files.toArray(new File[files.size()]);
-		
-		Object docLock = new Object();
-		Object reduceLock = new Object();
-		Thread[] threads = new Thread[numOfCores];
-		for (int i = 0; i < numOfCores; i++) {
-			threads[i] = new Thread(new DocumentParser(i, docLock, reduceLock));
-			threads[i].start();
+			Document document = new Document(i, files.get(i).getAbsolutePath(), files.get(i).getName().trim());
+			document.parseDocument(localDocumentFrequency[0]);
+			documents.add(document);
 		}
 
-		for (Thread thread : threads) {
-			try {
-				//A Wait for Joining all threads merging in a single Iteration
-				thread.join();
-			} catch (InterruptedException ee) {
-				ee.printStackTrace();
-			}
-		}*/
-		
 		//Collect Document Frequency from all Processors
 		Map<String, Integer>[] globalDocumentFrequency = new HashMap[1];
 		MPI.COMM_WORLD.Allreduce(localDocumentFrequency, 0,
 				globalDocumentFrequency, 0, 1, MPI.OBJECT, new Op(new DocumentFrequencyReducer(), true));
 
-		//System.out.println(this.processorID+" "+globalDocumentFrequency[0].keySet().size());
-
 		//Sequential Code
-		for(Document doc : documentList){
-			doc.calculateTfIdf(this.N, globalDocumentFrequency[0]);
+		for(Document document : documents){
+			document.calculateTfIdf(this.totalNumberOfFiles, globalDocumentFrequency[0]);
 		}
-		
-		//Parallel Code
-		//Set static variables for TfIdfCalc
-		/*TfIdfCalc.documentList = documentList;
-		TfIdfCalc.startIndex = this.startIndex;
-		TfIdfCalc.endIndex = this.endIndex;
-		TfIdfCalc.numOfCores = numOfCores;
-		TfIdfCalc.numOfDoc = this.N;
-		TfIdfCalc.docFrequencyMap = globalDocumentFrequency[0];
-		
-		for (int i = 0; i < numOfCores; i++) {
-			threads[i] = new Thread(new TfIdfCalc(i));
-			threads[i].start();
-		}
-		
-		for (Thread thread : threads) {
-			try {
-				//A Wait for Joining all threads merging in a single Iteration
-				thread.join();
-			} catch (InterruptedException ee) {
-				ee.printStackTrace();
-			}
-		}*/
-		
-		generateDocNodeList(documentList);
+
+		generateDocNodeList(documents);
 	}
 
-	private void reduceTfIDF(List<DocNode> documentList){
-		double[][] tfIdfMatrix = new double[documentList.size()][];		
-
-		for(int i=0; i<documentList.size(); i++){
-			tfIdfMatrix[i] = documentList.get(i).getTfIdf().toArray();
+	private void generateDocNodeList(List<Document> documentList){
+		DocNode node;
+		for(Document document : documentList){
+			node = new DocNode(document.getDocID(),document.getFileName(), document.getTfIdf());
+			this.docNodeList.add(node);
 		}
 
+		reduceTfIDFInOneProcessor();
+	}
+	
+	private void reduceTfIDFInOneProcessor(){
+		double[][] tfIdfMatrix = new double[docNodeList.size()][];		
+
+		for(int i=0; i<docNodeList.size(); i++){
+			tfIdfMatrix[i] = docNodeList.get(i).getTfIdf().toArray();
+		}
 
 		//Set reduced size
 		//Default size
-		int size = documentList.size();
-		if(documentList.size() >= 30)
+		int size = docNodeList.size();
+		if(docNodeList.size() >= 30)
 			size = 30;
 
 		//Reduce TfIdf
 		SVDReducer svd = new SVDReducer(size);
 		//tfIdfMatrix = svd.reduceTfIdf(tfIdfMatrix);
 
-		for(int i=0; i<documentList.size(); i++){
-			documentList.get(i).setReducedTfIdf(new DenseDoubleMatrix1D(tfIdfMatrix[i]));
+		for(int i=0; i<docNodeList.size(); i++){
+			docNodeList.get(i).setReducedTfIdf(new DenseDoubleMatrix1D(tfIdfMatrix[i]));
 		}
 	}
 
-	private void reduceTfIDF(){
+	private void reduceTfIDFAcrossAllProcessor(){
 		List<double[]>[] localTfIdf = new ArrayList[1];
 		localTfIdf[0] = new ArrayList<double[]>(docNodeList.size());
 
-
-		for( DocNode doc : docNodeList){
+		for(DocNode doc : docNodeList){
 			localTfIdf[0].add(doc.getTfIdf().toArray());
 		}
 
@@ -183,7 +146,7 @@ public class DocumentInitializer {
 		if(MPI.COMM_WORLD.Rank() == 0){
 			//Initialize globalTfIdf
 			List<double[]>[] globalTfIdf = new ArrayList[1];
-			globalTfIdf[0] = new ArrayList<double[]>(N);
+			globalTfIdf[0] = new ArrayList<double[]>(totalNumberOfFiles);
 
 			//Collect TfIdf
 			globalTfIdf[0].addAll(localTfIdf[0]);
@@ -194,7 +157,7 @@ public class DocumentInitializer {
 			}
 
 			//Create TfIdfMatrix
-			tfIdfMatrix = new double[N][];
+			tfIdfMatrix = new double[totalNumberOfFiles][];
 			for(double[] tfIdf : globalTfIdf[0]){
 				tfIdfMatrix[index] = tfIdf;
 				index++;
@@ -206,10 +169,10 @@ public class DocumentInitializer {
 
 			//Send Reduced TfIdf
 			for(int i=1;i<MPI.COMM_WORLD.Size();i++){
-				int offset = (N / numberOfProcessors) * i;
+				int offset = (totalNumberOfFiles / numberOfProcessors) * i;
 				int count = (i != numberOfProcessors - 1)
-						? (N / numberOfProcessors) * (i + 1) - 1
-								: N - 1;
+						? (totalNumberOfFiles / numberOfProcessors) * (i + 1) - 1
+								: totalNumberOfFiles - 1;
 						count = count - offset + 1;
 						MPI.COMM_WORLD.Send(tfIdfMatrix, offset, count, MPI.OBJECT, i, i);
 			}
@@ -235,19 +198,9 @@ public class DocumentInitializer {
 		return docNodeList;
 	}
 
-	public void generateDocNodeList(List<Document> documentList){
-		DocNode node;
-		for(Document document : documentList){
-			node = new DocNode(document.getDocID(),document.getFileName(), document.getTfIdf());
-			this.docNodeList.add(node);
-		}
-		//reduceTfIDF();
-		reduceTfIDF(this.docNodeList);
-	}
-
 }
-class DocumentParser implements Runnable{
 
+class DocumentParser implements Runnable{
 	public static int startIndex;
 	public static int endIndex;
 	public static int numOfCores;
@@ -261,7 +214,7 @@ class DocumentParser implements Runnable{
 	public Object docLock;
 	public Object reduceLock;
 	public Map<String, Integer> tmpLocalDocumentFrequency;
-	
+
 	DocumentParser(int id, Object docLock, Object reduceLock){
 
 		int N = endIndex - startIndex + 1;
@@ -296,27 +249,27 @@ class DocumentParser implements Runnable{
 	}
 	private void reduceMap(){
 		for (String word : tmpLocalDocumentFrequency.keySet()) {
-            int frequency = tmpLocalDocumentFrequency.get(word);
-            if (DocumentParser.localDocumentFrequency.containsKey(word)) {
-                frequency += DocumentParser.localDocumentFrequency.get(word);
-            }
-            DocumentParser.localDocumentFrequency.put(word, frequency);
-        }
+			int frequency = tmpLocalDocumentFrequency.get(word);
+			if (DocumentParser.localDocumentFrequency.containsKey(word)) {
+				frequency += DocumentParser.localDocumentFrequency.get(word);
+			}
+			DocumentParser.localDocumentFrequency.put(word, frequency);
+		}
 	}
 
 }
-class TfIdfCalc implements Runnable{
 
+class TfIdfCalc implements Runnable{
 	public static int startIndex;
 	public static int endIndex;
 	public static int numOfCores;
 	public static List<Document> documentList;
 	public static int numOfDoc;
 	public static Map<String, Integer> docFrequencyMap;
-	
+
 	public int thisStartIndex;
 	public int thisEndIndex;
-	
+
 	TfIdfCalc(int id){
 		int N = endIndex - startIndex + 1;
 		this.thisStartIndex = ((N / numOfCores) * id) + startIndex;
@@ -324,14 +277,14 @@ class TfIdfCalc implements Runnable{
 				? (N / numOfCores) * (id + 1) - 1
 						: N - 1) + startIndex;
 	}
-	
+
 	@Override
 	public void run() {
 		// TODO Auto-generated method stub
 		for(int i=thisStartIndex; i<=thisEndIndex;i++){
 			documentList.get(i).calculateTfIdf(numOfDoc, docFrequencyMap);
 		}
-		
+
 	}
-	
+
 }

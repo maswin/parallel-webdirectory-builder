@@ -34,12 +34,19 @@ public class HierarchicalClustering {
 	public DocNode[] localRepPoints;
 	public Centroid[] centroids;
 	public boolean[] flagToStop = new boolean[1];
-	int shareDetails[]=new int[2];
+	int shareDetails[] = new int[2];
 	public double R;
 	public String inputFolder;
+	
 	public HierarchicalClustering(String fName){
 		inputFolder = fName;
 	}
+	
+	public List<DocNode> preprocess(){
+		DocumentInitializer DI = new DocumentInitializer(inputFolder);
+		return DI.getDocNodeList();
+	}
+	
 	//to merge clusters to form the next level clusters, when given the results of LSH as input 
 	public void mergeClusters(List<Data> list, int startID){
 		List<Cluster> temp = new ArrayList<Cluster>();
@@ -224,15 +231,6 @@ public class HierarchicalClustering {
 		shareDetails[1] = centroidPoints.size();
 		return store;
 	}
-
-	//preprocessing steps
-	public List<DocNode> preprocess(){
-		List<DocNode> nodeList=new ArrayList<DocNode>();
-		DocumentInitializer DI = new DocumentInitializer(inputFolder);
-		nodeList = DI.getDocNodeList();
-		return nodeList;
-	}
-
 
 	//to form initial clusters in each processor
 	public Map<Long, Cluster> initialClustering(List<DocNode> docs, double percentOfRepPoints){
