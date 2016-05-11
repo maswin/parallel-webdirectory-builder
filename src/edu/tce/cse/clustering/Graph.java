@@ -46,7 +46,7 @@ public class Graph<E extends Node> {
 	}
 
 	//to form a complete graph 
-	public void addEdges(float sparsificationRatio){
+	public void addEdges(float sparsificationRatio, boolean useReducedWeight){
 		long startTimeSparsify = System.currentTimeMillis();
 		
 		for(int i=0; i<V.size(); i++) {
@@ -57,7 +57,12 @@ public class Graph<E extends Node> {
 			long startTime = System.currentTimeMillis();
 			for(int j=i+1; j<V.size(); j++){
 				if(j!=i){
-					float weight = findEdgeWeight(V.get(i), V.get(j));
+					float weight = 0f;
+					if(useReducedWeight) {
+						weight = findReducedEdgeWeight(V.get(i), V.get(j));
+					} else {
+						weight = findEdgeWeight(V.get(i), V.get(j));
+					}
 					if(weight < thresholdEdgeWeightForSparsification){
 						Edge e = new Edge(V.get(i), V.get(j), weight);
 						adjList.get(V.get(i)).add(e);
@@ -89,6 +94,10 @@ public class Graph<E extends Node> {
 		adjList.put(V.get(nodeID), edgesOfThisNode.subList(0, toRetain));
 	}
 
+	public float findReducedEdgeWeight(E node1, E node2){			
+		return node1.findReducedDistance(node2);
+	}
+	
 	public float findEdgeWeight(E node1, E node2){			
 		return node1.findDistance(node2);
 	}

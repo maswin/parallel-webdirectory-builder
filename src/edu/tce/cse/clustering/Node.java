@@ -8,4 +8,9 @@ public abstract class Node implements Serializable{
 		nodeID = id;
 	}
 	abstract public float findDistance(Node n);
+	
+	public float findReducedDistance(Node n) {
+		System.out.println("Error in finding reduced weight - over ride it");
+		return 0f;
+	}
 }

@@ -85,8 +85,12 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 
         DenseDoubleAlgebra algebra = new DenseDoubleAlgebra();
         
-        return (float) (vector1.zDotProduct(vector2) / 
+        float sim = (float) (vector1.zDotProduct(vector2) / 
                 (algebra.norm2(vector1)*algebra.norm2(vector2)));
+        if(Float.isNaN(sim)){
+        	return 0f;
+        }
+        return sim;
 	}
 	public float findReducedCosDistance(DocNode d){
 		return (1-findReducedCosSimilarity(d));
@@ -130,5 +134,11 @@ public class DocNode extends Node implements Comparable<DocNode>, Serializable{
 	}
 	public float findCosDistance(Centroid d){
 		return (1-findCosSimilarity(d));
+	}
+	
+	@Override
+	public float findReducedDistance(Node n) {
+		DocNode d = (DocNode)n;
+		return findReducedCosSimilarity(d);
 	}
 }

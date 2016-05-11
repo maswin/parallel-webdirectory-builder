@@ -29,7 +29,7 @@ import gui.TreeView;
 import java.util.Arrays;
 
 public class HierarchicalClustering {
-	public float sparsificationRatio = 0.4f;
+	public float sparsificationRatio = 0.3f;
 	public Map<Long, Cluster> clustersAtThisLevel;
 	public DocNode[] localRepPoints;
 	public Centroid[] centroids;
@@ -37,16 +37,16 @@ public class HierarchicalClustering {
 	int shareDetails[] = new int[2];
 	public double R;
 	public String inputFolder;
-	
+
 	public HierarchicalClustering(String fName){
 		inputFolder = fName;
 	}
-	
+
 	public List<DocNode> preprocessAndGetDocNodes(){
 		DocumentInitializer DI = new DocumentInitializer(inputFolder);
 		return DI.getDocNodeList();
 	}
-	
+
 	//to merge clusters to form the next level clusters, when given the results of LSH as input 
 	public void mergeClusters(List<Data> list, int startID){
 		List<Cluster> temp = new ArrayList<Cluster>();
@@ -55,6 +55,10 @@ public class HierarchicalClustering {
 		//form graph where each node is a cluster
 		Graph graph = new Graph(temp);
 		//use addEdge() to add each edge between cluster nodes. Update edge weight accordingly
+		int index = 0;
+		int base = list.size()/20;
+		if(base == 0)
+			base = 1;
 		for(Data data: list){
 			Cluster a = clustersAtThisLevel.get(data.a);
 			Cluster b = clustersAtThisLevel.get(data.b);
@@ -77,6 +81,10 @@ public class HierarchicalClustering {
 					adjList.get(b).put(a, weight);
 				}
 			}
+			if(index%(base)==0){
+				System.out.println("Graph Formation Phase, processing "+index+"/"+list.size()+"cluster");
+			}
+			index++;
 		}
 		for(Cluster c: adjList.keySet()){
 			temp.remove(c);
@@ -235,17 +243,17 @@ public class HierarchicalClustering {
 	//To form initial clusters in each processor
 	public Map<Long, Cluster> initialClustering(List<DocNode> docNodes, double percentOfRepPoints){
 		Directory directory = new Directory();
-		
+
 		//Form graph where each node is a DocNode
 		Graph graph = new Graph(docNodes);
-		graph.addEdges(sparsificationRatio);
-		
+		graph.addEdges(sparsificationRatio, true);
+
 		long startTimeForCentrality = System.currentTimeMillis();
 		System.out.println("Find Centrality Started");
 		graph.findCentrality();
 		long endTimeForCentrality = System.currentTimeMillis();
 		System.out.println("Find Centrality Ended in "+(endTimeForCentrality - startTimeForCentrality));
-		
+
 		float[] values = new float[graph.V.size()];
 		for(int i=0; i<graph.V.size(); i++){
 			values[i] = ((DocNode) graph.V.get(i)).getCentrality();
@@ -276,14 +284,14 @@ public class HierarchicalClustering {
 			MPI.COMM_WORLD.Barrier();
 			System.out.println("Process "+i+":");
 			System.out.println("Mean centrality value = "+mean);
-			for(Integer j: directory.directoryMap.keySet()){
-				List<DocNode> l = directory.directoryMap.get(j);
-				System.out.print("\nDirectory "+j+": ");
-				for(DocNode d: l){
-					System.out.print(d.fileName+" ");
-				}
-				System.out.println(" ");
-			}
+//			for(Integer j: directory.directoryMap.keySet()){
+//				List<DocNode> l = directory.directoryMap.get(j);
+//				System.out.print("\nDirectory "+j+": ");
+//				for(DocNode d: l){
+//					System.out.print(d.fileName+" ");
+//				}
+//				System.out.println(" ");
+//			}
 		}
 		MPI.COMM_WORLD.Barrier();
 		long startTimeComm = System.currentTimeMillis();
